@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+    <title>R&#244;les &#8212; Administration SIRH</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <h:outputStylesheet library="css" name="admin-style.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; display: flex; min-height: 100vh; }
+        .main { flex: 1; padding: 28px; }
+        .badge-ADMIN    { background:#ede9fe;color:#7c3aed;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700; }
+        .badge-RH       { background:#dbeafe;color:#1d4ed8;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700; }
+        .badge-MANAGER  { background:#fef3c7;color:#b45309;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700; }
+        .badge-EMPLOYE  { background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700; }
+        .badge-AUDITEUR { background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700; }
+        .badge-CANDIDAT { background:#fdf4ff;color:#7e22ce;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700; }
+        .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+        .page-title  { font-size:22px; font-weight:800; color:#0f172a; }
+        .page-subtitle { font-size:12px; color:#94a3b8; margin-top:2px; }
+        .section-card { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin-bottom:20px; }
+        .section-title { font-size:14px; font-weight:800; color:#0f172a; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+        .form-group { margin-bottom:14px; }
+        .form-label { display:block; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.5px; margin-bottom:5px; }
+        .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; border:none; font-family:inherit; }
+        .btn-primary   { background:#6d28d9; color:#fff; }
+        .btn-secondary { background:#f1f5f9; color:#334155; }
+        .btn-danger    { background:#ef4444; color:#fff; }
+        .btn-sm        { padding:4px 10px; font-size:11px; }
+
+        /* ─── Boutons d'action de la table des rôles ─── */
+        .role-actions {
+            display: inline-flex;
+            gap: 6px;
+            justify-content: flex-end;
+            align-items: center;
+            white-space: nowrap;
+        }
+        .role-actions .ui-button {
+            padding: 6px 10px !important;
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            border-radius: 6px !important;
+            border: 1px solid transparent !important;
+            line-height: 1 !important;
+            min-width: auto !important;
+            height: 30px !important;
+            white-space: nowrap !important;
+        }
+        .role-actions .ui-button .ui-button-text {
+            padding: 0 !important;
+        }
+        .role-actions .ui-button .ui-icon {
+            font-size: 12px !important;
+            margin-right: 4px !important;
+        }
+        /* Variantes par couleur — surcharge PrimeFaces */
+        .role-actions .btn-modifier {
+            background: #eef2ff !important;
+            color: #4338ca !important;
+            border-color: #c7d2fe !important;
+        }
+        .role-actions .btn-modifier:hover {
+            background: #e0e7ff !important;
+        }
+        .role-actions .btn-permissions {
+            background: #ecfdf5 !important;
+            color: #047857 !important;
+            border-color: #a7f3d0 !important;
+        }
+        .role-actions .btn-permissions:hover {
+            background: #d1fae5 !important;
+        }
+        .role-actions .btn-supprimer {
+            background: #fef2f2 !important;
+            color: #b91c1c !important;
+            border-color: #fecaca !important;
+        }
+        .role-actions .btn-supprimer:hover {
+            background: #fee2e2 !important;
+        }
+        /* Badge ID compact */
+        .role-id {
+            font-family: monospace;
+            font-size: 11px;
+            color: #94a3b8;
+            background: #f8fafc;
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+    </style>
+</h:head>
+
+<h:body>
+
+<ui:include src="sidebar-admin.xhtml"/>
+
+<div class="main">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Gestion des r&#244;les</h1>
+            <p class="page-subtitle">Administration &#8250; R&#244;les et permissions</p>
+        </div>
+    </div>
+
+    <p:growl id="growl" showDetail="true" life="4000"/>
+
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:20px;">
+
+        <!-- Formulaire création -->
+        <div>
+            <div class="section-card">
+                <div class="section-title">
+                    <i class="fas fa-plus-circle" style="color:#6d28d9;"></i>
+                    Nouveau r&#244;le
+                </div>
+                <h:form id="formCreerRole">
+                    <div class="form-group">
+                        <label class="form-label">Nom du r&#244;le *</label>
+                        <p:inputText value="#{adminBean.role.nom}"
+                                     placeholder="Ex: COMPTABLE"
+                                     style="width:100%;text-transform:uppercase;font-size:13px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;"/>
+                        <small style="color:#94a3b8;font-size:10px;display:block;margin-top:4px;">Sera automatiquement en majuscules</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <p:inputTextarea value="#{adminBean.role.description}"
+                                         rows="3"
+                                         placeholder="Description du r&#244;le..."
+                                         style="width:100%;font-size:13px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;"/>
+                    </div>
+                    <p:commandButton value="Cr&#233;er le r&#244;le"
+                                     action="#{adminBean.creerRole}"
+                                     update="formCreerRole formTableRoles growl"
+                                     styleClass="btn btn-primary"
+                                     style="width:100%;justify-content:center;"
+                                     icon="fas fa-check"/>
+                </h:form>
+            </div>
+
+            <!-- Rôles système en lecture seule -->
+            <div class="section-card">
+                <div class="section-title">
+                    <i class="fas fa-lock" style="color:#6d28d9;"></i>
+                    R&#244;les syst&#232;me (prot&#233;g&#233;s)
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:8px;border:1px solid #f1f5f9;">
+                        <span class="badge-ADMIN">ADMIN</span>
+                        <span style="font-size:11px;color:#64748b;">Acc&#232;s total</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:8px;border:1px solid #f1f5f9;">
+                        <span class="badge-RH">RH</span>
+                        <span style="font-size:11px;color:#64748b;">Gestion RH</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:8px;border:1px solid #f1f5f9;">
+                        <span class="badge-MANAGER">MANAGER</span>
+                        <span style="font-size:11px;color:#64748b;">Chef de structure</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:8px;border:1px solid #f1f5f9;">
+                        <span class="badge-EMPLOYE">EMPLOY&#201;</span>
+                        <span style="font-size:11px;color:#64748b;">Acc&#232;s personnel</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:8px;border:1px solid #f1f5f9;">
+                        <span class="badge-AUDITEUR">AUDITEUR</span>
+                        <span style="font-size:11px;color:#64748b;">Lecture seule</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:8px;border:1px solid #f1f5f9;">
+                        <span class="badge-CANDIDAT">CANDIDAT</span>
+                        <span style="font-size:11px;color:#64748b;">Recrutement externe</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table des rôles -->
+        <div class="section-card">
+            <div class="section-title">
+                <i class="fas fa-shield-alt" style="color:#6d28d9;"></i>
+                Tous les r&#244;les (#{adminBean.totalRoles})
+            </div>
+            <h:form id="formTableRoles">
+                <p:dataTable value="#{adminBean.roles}" var="r"
+                             rows="15" paginator="true"
+                             paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink}"
+                             emptyMessage="Aucun r&#244;le d&#233;fini."
+                             style="border:none;">
+
+                    <p:column headerText="R&#244;le" style="width:160px;">
+                        <span class="badge-#{r.nom}">#{r.nom}</span>
+                    </p:column>
+
+                    <p:column headerText="Description">
+                        <span style="font-size:13px;color:#64748b;">
+                            #{r.description != null ? r.description : '—'}
+                        </span>
+                    </p:column>
+
+                    <p:column headerText="ID" style="width:70px;text-align:center;">
+                        <span class="role-id">##{r.id}</span>
+                    </p:column>
+
+                    <p:column headerText="Actions" style="width:340px;text-align:right;">
+                        <h:panelGroup layout="block" styleClass="role-actions">
+                        <!-- Actions sur le rôle -->
+                        <p:commandButton value="Suppr."
+                                         styleClass="btn-supprimer"
+                                         icon="pi pi-trash"
+                                         rendered="#{r.nom != 'ADMIN' and r.nom != 'RH'
+                                                  and r.nom != 'MANAGER' and r.nom != 'EMPLOYE'
+                                                  and r.nom != 'AUDITEUR' and r.nom != 'CANDIDAT'
+                                                  and r.nom != 'SUPER_ADMIN'}"
+                                         action="#{adminBean.supprimerRole(r.id)}"
+                                         ajax="false"
+                                         onclick="return confirm('Supprimer le r\u00F4le #{r.nom} ?')"/>
+                        <p:commandButton value="Modifier"
+                                         styleClass="btn-modifier"
+                                         icon="pi pi-pencil"
+                                         action="#{adminBean.preparerEditionRole(r)}"
+                                         update=":formDlgRole growl"
+                                         oncomplete="PF('dlgRole').show()"
+                                         ajax="true"
+                                         process="@this"/>
+                        <p:commandButton value="Permissions"
+                                         styleClass="btn-permissions"
+                                         icon="pi pi-shield"
+                                         action="#{adminBean.preparerPermissionsRole(r)}"
+                                         update=":formDlgPermissions growl"
+                                         oncomplete="PF('dlgPermissions').show()"
+                                         ajax="true"
+                                         process="@this"/>
+                        </h:panelGroup>
+                    </p:column>
+
+                </p:dataTable>
+            </h:form>
+        </div>
+
+        <!-- ═══════════════════ DIALOG MODIFICATION ROLE ═══════════════════ -->
+        <h:form id="formDlgRole">
+            <p:dialog header="Modifier le rôle" widgetVar="dlgRole" modal="true" width="480"
+                      resizable="false" closeOnEscape="true">
+                <div style="padding:20px;">
+                    <p:messages showDetail="true" style="margin-bottom:12px;"/>
+                    <div style="margin-bottom:14px;">
+                        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Nom du rôle</label>
+                        <p:inputText value="#{adminBean.role.nom}" style="width:100%;"
+                                     disabled="#{adminBean.role.nom == 'ADMIN' or adminBean.role.nom == 'RH'
+                                              or adminBean.role.nom == 'MANAGER' or adminBean.role.nom == 'EMPLOYE'
+                                              or adminBean.role.nom == 'AUDITEUR' or adminBean.role.nom == 'CANDIDAT'}"/>
+                    </div>
+                    <div style="margin-bottom:14px;">
+                        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Description</label>
+                        <p:inputTextarea value="#{adminBean.role.description}" rows="3" style="width:100%;"/>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;border-top:1px solid #e2e8f0;">
+                        <p:commandButton value="Annuler" type="button"
+                                         onclick="PF('dlgRole').hide()"
+                                         styleClass="btn btn-secondary"/>
+                        <p:commandButton value="Enregistrer"
+                                         action="#{adminBean.modifierRole}"
+                                         update="formDlgRole :formTableRoles growl"
+                                         oncomplete="if(!args.validationFailed) PF('dlgRole').hide()"
+                                         styleClass="btn btn-primary"/>
+                    </div>
+                </div>
+            </p:dialog>
+        </h:form>
+
+        <!-- ═══════════════════ DIALOG PERMISSIONS PAR ROLE ═══════════════════ -->
+        <h:form id="formDlgPermissions">
+            <p:dialog header="Permissions du rôle #{adminBean.role.nom}"
+                      widgetVar="dlgPermissions" modal="true" width="720" height="600"
+                      resizable="false" closeOnEscape="true">
+                <div style="padding:20px;">
+                    <p:messages showDetail="true" style="margin-bottom:12px;"/>
+                    <div style="background:#f8fafc;border-radius:8px;padding:12px;
+                                margin-bottom:14px;font-size:12px;color:#475569;">
+                        <i class="pi pi-info-circle" style="margin-right:6px;color:#6d28d9;"/>
+                        Cochez les permissions à attribuer à ce rôle. Les utilisateurs
+                        liés au rôle gagneront/perdront automatiquement ces droits.
+                    </div>
+
+                    <p:selectManyCheckbox value="#{adminBean.permissionsSelectionnees}"
+                                          layout="grid" columns="2"
+                                          style="width:100%;">
+                        <f:selectItems value="#{adminBean.toutesPermissions}"
+                                       var="p"
+                                       itemValue="#{p.id}"
+                                       itemLabel="#{p.libelle} (#{p.code})"/>
+                    </p:selectManyCheckbox>
+
+                    <div style="display:flex;justify-content:flex-end;gap:10px;
+                                padding-top:14px;margin-top:14px;border-top:1px solid #e2e8f0;">
+                        <p:commandButton value="Annuler" type="button"
+                                         onclick="PF('dlgPermissions').hide()"
+                                         styleClass="btn btn-secondary"/>
+                        <p:commandButton value="Enregistrer"
+                                         action="#{adminBean.enregistrerPermissions}"
+                                         update="formDlgPermissions growl"
+                                         oncomplete="if(!args.validationFailed) PF('dlgPermissions').hide()"
+                                         styleClass="btn btn-primary"/>
+                    </div>
+                </div>
+            </p:dialog>
+        </h:form>
+
+    </div>
+</div>
+
+</h:body>
+</html>

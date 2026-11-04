@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+    <title>Annonces — Administration</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <style>
+        body { background:#f1f5f9;font-family:'Segoe UI',sans-serif;margin:0;display:flex;min-height:100vh; }
+        .main { flex: 1; padding: 28px; }
+        .page-title { font-size:22px;font-weight:800;color:#0f172a;margin-bottom:4px; }
+        .page-sub   { font-size:12px;color:#94a3b8;margin-bottom:22px; }
+        .card { background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:24px;margin-bottom:20px; }
+        .card-title { font-size:14px;font-weight:800;color:#0f172a;margin-bottom:18px;
+                      display:flex;align-items:center;gap:8px; }
+
+        .form-group { margin-bottom:18px; }
+        .form-label { display:block;font-size:12px;font-weight:700;color:#475569;
+                      margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px; }
+        .grid-2 { display:grid;grid-template-columns:1fr 1fr;gap:18px; }
+        .priorite-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:8px; }
+        .priorite-card {
+            border:2px solid #e2e8f0;border-radius:8px;padding:10px;cursor:pointer;
+            text-align:center;font-size:11px;font-weight:700;transition:all .15s;
+        }
+        .priorite-card.active { border-width:2px; }
+        .priorite-card.basse    { color:#64748b; }
+        .priorite-card.basse.active    { border-color:#64748b;background:#f1f5f9; }
+        .priorite-card.normale  { color:#2563eb; }
+        .priorite-card.normale.active  { border-color:#2563eb;background:#dbeafe; }
+        .priorite-card.haute    { color:#f59e0b; }
+        .priorite-card.haute.active    { border-color:#f59e0b;background:#fef3c7; }
+        .priorite-card.urgente  { color:#dc2626; }
+        .priorite-card.urgente.active  { border-color:#dc2626;background:#fee2e2; }
+        .priorite-card .priorite-radio { display:none; }
+
+        .btn-diffuser {
+            background: linear-gradient(135deg,#2563eb,#1d4ed8);
+            color:#fff;border:none;padding:14px 28px;font-size:14px;font-weight:700;
+            border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;
+        }
+        .preview {
+            background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;
+            padding:14px;font-size:12px;color:#475569;
+        }
+    </style>
+</h:head>
+
+<h:body>
+
+<ui:include src="sidebar-admin.xhtml"/>
+
+<div class="main">
+    <p:growl id="growl" showDetail="true"/>
+
+    <div>
+        <h1 class="page-title"><i class="pi pi-megaphone" style="margin-right:6px;color:#dc2626;"/> Diffuser une annonce</h1>
+        <div class="page-sub">Envoyer une notification (et optionnellement un email) à un ensemble d'utilisateurs</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">
+            <i class="pi pi-target" style="color:#2563eb;"/>
+            Ciblage de l'annonce
+        </div>
+
+        <h:form id="formAnnonce">
+            <div class="form-group">
+                <label class="form-label">Destinataires</label>
+                <p:selectOneRadio value="#{annonceBean.cible}" layout="grid" columns="3"
+                                  style="margin-bottom:10px;">
+                    <f:selectItem itemLabel="Tous les utilisateurs actifs" itemValue="TOUS"/>
+                    <f:selectItem itemLabel="Par rôle"                     itemValue="ROLE"/>
+                    <f:selectItem itemLabel="Par institution"              itemValue="INSTITUTION"/>
+                    <p:ajax update="formAnnonce"/>
+                </p:selectOneRadio>
+            </div>
+
+            <h:panelGroup rendered="#{annonceBean.cible == 'ROLE'}">
+                <div class="form-group">
+                    <label class="form-label">Rôle ciblé</label>
+                    <p:selectOneMenu value="#{annonceBean.roleCible}" style="width:100%;">
+                        <f:selectItem itemLabel="— Choisir un rôle —" itemValue="#{null}"/>
+                        <f:selectItem itemLabel="Administrateurs"     itemValue="ADMIN"/>
+                        <f:selectItem itemLabel="Responsables RH"     itemValue="RH"/>
+                        <f:selectItem itemLabel="Managers"            itemValue="MANAGER"/>
+                        <f:selectItem itemLabel="Employés"            itemValue="EMPLOYE"/>
+                        <f:selectItem itemLabel="Auditeurs"           itemValue="AUDITEUR"/>
+                        <f:selectItem itemLabel="Candidats"           itemValue="CANDIDAT"/>
+                    </p:selectOneMenu>
+                </div>
+            </h:panelGroup>
+
+            <h:panelGroup rendered="#{annonceBean.cible == 'INSTITUTION'}">
+                <div class="form-group">
+                    <label class="form-label">Institution ciblée</label>
+                    <p:selectOneMenu value="#{annonceBean.institutionCibleId}" style="width:100%;">
+                        <f:selectItem itemLabel="— Choisir une institution —" itemValue="#{null}"/>
+                        <f:selectItems value="#{annonceBean.toutesInstitutions}" var="i"
+                                       itemValue="#{i.id}" itemLabel="#{i.code} — #{i.nom}"/>
+                    </p:selectOneMenu>
+                </div>
+            </h:panelGroup>
+
+            <div class="form-group">
+                <label class="form-label">Titre de l'annonce *</label>
+                <p:inputText value="#{annonceBean.titre}" style="width:100%;"
+                             placeholder="Ex : Maintenance prévue dimanche 12h-14h"
+                             maxlength="200"/>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Message</label>
+                <p:inputTextarea value="#{annonceBean.message}" rows="6" style="width:100%;"
+                                 placeholder="Décrivez l'événement, l'impact, les actions à entreprendre..."
+                                 maxlength="2000"/>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Priorité</label>
+                <p:selectOneRadio value="#{annonceBean.priorite}" layout="grid" columns="4">
+                    <f:selectItem itemLabel="Basse"   itemValue="BASSE"/>
+                    <f:selectItem itemLabel="Normale" itemValue="NORMALE"/>
+                    <f:selectItem itemLabel="Haute"   itemValue="HAUTE"/>
+                    <f:selectItem itemLabel="Urgente" itemValue="URGENTE"/>
+                </p:selectOneRadio>
+            </div>
+
+            <div class="form-group">
+                <p:selectBooleanCheckbox value="#{annonceBean.avecEmail}"/>
+                <span style="margin-left:8px;font-size:13px;">
+                    Envoyer également par email
+                    <span style="color:#94a3b8;font-size:11px;">
+                        (en plus de la notification in-app)
+                    </span>
+                </span>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;gap:10px;
+                        padding-top:14px;border-top:1px solid #e2e8f0;">
+                <p:commandButton value="Diffuser l'annonce"
+                    icon="pi pi-send"
+                    action="#{annonceBean.diffuser}"
+                    update="formAnnonce growl"
+                    styleClass="btn-diffuser"
+                    onclick="return confirm('Confirmer la diffusion de cette annonce ?');"/>
+            </div>
+        </h:form>
+    </div>
+
+    <div class="card">
+        <div class="card-title">
+            <i class="pi pi-info-circle" style="color:#0891b2;"/>
+            Bonnes pratiques
+        </div>
+        <ul style="font-size:13px;color:#475569;line-height:1.8;padding-left:20px;">
+            <li><strong>Titre clair</strong> : un sujet précis, datable si possible</li>
+            <li><strong>Message bref</strong> : 2 à 3 paragraphes maximum</li>
+            <li><strong>Priorité URGENTE</strong> à réserver aux interruptions imprévues</li>
+            <li><strong>Email activé</strong> uniquement pour les annonces critiques (perturbe les boîtes)</li>
+            <li><strong>Cible précise</strong> : ne pas envoyer « à tous » si seul un rôle est concerné</li>
+        </ul>
+    </div>
+</div>
+
+</h:body>
+</html>

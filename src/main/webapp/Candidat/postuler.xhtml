@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+    <title>
+        Postuler —
+        #{candidatBean.offreSelectionnee != null
+            ? candidatBean.offreSelectionnee.titre : 'Offre'}
+    </title>
+    <!-- CORRECTION : styles :root et .layout-main supprimés (gérés par candidat.css)
+         Toutes les classes form-section, doc-row, etc. sont aussi dans candidat.css -->
+    <h:outputStylesheet library="css" name="candidat.css"/>
+</h:head>
+
+<h:body>
+    <div class="layout-wrapper">
+        <ui:include src="sidebar-candidat.xhtml"/>
+
+        <div class="layout-main">
+
+            <div class="layout-topbar">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <a href="#{request.contextPath}/Candidat/offres.xhtml"
+                       style="color:#64748b;font-size:13px;">
+                        <i class="pi pi-arrow-left"/> Retour aux offres
+                    </a>
+                    <span style="color:#cbd5e1;">|</span>
+                    <h2 class="page-title" style="margin:0;">Postuler à une offre</h2>
+                </div>
+            </div>
+
+            <div class="layout-content">
+
+                <!-- ── Aucune offre sélectionnée ───────────────── -->
+                <p:outputPanel rendered="#{candidatBean.offreSelectionnee == null}">
+                    <div style="text-align:center;padding:60px;color:#94a3b8;">
+                        <i class="pi pi-exclamation-triangle"
+                           style="font-size:3em;display:block;margin-bottom:16px;
+                                  color:#f59e0b;"/>
+                        <div style="font-size:16px;font-weight:600;margin-bottom:8px;">
+                            Aucune offre sélectionnée
+                        </div>
+                        <a href="#{request.contextPath}/Candidat/offres.xhtml"
+                           style="color:#0ea5e9;font-weight:600;">
+                            ← Voir les offres disponibles
+                        </a>
+                    </div>
+                </p:outputPanel>
+
+                <p:outputPanel rendered="#{candidatBean.offreSelectionnee != null}">
+
+                    <!-- ── Bandeau offre ───────────────────────── -->
+                    <div style="background:linear-gradient(135deg,#0ea5e9,#0284c7);
+                                border-radius:12px;padding:20px 24px;
+                                margin-bottom:20px;color:#fff;">
+                        <div style="display:flex;justify-content:space-between;
+                                    align-items:flex-start;flex-wrap:wrap;gap:12px;">
+                            <div>
+                                <div style="font-size:20px;font-weight:800;margin-bottom:6px;">
+                                    #{candidatBean.offreSelectionnee.titre}
+                                </div>
+                                <div style="display:flex;gap:16px;font-size:13px;
+                                            opacity:0.9;flex-wrap:wrap;">
+                                    <span>
+                                        <i class="pi pi-map-marker"/>
+                                        #{candidatBean.offreSelectionnee.localisation != null
+                                            ? candidatBean.offreSelectionnee.localisation
+                                            : 'Non précisé'}
+                                    </span>
+                                    <span>
+                                        <i class="pi pi-briefcase"/>
+                                        #{candidatBean.offreSelectionnee.typeContrat != null
+                                            ? candidatBean.offreSelectionnee.typeContrat : 'CDI'}
+                                    </span>
+                                    <span>
+                                        <i class="pi pi-users"/>
+                                        #{candidatBean.offreSelectionnee.nombrePostes != null
+                                            ? candidatBean.offreSelectionnee.nombrePostes : 1}
+                                        poste(s)
+                                    </span>
+                                </div>
+                            </div>
+                            <div style="background:rgba(255,255,255,0.2);border-radius:8px;
+                                        padding:8px 16px;font-size:12px;font-weight:700;">
+                                <h:outputText value="PUBLIÉE" rendered="#{candidatBean.offreSelectionnee.ouverte}"/>
+                                <h:outputText value="CLÔTURÉE" rendered="#{candidatBean.offreSelectionnee.expiree}"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Avertissement si offre expirée -->
+                    <h:panelGroup rendered="#{candidatBean.offreSelectionnee.expiree}">
+                        <div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;
+                                    padding:14px 18px;margin-bottom:16px;display:flex;
+                                    align-items:center;gap:10px;">
+                            <i class="pi pi-ban" style="color:#ef4444;font-size:18px;"/>
+                            <div>
+                                <strong style="color:#b91c1c;">Offre clôturée</strong>
+                                <span style="color:#7f1d1d;font-size:12px;margin-left:8px;">
+                                    — Les candidatures ne sont plus acceptées depuis le
+                                    <h:outputText value="#{candidatBean.offreSelectionnee.dateLimiteFermeture}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy 'à' HH:mm" type="localDateTime"/>
+                                    </h:outputText>
+                                </span>
+                            </div>
+                        </div>
+                    </h:panelGroup>
+
+                    <div class="info-box">
+                        <i class="pi pi-info-circle"/> Remplissez soigneusement ce formulaire.
+                        Le <strong>CV</strong> est toujours obligatoire ; les autres documents
+                        marqués <span class="required">*</span> le sont aussi pour cette offre précise.
+                        Relisez bien avant d'envoyer — vous ne pourrez plus modifier après soumission.
+                    </div>
+
+                    <!-- CORRECTION : enctype multipart obligatoire pour l'upload de fichiers -->
+                    <h:form id="formPostuler" enctype="multipart/form-data">
+                        <p:messages id="msgs" showDetail="true" closable="true"
+                                    style="margin-bottom:16px;"/>
+
+                        <!-- ── 1. Informations personnelles ──────── -->
+                        <div class="form-section">
+                            <div class="form-section-title">
+                                <i class="pi pi-user"/> Informations personnelles
+                            </div>
+                            <div class="form-grid-2">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        Nom <span class="required">*</span>
+                                    </label>
+                                    <p:inputText
+                                        value="#{candidatBean.nouvelleCandidature.nomCandidat}"
+                                        required="true"
+                                        requiredMessage="Le nom est obligatoire."
+                                        style="width:100%;"/>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        Prénom <span class="required">*</span>
+                                    </label>
+                                    <p:inputText
+                                        value="#{candidatBean.nouvelleCandidature.prenomCandidat}"
+                                        required="true"
+                                        requiredMessage="Le prénom est obligatoire."
+                                        style="width:100%;"/>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        Email <span class="required">*</span>
+                                    </label>
+                                    <p:inputText
+                                        value="#{candidatBean.nouvelleCandidature.emailCandidat}"
+                                        required="true"
+                                        requiredMessage="L'email est obligatoire."
+                                        style="width:100%;"/>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Téléphone</label>
+                                    <p:inputText
+                                        value="#{candidatBean.nouvelleCandidature.telephoneCandidat}"
+                                        placeholder="+221 77 000 00 00"
+                                        style="width:100%;"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── 2. Lettre de motivation ───────────── -->
+                        <div class="form-section">
+                            <div class="form-section-title">
+                                <i class="pi pi-pencil"/> Lettre de motivation
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    Rédigez votre lettre de motivation
+                                </label>
+                                <p:inputTextarea
+                                    value="#{candidatBean.nouvelleCandidature.lettreMotivation}"
+                                    rows="8"
+                                    style="width:100%;line-height:1.7;"
+                                    placeholder="Madame, Monsieur,&#10;&#10;Je me permets de vous adresser ma candidature pour le poste de...&#10;&#10;[Présentez votre parcours, vos motivations et vos atouts]&#10;&#10;Dans l'attente de votre retour, je reste disponible pour un entretien.&#10;&#10;Cordialement,"/>
+                            </div>
+                            <div style="font-size:11px;color:#94a3b8;margin-top:6px;">
+                                <i class="pi pi-info-circle"/>
+                                Vous pouvez aussi joindre un fichier lettre de motivation
+                                ci-dessous.
+                            </div>
+                        </div>
+
+                        <!-- ── 3. Documents à joindre ────────────── -->
+                        <div class="form-section">
+                            <div class="form-section-title">
+                                <i class="pi pi-paperclip"/> Documents à joindre
+                            </div>
+
+                            <!-- CV -->
+                            <div class="doc-row">
+                                <div class="doc-icon" style="background:#fee2e2;">
+                                    <i class="pi pi-file-pdf"
+                                       style="color:#ef4444;font-size:18px;"/>
+                                </div>
+                                <div class="doc-info">
+                                    <div class="doc-title">
+                                        CV (Curriculum Vitae)
+                                        <span class="required">*</span>
+                                    </div>
+                                    <div class="doc-desc">
+                                        Format PDF ou Word — Obligatoire — Max 10 Mo
+                                    </div>
+                                </div>
+                                <p:fileUpload value="#{candidatBean.cvFichier}"
+                                              mode="simple" skinSimple="true"
+                                              allowTypes="/(\.|\/)(pdf|doc|docx)$/"
+                                              label="Choisir un fichier"
+                                              style="min-width:160px;"/>
+                            </div>
+
+                            <!-- Documents exigés par le RH pour cette offre (liste énumérée librement) -->
+                            <ui:repeat value="#{candidatBean.offreSelectionnee.documentsRequis}" var="doc">
+                                <div class="doc-row">
+                                    <div class="doc-icon" style="background:#dbeafe;">
+                                        <i class="pi pi-file" style="color:#3b82f6;font-size:18px;"/>
+                                    </div>
+                                    <div class="doc-info">
+                                        <div class="doc-title">
+                                            #{doc.libelle}
+                                            <h:outputText value="*" styleClass="required" rendered="#{doc.obligatoire}"/>
+                                        </div>
+                                        <div class="doc-desc">#{doc.obligatoire ? 'Obligatoire pour cette offre' : 'Optionnel'} — Max 10 Mo</div>
+                                    </div>
+                                    <p:fileUpload value="#{candidatBean.fichiersDynamiques[doc.id]}"
+                                                  mode="simple" skinSimple="true"
+                                                  allowTypes="/(\.|\/)(pdf|doc|docx|jpg|jpeg|png)$/"
+                                                  label="Choisir un fichier"
+                                                  style="min-width:160px;"/>
+                                </div>
+                            </ui:repeat>
+
+                            <!-- Documents supplémentaires (liste libre) -->
+                            <h:panelGroup id="blocDocsSupp" layout="block">
+                                <ui:repeat value="#{candidatBean.lignesDocsSupp}" var="ligne" varStatus="st">
+                                    <div class="doc-row">
+                                        <div class="doc-icon" style="background:#dcfce7;">
+                                            <i class="pi pi-paperclip" style="color:#10b981;font-size:18px;"/>
+                                        </div>
+                                        <div class="doc-info" style="flex:1;">
+                                            <div class="doc-title">Document supplémentaire #{st.index + 1}</div>
+                                            <p:inputText value="#{ligne.libelle}"
+                                                         placeholder="Libellé (ex. Certificat de formation)"
+                                                         style="width:100%;margin-top:6px;"/>
+                                        </div>
+                                        <p:fileUpload value="#{ligne.fichier}"
+                                                      mode="simple" skinSimple="true"
+                                                      allowTypes="/(\.|\/)(pdf|doc|docx|jpg|jpeg|png)$/"
+                                                      label="Choisir un fichier"
+                                                      style="min-width:160px;"/>
+                                        <p:commandButton icon="pi pi-trash" title="Retirer ce document"
+                                                         action="#{candidatBean.retirerLigneDocSupp(ligne)}"
+                                                         process="@form" update="blocDocsSupp"
+                                                         styleClass="ui-button-danger"/>
+                                    </div>
+                                </ui:repeat>
+                                <div style="margin-top:12px;">
+                                    <p:commandButton value="Ajouter un document" icon="pi pi-plus"
+                                                     action="#{candidatBean.ajouterLigneDocSupp}"
+                                                     process="@form" update="blocDocsSupp"
+                                                     styleClass="ui-button-outlined"/>
+                                </div>
+                            </h:panelGroup>
+
+                            <div class="warn-box" style="margin-top:14px;margin-bottom:0;">
+                                <i class="pi pi-exclamation-triangle"/>
+                                Préparez les <strong>originaux ET des copies</strong>.
+                                Adaptez votre CV à cette offre spécifique.
+                                Les documents demandés varient selon le poste et le secteur.
+                            </div>
+                        </div>
+
+                        <!-- ── Boutons ────────────────────────────── -->
+                        <div style="display:flex;justify-content:flex-end;
+                                    gap:12px;margin-top:8px;">
+                            <!-- CORRECTION : type="button" empêche la soumission du form -->
+                            <p:commandButton value="Annuler"
+                                             type="button"
+                                             onclick="window.location='#{request.contextPath}/Candidat/offres.xhtml'"
+                                             icon="pi pi-times"
+                                             styleClass="btn-cancel ui-button-secondary"/>
+                            <!-- CORRECTION : ajax="false" pour soumettre le formulaire
+                                 multipart correctement avec les fichiers joints -->
+                            <p:commandButton value="Envoyer ma candidature"
+                                             action="#{candidatBean.postulerEtRediriger}"
+                                             ajax="false"
+                                             disabled="#{candidatBean.offreSelectionnee.expiree}"
+                                             title="#{candidatBean.offreSelectionnee.expiree ? 'Offre clôturée' : 'Envoyer ma candidature'}"
+                                             icon="pi pi-send"
+                                             styleClass="btn-submit #{candidatBean.offreSelectionnee.expiree ? 'ui-button-secondary' : 'ui-button-success'}"/>
+                        </div>
+
+                    </h:form>
+                </p:outputPanel>
+
+            </div><!-- /layout-content -->
+        </div><!-- /layout-main -->
+    </div><!-- /layout-wrapper -->
+</h:body>
+</html>

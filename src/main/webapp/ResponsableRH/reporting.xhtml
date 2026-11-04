@@ -1,0 +1,131 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <ui:param name="page" value="reporting"/>
+    <ui:define name="title">Reporting &amp; KPI — SIRH</ui:define>
+    <ui:define name="pageTitle">Reporting &amp; KPI</ui:define>
+    <ui:define name="breadcrumb">Analytique &gt; Tableaux de bord — #{sessionBean.institutionCourante.nom}</ui:define>
+
+    <ui:define name="content">
+        <div class="kpi-grid">
+            <div class="kpi-card blue">
+                <div class="kpi-label">Effectif actif</div>
+                <div class="kpi-value">#{adminReportingBean.effectifActif}</div>
+                <div class="kpi-sub">sur #{adminReportingBean.effectifTotal} au total</div>
+            </div>
+            <div class="kpi-card gold">
+                <div class="kpi-label">Masse salariale</div>
+                <div class="kpi-value">
+                    <h:outputText value="#{adminReportingBean.masseSalariale}">
+                        <f:convertNumber type="currency" currencySymbol="FCFA " groupingUsed="true"/>
+                    </h:outputText>
+                </div>
+                <div class="kpi-sub">salaire moyen <h:outputText value="#{adminReportingBean.salaireMoyen}"><f:convertNumber type="currency" currencySymbol="FCFA " groupingUsed="true"/></h:outputText></div>
+            </div>
+            <div class="kpi-card orange">
+                <div class="kpi-label">Congés en attente</div>
+                <div class="kpi-value">#{adminReportingBean.congesEnAttente}</div>
+                <div class="kpi-sub">#{adminReportingBean.congesApprouves} approuvés</div>
+            </div>
+            <div class="kpi-card purple">
+                <div class="kpi-label">Recrutement</div>
+                <div class="kpi-value">#{adminReportingBean.candidaturesRecues}</div>
+                <div class="kpi-sub">#{adminReportingBean.offresPubliees} offre(s) publiée(s)</div>
+            </div>
+            <div class="kpi-card green">
+                <div class="kpi-label">Évaluations en cours</div>
+                <div class="kpi-value">#{adminReportingBean.evaluationsEnCours}</div>
+            </div>
+            <div class="kpi-card red">
+                <div class="kpi-label">Taux d'absentéisme</div>
+                <div class="kpi-value">#{adminReportingBean.tauxAbsenteisme}%</div>
+            </div>
+            <div class="kpi-card red">
+                <div class="kpi-label">Taux de turnover (annuel)</div>
+                <div class="kpi-value">#{adminReportingBean.tauxTurnover}%</div>
+            </div>
+            <div class="kpi-card orange">
+                <div class="kpi-label">Contrats expirant (30j)</div>
+                <div class="kpi-value">#{adminReportingBean.contratsExpirantDans30j}</div>
+            </div>
+        </div>
+
+        <div class="section-card collapsed">
+            <div class="section-header">
+                <div class="section-title"><div class="section-title-dot" style="background:#2563eb;"></div>Répartition des effectifs</div>
+            </div>
+            <div class="form-row col-2" style="padding:16px 20px 20px;">
+                <div>
+                    <h4 style="font-size:12px;color:#64748b;margin:0 0 10px;text-transform:uppercase;">Par type de contrat</h4>
+                    <p:dataTable value="#{adminReportingBean.repartitionParContrat.entrySet().toArray()}" var="e" style="border:none;">
+                        <p:column headerText="Type"><h:outputText value="#{e.key}"/></p:column>
+                        <p:column headerText="Effectif" style="text-align:right;"><h:outputText value="#{e.value}"/></p:column>
+                    </p:dataTable>
+                </div>
+                <div>
+                    <h4 style="font-size:12px;color:#64748b;margin:0 0 10px;text-transform:uppercase;">Par direction</h4>
+                    <p:dataTable value="#{adminReportingBean.repartitionParDirection.entrySet().toArray()}" var="e" style="border:none;">
+                        <p:column headerText="Direction"><h:outputText value="#{e.key}"/></p:column>
+                        <p:column headerText="Effectif" style="text-align:right;"><h:outputText value="#{e.value}"/></p:column>
+                    </p:dataTable>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card collapsed">
+            <div class="section-header">
+                <div class="section-title"><div class="section-title-dot" style="background:#d4a017;"></div>Évolution annuelle</div>
+                <h:form id="formAnnee">
+                    <p:selectOneMenu id="selAnnee" value="#{adminReportingBean.rapportAnnee}">
+                        <f:selectItem itemLabel="#{adminReportingBean.rapportAnnee - 3}" itemValue="#{adminReportingBean.rapportAnnee - 3}"/>
+                        <f:selectItem itemLabel="#{adminReportingBean.rapportAnnee - 2}" itemValue="#{adminReportingBean.rapportAnnee - 2}"/>
+                        <f:selectItem itemLabel="#{adminReportingBean.rapportAnnee - 1}" itemValue="#{adminReportingBean.rapportAnnee - 1}"/>
+                        <f:selectItem itemLabel="#{adminReportingBean.rapportAnnee}" itemValue="#{adminReportingBean.rapportAnnee}"/>
+                        <p:ajax event="change" listener="#{adminReportingBean.changerAnneeRapport}" update="@form :evolutionPanel"/>
+                    </p:selectOneMenu>
+                </h:form>
+            </div>
+            <div id="evolutionPanel" class="form-row col-2" style="padding:16px 20px 20px;">
+                <div>
+                    <h4 style="font-size:12px;color:#64748b;margin:0 0 10px;text-transform:uppercase;">Effectifs par mois</h4>
+                    <p:dataTable value="#{adminReportingBean.evolutionEffectifs.entrySet().toArray()}" var="e" style="border:none;">
+                        <p:column headerText="Mois"><h:outputText value="#{adminReportingBean.getMoisLabel(e.key)}"/></p:column>
+                        <p:column headerText="Effectif" style="text-align:right;"><h:outputText value="#{e.value}"/></p:column>
+                    </p:dataTable>
+                </div>
+                <div>
+                    <h4 style="font-size:12px;color:#64748b;margin:0 0 10px;text-transform:uppercase;">Congés par mois</h4>
+                    <p:dataTable value="#{adminReportingBean.evolutionConges.entrySet().toArray()}" var="e" style="border:none;">
+                        <p:column headerText="Mois"><h:outputText value="#{adminReportingBean.getMoisLabel(e.key)}"/></p:column>
+                        <p:column headerText="Demandes" style="text-align:right;"><h:outputText value="#{e.value}"/></p:column>
+                    </p:dataTable>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card collapsed">
+            <div class="section-header">
+                <div class="section-title"><div class="section-title-dot" style="background:#16a34a;"></div>Exports</div>
+            </div>
+            <div style="padding:16px 20px 20px;display:flex;gap:10px;flex-wrap:wrap;">
+                <h:form>
+                    <p:commandButton value="Exporter les effectifs (CSV)" icon="pi pi-download"
+                        action="#{adminReportingBean.exporterEffectifsCSV}" ajax="false" styleClass="btn btn-secondary"/>
+                </h:form>
+                <h:form>
+                    <p:commandButton value="Exporter la masse salariale (CSV)" icon="pi pi-download"
+                        action="#{adminReportingBean.exporterMasseSalarialeCSV}" ajax="false" styleClass="btn btn-secondary"/>
+                </h:form>
+                <h:form>
+                    <p:commandButton value="Exporter les congés (CSV)" icon="pi pi-download"
+                        action="#{adminReportingBean.exporterCongesCSV}" ajax="false" styleClass="btn btn-secondary"/>
+                </h:form>
+            </div>
+        </div>
+    </ui:define>
+
+</ui:composition>

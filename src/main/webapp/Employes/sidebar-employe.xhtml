@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+
+<ui:composition>
+<style>
+/* Les variables --emp-* sont définies une seule fois dans employe-style.css
+   (feuille de style globale) ; ce bloc ne les redéfinit plus pour éviter
+   d'écraser globalement le thème clair de tout le contenu de la page. */
+.emp-sidebar {
+    position:fixed; top:0; left:0; width:var(--sidebar-w); height:100vh;
+    background:#1646b8; border-right:1px solid var(--emp-sb-border);
+    display:flex; flex-direction:column; z-index:100; overflow-y:auto;
+}
+.emp-sidebar-header { padding:24px 20px 16px; border-bottom:1px solid var(--emp-sb-border); }
+.emp-sidebar-logo {
+    display:flex; align-items:center; gap:10px;
+    font-size:1.1rem; font-weight:700; color:var(--emp-sb-text-h); letter-spacing:0.5px;
+}
+.emp-sidebar-logo .logo-icon {
+    width:36px; height:36px;
+    background:#fff; color:#1f5eea;
+    border-radius:10px; display:flex; align-items:center; justify-content:center;
+    font-size:1rem;
+}
+.emp-sidebar-user {
+    margin-top:16px; padding:12px 16px; background:var(--emp-sb-hover);
+    border-radius:10px; display:flex; align-items:center; gap:10px;
+}
+.emp-avatar {
+    width:40px; height:40px; border-radius:50%;
+    background:rgba(255,255,255,.22);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:1rem; color:#fff; flex-shrink:0;
+}
+.user-name { font-weight:600; font-size:0.85rem; color:var(--emp-sb-text-h); display:block; }
+.user-role { font-size:0.72rem; color:#d3e0ff; text-transform:uppercase; letter-spacing:0.5px; display:block; }
+.emp-sidebar-nav { flex:1; padding:16px 12px; }
+.emp-nav-section { margin-bottom:20px; }
+.emp-nav-label {
+    font-size:0.65rem; color:var(--emp-sb-text); opacity:.7; text-transform:uppercase;
+    letter-spacing:1.5px; padding:0 8px 6px; display:block;
+}
+.emp-nav-toggle {
+    width:100%; background:none; border:none; cursor:pointer; font-family:inherit;
+    display:flex; align-items:center; justify-content:space-between;
+}
+.emp-nav-toggle:hover { color:var(--emp-sb-text-h); }
+.emp-nav-chevron { font-size:0.55rem; transition:transform .2s; flex-shrink:0; }
+.emp-nav-section.collapsed .emp-nav-chevron { transform:rotate(-90deg); }
+.emp-nav-body { overflow:hidden; max-height:600px; transition:max-height .25s ease, opacity .2s ease; opacity:1; }
+.emp-nav-section.collapsed .emp-nav-body { max-height:0; opacity:0; pointer-events:none; }
+.emp-jury-item {
+    align-items:flex-start; cursor:pointer;
+}
+.emp-jury-item .jury-titre {
+    font-weight:600; font-size:0.8rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;
+}
+.emp-jury-item .jury-role {
+    font-size:0.68rem; opacity:.7; display:block;
+}
+.emp-nav-item {
+    display:flex; align-items:center; gap:10px; padding:9px 12px;
+    border-radius:8px; color:var(--emp-sb-text); text-decoration:none;
+    transition:all 0.2s; margin-bottom:2px; font-size:0.87rem;
+}
+.emp-nav-item:hover { background:var(--emp-sb-hover); color:var(--emp-sb-text-h); }
+.emp-nav-item.active {
+    background:linear-gradient(90deg,rgba(37,99,235,0.3),transparent);
+    color:var(--emp-sb-text-h); border-left:3px solid #2563eb;
+}
+.emp-nav-item .nav-icon { width:20px; text-align:center; font-size:0.95rem; }
+.emp-sidebar-footer { padding:16px 12px; border-top:1px solid var(--emp-sb-border); }
+.notif-badge {
+    background:#5b8def; color:#fff; font-size:0.68rem; font-weight:700;
+    border-radius:10px; padding:1px 6px; margin-left:auto;
+}
+</style>
+
+<!-- Overlay + hamburger mobile -->
+<div class="emp-sb-overlay" id="empSbOverlay" onclick="closeMobileEmpSidebar()"></div>
+<button type="button" class="emp-sb-hamburger" id="empSbHamburger" onclick="openMobileEmpSidebar()" aria-label="Ouvrir le menu">
+    <i class="pi pi-bars"/>
+</button>
+
+<div class="emp-sidebar" id="empSidebar">
+    <!-- Header -->
+    <div class="emp-sidebar-header">
+        <div class="emp-sidebar-logo">
+            <div class="logo-icon"><i class="pi pi-user"/></div>
+            <span>SIRH Employé</span>
+            <button type="button" class="emp-sb-toggle" onclick="toggleEmpSidebarMini()"
+                    title="Réduire / Agrandir" aria-label="Réduire ou agrandir le menu">
+                <i class="pi pi-bars"/>
+            </button>
+        </div>
+        <div class="emp-sidebar-user">
+            <div class="emp-avatar">
+                #{employeBean.employe != null and employeBean.employe.prenom != null ? employeBean.employe.prenom.substring(0,1) : 'E'}#{employeBean.employe != null and employeBean.employe.nom != null ? employeBean.employe.nom.substring(0,1) : ''}
+            </div>
+            <div class="user-info">
+                <span class="user-name">
+                    #{employeBean.employe != null ? employeBean.employe.prenom.concat(' ').concat(employeBean.employe.nom) : sessionBean.username}
+                </span>
+                <span class="user-role">Employé</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="emp-sidebar-nav">
+        <div class="emp-nav-section" data-section="dashboard">
+            <button type="button" class="emp-nav-label emp-nav-toggle" onclick="toggleEmpSection('dashboard')">
+                <span>Tableau de bord</span>
+                <i class="pi pi-chevron-down emp-nav-chevron"/>
+            </button>
+            <div class="emp-nav-body">
+                <h:outputLink value="#{request.contextPath}/Employes/dashboard.xhtml" styleClass="emp-nav-item">
+                    <i class="pi pi-home nav-icon"/>
+                    <span>Accueil</span>
+                </h:outputLink>
+            </div>
+        </div>
+
+        <div class="emp-nav-section" data-section="profil">
+            <button type="button" class="emp-nav-label emp-nav-toggle" onclick="toggleEmpSection('profil')">
+                <span>Mon profil</span>
+                <i class="pi pi-chevron-down emp-nav-chevron"/>
+            </button>
+            <div class="emp-nav-body">
+                <h:outputLink value="#{request.contextPath}/Employes/mon-profil.xhtml" styleClass="emp-nav-item">
+                    <i class="pi pi-id-card nav-icon"/>
+                    <span>Ma fiche personnelle</span>
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/Employes/organigramme.xhtml" styleClass="emp-nav-item">
+                    <i class="pi pi-sitemap nav-icon"/>
+                    <span>Organigramme</span>
+                </h:outputLink>
+            </div>
+        </div>
+
+        <div class="emp-nav-section" data-section="compte">
+            <button type="button" class="emp-nav-label emp-nav-toggle" onclick="toggleEmpSection('compte')">
+                <span>Mon Compte</span>
+                <i class="pi pi-chevron-down emp-nav-chevron"/>
+            </button>
+            <div class="emp-nav-body">
+                <h:outputLink value="#{request.contextPath}/Principal/mon-compte.xhtml" styleClass="emp-nav-item">
+                    <i class="pi pi-id-card nav-icon"/>
+                    <span>Mon Compte</span>
+                </h:outputLink>
+            </div>
+        </div>
+
+        <div class="emp-nav-section" data-section="conges">
+            <button type="button" class="emp-nav-label emp-nav-toggle" onclick="toggleEmpSection('conges')">
+                <span>Congés</span>
+                <i class="pi pi-chevron-down emp-nav-chevron"/>
+            </button>
+            <div class="emp-nav-body">
+                <h:outputLink value="#{request.contextPath}/Employes/mes-conges.xhtml" styleClass="emp-nav-item">
+                    <i class="pi pi-calendar nav-icon"/>
+                    <span>Mes congés</span>
+                    <h:panelGroup rendered="#{employeBean.congesEnAttente gt 0}">
+                        <span class="notif-badge">#{employeBean.congesEnAttente}j</span>
+                    </h:panelGroup>
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/Employes/nouvelle-demande.xhtml" styleClass="emp-nav-item">
+                    <i class="pi pi-plus-circle nav-icon"/>
+                    <span>Nouvelle demande</span>
+                </h:outputLink>
+            </div>
+        </div>
+
+        <div class="emp-nav-section" data-section="carriere">
+            <button type="button" class="emp-nav-label emp-nav-toggle" onclick="toggleEmpSection('carriere')">
+                <span>Ma carrière</span>
+                <i class="pi pi-chevron-down emp-nav-chevron"/>
+            </button>
+            <div class="emp-nav-body">
+                <h:outputLink value="#{request.contextPath}/Employes/ma-carriere.xhtml" styleClass="emp-nav-item">
+                    <i class="pi pi-chart-line nav-icon"/>
+                    <span>Historique carrière</span>
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/Employes/mes-formations.xhtml" styleClass="emp-nav-item">
+                    <i class="pi pi-book nav-icon"/>
+                    <span>Mes formations</span>
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/Employes/mes-evaluations.xhtml" styleClass="emp-nav-item">
+                    <i class="pi pi-star nav-icon"/>
+                    <span>Mes évaluations</span>
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/Employes/mes-evenements.xhtml" styleClass="emp-nav-item">
+                    <i class="pi pi-calendar nav-icon"/>
+                    <span>Mes événements</span>
+                </h:outputLink>
+            </div>
+        </div>
+
+        <!-- Concours &amp; Jury — visible uniquement si l'employé siège dans au moins un jury -->
+        <h:panelGroup rendered="#{not empty employeBean.mesJurys}">
+            <div class="emp-nav-section" data-section="jury">
+                <button type="button" class="emp-nav-label emp-nav-toggle" onclick="toggleEmpSection('jury')">
+                    <span>Concours &amp; Jury</span>
+                    <i class="pi pi-chevron-down emp-nav-chevron"/>
+                </button>
+                <div class="emp-nav-body">
+                    <h:outputLink value="#{request.contextPath}/Employes/concours-jury.xhtml" styleClass="emp-nav-item">
+                        <i class="pi pi-users nav-icon"/>
+                        <span>Mes jurys</span>
+                        <h:panelGroup rendered="#{not empty employeBean.mesJurysEnCours}">
+                            <span class="notif-badge">#{employeBean.mesJurysEnCours.size()}</span>
+                        </h:panelGroup>
+                    </h:outputLink>
+                </div>
+            </div>
+        </h:panelGroup>
+
+        <div class="emp-nav-section" data-section="infos">
+            <button type="button" class="emp-nav-label emp-nav-toggle" onclick="toggleEmpSection('infos')">
+                <span>Informations</span>
+                <i class="pi pi-chevron-down emp-nav-chevron"/>
+            </button>
+            <div class="emp-nav-body">
+                <h:outputLink value="#{request.contextPath}/Employes/bulletins.xhtml" styleClass="emp-nav-item">
+                    <i class="pi pi-file-pdf nav-icon"/>
+                    <span>Bulletins de salaire</span>
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/Employes/notifications.xhtml" styleClass="emp-nav-item">
+                    <i class="pi pi-bell nav-icon"/>
+                    <span>Notifications</span>
+                    <h:panelGroup rendered="#{notificationBean.compteurNonLues gt 0}">
+                        <span class="notif-badge">#{notificationBean.compteurNonLues}</span>
+                    </h:panelGroup>
+                </h:outputLink>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Footer -->
+    <div class="emp-sidebar-footer">
+        <h:form>
+            <p:commandLink action="#{loginBean.logout}" ajax="false"
+                           styleClass="emp-nav-item" style="width:100%;">
+                <i class="pi pi-sign-out nav-icon"/>
+                <span>Déconnexion</span>
+            </p:commandLink>
+        </h:form>
+    </div>
+</div>
+
+<script>
+//<![CDATA[
+(function() {
+    /* Marquer le lien actif selon l'URL */
+    var path = window.location.pathname;
+    document.querySelectorAll('.emp-nav-item').forEach(function(a) {
+        var href = a.getAttribute('href');
+        if (href && path.indexOf(href) !== -1) {
+            a.classList.add('active');
+        }
+    });
+
+    /* Accordéon exclusif : ouvrir une section referme automatiquement les autres */
+    var OPEN_SECTION_KEY = 'sirh_emp_sidebar_open_section';
+    function getOpenSection() {
+        try { return localStorage.getItem(OPEN_SECTION_KEY); } catch(e) { return null; }
+    }
+    function setOpenSection(key) {
+        try { localStorage.setItem(OPEN_SECTION_KEY, key || ''); } catch(e) {}
+    }
+    function applyOpenSection(key) {
+        document.querySelectorAll('.emp-nav-section').forEach(function(section) {
+            var k = section.getAttribute('data-section');
+            section.classList.toggle('collapsed', k !== key);
+        });
+    }
+
+    window.toggleEmpSection = function(key) {
+        var target = document.querySelector('.emp-nav-section[data-section="' + key + '"]');
+        if (!target) return;
+        var isOpen = !target.classList.contains('collapsed');
+        var newOpenKey = isOpen ? null : key;
+        applyOpenSection(newOpenKey);
+        setOpenSection(newOpenKey);
+    };
+
+    var activeSectionKey = null;
+    document.querySelectorAll('.emp-nav-section').forEach(function(section) {
+        if (section.querySelector('.emp-nav-item.active')) {
+            activeSectionKey = section.getAttribute('data-section');
+        }
+    });
+    if (!activeSectionKey) activeSectionKey = getOpenSection() || 'dashboard';
+    applyOpenSection(activeSectionKey);
+    setOpenSection(activeSectionKey);
+
+    /* Réduction desktop (icônes seules) — persistée comme les autres espaces (Admin/RH) */
+    var MINI_KEY = 'sirh_emp_sidebar_mini';
+    var sidebar  = document.getElementById('empSidebar');
+    var overlay  = document.getElementById('empSbOverlay');
+
+    function applyMini(mini) {
+        if (mini) {
+            sidebar.classList.add('mini');
+            document.documentElement.style.setProperty('--sidebar-w', '68px');
+        } else {
+            sidebar.classList.remove('mini');
+            document.documentElement.style.setProperty('--sidebar-w', '260px');
+        }
+        try { localStorage.setItem(MINI_KEY, mini ? '1' : '0'); } catch(e) {}
+    }
+    var savedMini = false;
+    try { savedMini = localStorage.getItem(MINI_KEY) === '1'; } catch(e) {}
+    applyMini(savedMini);
+
+    window.toggleEmpSidebarMini = function() { applyMini(!sidebar.classList.contains('mini')); };
+
+    /* Ouverture/fermeture mobile (sidebar hors écran en dessous de 768px) */
+    window.openMobileEmpSidebar = function() {
+        sidebar.classList.add('open');
+        if (overlay) overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+    window.closeMobileEmpSidebar = function() {
+        sidebar.classList.remove('open');
+        if (overlay) overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    };
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') window.closeMobileEmpSidebar();
+    });
+})();
+//]]>
+</script>
+
+</ui:composition>
+</html>

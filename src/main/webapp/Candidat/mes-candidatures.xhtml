@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+    <title>Mes candidatures — Espace Candidat</title>
+    <!-- CORRECTION : nom du fichier CSS renseigné -->
+    <h:outputStylesheet library="css" name="candidat.css"/>
+</h:head>
+
+<h:body>
+    <div class="layout-wrapper">
+        <ui:include src="sidebar-candidat.xhtml"/>
+
+        <div class="layout-main">
+
+            <div class="layout-topbar">
+                <div>
+                    <h2 class="page-title">Mes candidatures</h2>
+                    <p class="page-subtitle">Suivez l'état de vos dossiers</p>
+                </div>
+            </div>
+
+            <div class="layout-content">
+                <p:growl id="growl" showDetail="true" life="4000"/>
+
+                <!-- ── Résumé statuts / filtre cliquable ─────────── -->
+                <h:form id="formFiltreStatut">
+                    <div style="display:flex;gap:10px;margin-bottom:20px;">
+
+                        <p:commandButton value="Toutes (#{candidatBean.mesCandidatures.size()})"
+                            action="#{candidatBean.setFiltreStatutMesCandidatures('TOUTES')}"
+                            update="@form formTableCandidatures"
+                            style="flex:1;background:#{candidatBean.filtreStatutMesCandidatures == 'TOUTES' ? '#0f172a' : '#fff'};
+                                   color:#{candidatBean.filtreStatutMesCandidatures == 'TOUTES' ? '#fff' : '#0f172a'};
+                                   border:1px solid #e2e8f0;border-radius:8px;padding:10px 16px;
+                                   font-size:13px;font-weight:700;"/>
+
+                        <p:commandButton value="#{candidatBean.nbEnAttente} En attente"
+                            action="#{candidatBean.setFiltreStatutMesCandidatures('RECUE')}"
+                            update="@form formTableCandidatures"
+                            style="flex:1;background:#{candidatBean.filtreStatutMesCandidatures == 'RECUE' ? '#1d4ed8' : '#fff'};
+                                   color:#{candidatBean.filtreStatutMesCandidatures == 'RECUE' ? '#fff' : '#1d4ed8'};
+                                   border:1px solid #dbeafe;border-radius:8px;padding:10px 16px;
+                                   font-size:13px;font-weight:700;"/>
+
+                        <p:commandButton value="#{candidatBean.nbEntretiens} Entretien"
+                            action="#{candidatBean.setFiltreStatutMesCandidatures('ENTRETIEN')}"
+                            update="@form formTableCandidatures"
+                            style="flex:1;background:#{candidatBean.filtreStatutMesCandidatures == 'ENTRETIEN' ? '#7c3aed' : '#fff'};
+                                   color:#{candidatBean.filtreStatutMesCandidatures == 'ENTRETIEN' ? '#fff' : '#7c3aed'};
+                                   border:1px solid #ede9fe;border-radius:8px;padding:10px 16px;
+                                   font-size:13px;font-weight:700;"/>
+
+                        <p:commandButton value="#{candidatBean.nbRetenues} Retenues"
+                            action="#{candidatBean.setFiltreStatutMesCandidatures('RETENUE')}"
+                            update="@form formTableCandidatures"
+                            style="flex:1;background:#{candidatBean.filtreStatutMesCandidatures == 'RETENUE' ? '#15803d' : '#fff'};
+                                   color:#{candidatBean.filtreStatutMesCandidatures == 'RETENUE' ? '#fff' : '#15803d'};
+                                   border:1px solid #dcfce7;border-radius:8px;padding:10px 16px;
+                                   font-size:13px;font-weight:700;"/>
+
+                        <p:commandButton value="#{candidatBean.nbRefusees} Refusées"
+                            action="#{candidatBean.setFiltreStatutMesCandidatures('REFUSEE')}"
+                            update="@form formTableCandidatures"
+                            style="flex:1;background:#{candidatBean.filtreStatutMesCandidatures == 'REFUSEE' ? '#b91c1c' : '#fff'};
+                                   color:#{candidatBean.filtreStatutMesCandidatures == 'REFUSEE' ? '#fff' : '#b91c1c'};
+                                   border:1px solid #fee2e2;border-radius:8px;padding:10px 16px;
+                                   font-size:13px;font-weight:700;"/>
+
+                    </div>
+                </h:form>
+
+                <!-- ── Tableau candidatures ───────────────────── -->
+                <div class="card">
+                    <h:form id="formTableCandidatures">
+
+                        <p:outputPanel rendered="#{candidatBean.filtreStatutMesCandidatures == null}">
+                            <div style="text-align:center;padding:50px;color:#94a3b8;">
+                                Choisissez un statut ci-dessus pour afficher vos candidatures.
+                            </div>
+                        </p:outputPanel>
+
+                        <p:outputPanel rendered="#{candidatBean.filtreStatutMesCandidatures != null
+                                                    and empty candidatBean.mesCandidatures}">
+                            <div style="text-align:center;padding:50px;color:#94a3b8;">
+                                <i class="pi pi-inbox"
+                                   style="font-size:48px;display:block;margin-bottom:16px;opacity:.3;"/>
+                                <div style="font-size:18px;font-weight:700;margin-bottom:8px;">
+                                    Aucune candidature
+                                </div>
+                                <div style="font-size:13px;">
+                                    Consultez les offres disponibles et postulez !
+                                </div>
+                                <a href="#{request.contextPath}/Candidat/offres.xhtml"
+                                   style="display:inline-block;margin-top:16px;background:#0ea5e9;
+                                          color:#fff;padding:10px 20px;border-radius:8px;
+                                          font-weight:600;font-size:13px;">
+                                    Voir les offres
+                                </a>
+                            </div>
+                        </p:outputPanel>
+
+                        <p:dataTable value="#{candidatBean.mesCandidaturesFiltrees}" var="c"
+                                     rendered="#{candidatBean.filtreStatutMesCandidatures != null
+                                                 and not empty candidatBean.mesCandidatures}"
+                                     emptyMessage="Aucune candidature pour ce statut."
+                                     rows="15" paginator="true"
+                                     paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink}"
+                                     style="border:none;">
+
+                            <p:column headerText="Offre" style="min-width:200px;">
+                                <div style="font-size:13px;font-weight:700;color:#0f172a;">
+                                    #{c.offre != null ? c.offre.titre : '—'}
+                                </div>
+                                <div style="font-size:11px;color:#94a3b8;margin-top:2px;">
+                                    #{c.offre != null and c.offre.typeContrat != null
+                                        ? c.offre.typeContrat : ''}
+                                    #{c.offre != null and c.offre.localisation != null
+                                        ? ' · '.concat(c.offre.localisation) : ''}
+                                </div>
+                            </p:column>
+
+                            <p:column headerText="Date" style="width:140px;">
+                                <h:outputText value="#{c.dateCandidature}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy HH:mm"
+                                                       type="localDateTime"/>
+                                </h:outputText>
+                            </p:column>
+
+                            <p:column headerText="Statut" style="width:130px;">
+                                <span class="badge-#{c.statut}">#{c.statut}</span>
+                            </p:column>
+
+                            <p:column headerText="Entretien" style="width:140px;">
+                                <p:outputPanel rendered="#{c.dateEntretien != null}">
+                                    <div style="font-size:12px;font-weight:600;color:#7c3aed;">
+                                        <i class="pi pi-calendar"/>
+                                        <h:outputText value="#{c.dateEntretien}">
+                                            <f:convertDateTime pattern="dd/MM/yyyy"
+                                                               type="localDate"/>
+                                        </h:outputText>
+                                    </div>
+                                    <div style="font-size:11px;color:#94a3b8;">
+                                        #{c.typeEntretien}
+                                    </div>
+                                </p:outputPanel>
+                                <p:outputPanel rendered="#{c.dateEntretien == null}">
+                                    <span style="color:#94a3b8;font-size:12px;">—</span>
+                                </p:outputPanel>
+                            </p:column>
+
+                            <p:column headerText="Commentaire RH" style="min-width:160px;">
+                                <p:outputPanel rendered="#{not empty c.commentaireRH}">
+                                    <div style="font-size:12px;color:#475569;font-style:italic;">
+                                        "#{c.commentaireRH.length() gt 80
+                                            ? c.commentaireRH.substring(0,80).concat('...')
+                                            : c.commentaireRH}"
+                                    </div>
+                                </p:outputPanel>
+                                <p:outputPanel rendered="#{empty c.commentaireRH}">
+                                    <span style="color:#94a3b8;font-size:12px;">—</span>
+                                </p:outputPanel>
+                            </p:column>
+
+                            <p:column headerText="Action" style="width:110px;">
+                                <!-- CORRECTION : annulation possible uniquement si RECUE -->
+                                <p:commandButton
+                                    rendered="#{c.statut == 'RECUE'}"
+                                    value="✕ Annuler"
+                                    action="#{candidatBean.annulerCandidature(c)}"
+                                    update="formTableCandidatures growl"
+                                    onclick="return confirm('Annuler cette candidature ?')"
+                                    style="font-size:11px;padding:4px 8px;
+                                           background:#fef2f2;color:#ef4444;
+                                           border:1px solid #fecaca;border-radius:6px;
+                                           cursor:pointer;"/>
+                                <p:outputPanel rendered="#{c.statut != 'RECUE'}">
+                                    <span style="color:#94a3b8;font-size:11px;">—</span>
+                                </p:outputPanel>
+                            </p:column>
+
+                        </p:dataTable>
+                    </h:form>
+                </div>
+
+            </div><!-- /layout-content -->
+        </div><!-- /layout-main -->
+    </div><!-- /layout-wrapper -->
+</h:body>
+</html>

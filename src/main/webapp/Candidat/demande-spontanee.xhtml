@@ -1,0 +1,524 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+    <title>Demande spontanée — Espace Candidat</title>
+    <h:outputStylesheet library="css" name="candidat.css"/>
+    <style>
+        .type-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all .2s;
+            background: #fff;
+            text-align: center;
+        }
+        .type-card:hover        { border-color: #0ea5e9; box-shadow: 0 4px 16px rgba(14,165,233,.15); }
+        .type-card.selected     { border-color: #0ea5e9; background: #f0f9ff; }
+        .type-card.selected-stage { border-color: #7c3aed; background: #faf5ff; }
+
+        .type-icon {
+            font-size: 36px; margin-bottom: 10px; display: block;
+        }
+        .type-titre { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+        .type-desc  { font-size: 12px; color: #64748b; }
+
+        .docs-section {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 18px;
+            margin-top: 8px;
+        }
+        .docs-section h4 {
+            font-size: 13px; font-weight: 700; color: #0f172a;
+            margin-bottom: 14px;
+            display: flex; align-items: center; gap: 7px;
+        }
+        .doc-item {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 12px; color: #475569; margin-bottom: 8px;
+        }
+        .doc-item i { color: #0ea5e9; }
+        .required-star { color: #ef4444; margin-left: 2px; }
+
+        .form-section {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 22px;
+            margin-bottom: 18px;
+        }
+        .form-section h3 {
+            font-size: 13px; font-weight: 700; color: #64748b;
+            text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .field-row.full { grid-template-columns: 1fr; }
+        .field { margin-bottom: 14px; }
+        .field label {
+            display: block; font-size: 12px; font-weight: 600;
+            color: #374151; margin-bottom: 5px;
+        }
+        .field label .req { color: #ef4444; }
+
+        /* Upload zone */
+        .upload-zone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 14px;
+            text-align: center;
+            background: #f8fafc;
+            transition: border-color .2s;
+        }
+        .upload-zone:hover { border-color: #0ea5e9; }
+        .upload-zone .upload-label {
+            font-size: 12px; color: #64748b; margin-top: 4px;
+        }
+
+        .step-indicator {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 24px;
+        }
+        .step {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 12px; font-weight: 600; color: #94a3b8;
+        }
+        .step.active { color: #0ea5e9; }
+        .step.done   { color: #10b981; }
+        .step-num {
+            width: 24px; height: 24px; border-radius: 50%;
+            background: #e2e8f0; color: #64748b;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 800;
+        }
+        .step.active .step-num { background: #0ea5e9; color: #fff; }
+        .step.done   .step-num { background: #10b981; color: #fff; }
+        .step-sep { flex: 1; height: 1px; background: #e2e8f0; max-width: 40px; }
+    </style>
+</h:head>
+
+<h:body>
+<div class="layout-wrapper">
+    <ui:include src="sidebar-candidat.xhtml"/>
+
+    <div class="layout-main">
+        <div class="layout-topbar">
+            <div>
+                <h2 class="page-title">Demande spontanée</h2>
+                <p class="page-subtitle">Emploi ou Stage — sans offre publiée</p>
+            </div>
+        </div>
+
+        <div class="layout-content">
+            <p:growl id="growl" showDetail="true" life="5000"/>
+
+            <h:form id="formDemande" enctype="multipart/form-data">
+
+                <!-- ── ÉTAPE 1 : Choisir le type ───────────────────── -->
+                <div class="form-section">
+                    <h3>1 — Type de demande</h3>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+
+                        <!-- Emploi -->
+                        <div id="cardEmploi" class="type-card"
+                             onclick="choisirType('EMPLOI')">
+                            <span class="type-icon">💼</span>
+                            <div class="type-titre">Demande d'Emploi</div>
+                            <div class="type-desc">
+                                Postulez pour un poste permanent (CDI/CDD) au sein du Ministère
+                            </div>
+                        </div>
+
+                        <!-- Stage -->
+                        <div id="cardStage" class="type-card"
+                             onclick="choisirType('STAGE')">
+                            <span class="type-icon">🎓</span>
+                            <div class="type-titre">Demande de Stage</div>
+                            <div class="type-desc">
+                                Effectuez un stage académique ou professionnel au MFB
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Champ caché pour stocker le type -->
+                    <h:inputHidden id="typeDemandeHidden"
+                                   value="#{demandeSpontaneeBean.typeDemande}"/>
+
+                    <!-- Message tant qu'aucun type n'est choisi -->
+                    <div id="hintChoixType" style="text-align:center;color:#94a3b8;
+                                                    font-size:13px;padding:8px;">
+                        ↑ Choisissez « Demande d'Emploi » ou « Demande de Stage » pour continuer. Cliquez à nouveau sur la carte choisie pour revenir à l'affichage de départ.
+                    </div>
+
+                    <!-- Documents requis selon le type -->
+                    <div id="docsEmploi" class="docs-section" style="display:none;">
+                        <h4><i class="pi pi-file-pdf" style="color:#ef4444;"/> Documents requis — Emploi</h4>
+                        <div class="doc-item"><i class="pi pi-check"/> CV actualisé <span class="required-star">*</span></div>
+                        <div class="doc-item"><i class="pi pi-check"/> Lettre de motivation <span class="required-star">*</span></div>
+                        <div class="doc-item"><i class="pi pi-check"/> Copie CNI / Passeport <span class="required-star">*</span></div>
+                        <div class="doc-item"><i class="pi pi-check"/> Diplômes et attestations <span class="required-star">*</span></div>
+                        <div class="doc-item"><i class="pi pi-circle"/> Certificats de travail (optionnel)</div>
+                        <div class="doc-item"><i class="pi pi-circle"/> Casier judiciaire (optionnel)</div>
+                    </div>
+
+                    <div id="docsStage" class="docs-section" style="display:none;">
+                        <h4><i class="pi pi-file-pdf" style="color:#7c3aed;"/> Documents requis — Stage</h4>
+                        <div class="doc-item"><i class="pi pi-check"/> CV <span class="required-star">*</span></div>
+                        <div class="doc-item"><i class="pi pi-check"/> Lettre de motivation <span class="required-star">*</span></div>
+                        <div class="doc-item"><i class="pi pi-check"/> Lettre de recommandation de l'établissement <span class="required-star">*</span></div>
+                        <div class="doc-item"><i class="pi pi-check"/> Copie CNI / Passeport <span class="required-star">*</span></div>
+                        <div class="doc-item"><i class="pi pi-check"/> Relevé de notes <span class="required-star">*</span></div>
+                        <div class="doc-item"><i class="pi pi-circle"/> Attestation d'inscription (optionnel)</div>
+                    </div>
+                </div>
+
+                <!-- ── Reste du formulaire : masqué tant qu'aucun type n'est choisi ── -->
+                <div id="resteFormulaire" style="display:none;">
+
+                <!-- ── ÉTAPE 2 : Informations personnelles ─────────── -->
+                <div class="form-section">
+                    <h3>2 — Informations personnelles</h3>
+                    <div class="field-row">
+                        <div class="field">
+                            <label>Nom <span class="req">*</span></label>
+                            <p:inputText value="#{demandeSpontaneeBean.nom}"
+                                         placeholder="Votre nom de famille"
+                                         style="width:100%" required="true"/>
+                        </div>
+                        <div class="field">
+                            <label>Prénom <span class="req">*</span></label>
+                            <p:inputText value="#{demandeSpontaneeBean.prenom}"
+                                         placeholder="Votre prénom"
+                                         style="width:100%" required="true"/>
+                        </div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field">
+                            <label>Email <span class="req">*</span></label>
+                            <p:inputText value="#{demandeSpontaneeBean.email}"
+                                         placeholder="votre@email.sn"
+                                         style="width:100%" required="true"/>
+                        </div>
+                        <div class="field">
+                            <label>Téléphone <span class="req">*</span></label>
+                            <p:inputText value="#{demandeSpontaneeBean.telephone}"
+                                         placeholder="+221 7X XXX XX XX"
+                                         style="width:100%" required="true"/>
+                        </div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field">
+                            <label>Date de naissance</label>
+                            <p:datePicker value="#{demandeSpontaneeBean.dateNaissance}"
+                                          pattern="dd/MM/yyyy"
+                                          placeholder="JJ/MM/AAAA"
+                                          style="width:100%"/>
+                        </div>
+                        <div class="field">
+                            <label>Nationalité</label>
+                            <p:inputText value="#{demandeSpontaneeBean.nationalite}"
+                                         placeholder="Sénégalaise"
+                                         style="width:100%"/>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Adresse</label>
+                        <p:inputText value="#{demandeSpontaneeBean.adresse}"
+                                     placeholder="Votre adresse complète"
+                                     style="width:100%"/>
+                    </div>
+                </div>
+
+                <!-- ── ÉTAPE 3 : Profil professionnel ─────────────── -->
+                <div class="form-section">
+                    <h3>3 — Profil professionnel</h3>
+                    <div class="field-row">
+                        <div class="field">
+                            <label>Niveau d'études <span class="req">*</span></label>
+                            <p:selectOneMenu value="#{demandeSpontaneeBean.niveauEtudes}"
+                                             style="width:100%" required="true">
+                                <f:selectItem itemLabel="— Sélectionner —" itemValue="" noSelectionOption="true"/>
+                                <f:selectItem itemLabel="BEPC / Brevet" itemValue="BEPC"/>
+                                <f:selectItem itemLabel="Baccalauréat" itemValue="BAC"/>
+                                <f:selectItem itemLabel="Bac+2 / BTS / DUT" itemValue="BAC2"/>
+                                <f:selectItem itemLabel="Licence / Bac+3" itemValue="LICENCE"/>
+                                <f:selectItem itemLabel="Master / Bac+5" itemValue="MASTER"/>
+                                <f:selectItem itemLabel="Doctorat / Bac+8" itemValue="DOCTORAT"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field">
+                            <label>Années d'expérience</label>
+                            <p:selectOneMenu value="#{demandeSpontaneeBean.anneesExperience}"
+                                             style="width:100%">
+                                <f:selectItem itemLabel="— Sélectionner —" itemValue="" noSelectionOption="true"/>
+                                <f:selectItem itemLabel="Aucune (débutant)" itemValue="0"/>
+                                <f:selectItem itemLabel="Moins de 2 ans" itemValue="1"/>
+                                <f:selectItem itemLabel="2 à 5 ans" itemValue="3"/>
+                                <f:selectItem itemLabel="5 à 10 ans" itemValue="7"/>
+                                <f:selectItem itemLabel="Plus de 10 ans" itemValue="10"/>
+                            </p:selectOneMenu>
+                        </div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field">
+                            <label>Domaine souhaité <span class="req">*</span></label>
+                            <p:selectOneMenu value="#{demandeSpontaneeBean.domaine}"
+                                             style="width:100%" required="true">
+                                <f:selectItem itemLabel="— Sélectionner —" itemValue="" noSelectionOption="true"/>
+                                <f:selectItem itemLabel="Finance et Budget" itemValue="FINANCE"/>
+                                <f:selectItem itemLabel="Comptabilité" itemValue="COMPTABILITE"/>
+                                <f:selectItem itemLabel="Informatique / SI" itemValue="INFORMATIQUE"/>
+                                <f:selectItem itemLabel="Ressources Humaines" itemValue="RH"/>
+                                <f:selectItem itemLabel="Juridique" itemValue="JURIDIQUE"/>
+                                <f:selectItem itemLabel="Communication" itemValue="COMMUNICATION"/>
+                                <f:selectItem itemLabel="Administration" itemValue="ADMINISTRATION"/>
+                                <f:selectItem itemLabel="Autre" itemValue="AUTRE"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field" id="champEtablissement">
+                            <label id="labelEtab">Poste visé / Spécialité</label>
+                            <p:inputText value="#{demandeSpontaneeBean.posteVise}"
+                                         placeholder="Ex: Analyste financier, Développeur..."
+                                         style="width:100%"/>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Lettre de motivation / Présentation</label>
+                        <p:inputTextarea value="#{demandeSpontaneeBean.motivation}"
+                                         rows="4" style="width:100%"
+                                         placeholder="Présentez brièvement votre profil et vos motivations..."/>
+                    </div>
+
+                    <!-- Champ spécifique stage : établissement -->
+                    <div id="champStageOnly" style="display:none;">
+                        <div class="field-row">
+                            <div class="field">
+                                <label>Établissement <span class="req">*</span></label>
+                                <p:inputText value="#{demandeSpontaneeBean.etablissement}"
+                                             placeholder="Nom de votre école / université"
+                                             style="width:100%"/>
+                            </div>
+                            <div class="field">
+                                <label>Durée du stage souhaitée</label>
+                                <p:selectOneMenu value="#{demandeSpontaneeBean.dureeStageMois}"
+                                                 style="width:100%">
+                                    <f:selectItem itemLabel="— Sélectionner —" itemValue="" noSelectionOption="true"/>
+                                    <f:selectItem itemLabel="1 mois" itemValue="1"/>
+                                    <f:selectItem itemLabel="2 mois" itemValue="2"/>
+                                    <f:selectItem itemLabel="3 mois" itemValue="3"/>
+                                    <f:selectItem itemLabel="6 mois" itemValue="6"/>
+                                </p:selectOneMenu>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Date de début souhaitée</label>
+                            <p:datePicker value="#{demandeSpontaneeBean.dateDebutSouhaite}"
+                                          pattern="dd/MM/yyyy"
+                                          placeholder="JJ/MM/AAAA"
+                                          style="width:100%"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── ÉTAPE 4 : Documents ─────────────────────────── -->
+                <div class="form-section">
+                    <h3>4 — Pièces jointes</h3>
+
+                    <div class="field-row">
+                        <!-- CV -->
+                        <div class="field">
+                            <label>CV <span class="req">*</span></label>
+                            <div class="upload-zone">
+                                <p:fileUpload value="#{demandeSpontaneeBean.cvFichier}"
+                                              mode="simple" skinSimple="true"
+                                              allowTypes="/(\.|\/)(pdf|doc|docx)$/"
+                                              style="width:100%"/>
+                                <div class="upload-label">PDF, DOC — max 5 Mo</div>
+                            </div>
+                        </div>
+
+                        <!-- Lettre de motivation -->
+                        <div class="field">
+                            <label>Lettre de motivation <span class="req">*</span></label>
+                            <div class="upload-zone">
+                                <p:fileUpload value="#{demandeSpontaneeBean.lettreFichier}"
+                                              mode="simple" skinSimple="true"
+                                              allowTypes="/(\.|\/)(pdf|doc|docx)$/"
+                                              style="width:100%"/>
+                                <div class="upload-label">PDF, DOC — max 5 Mo</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field-row">
+                        <!-- CNI / Passeport -->
+                        <div class="field">
+                            <label>CNI / Passeport <span class="req">*</span></label>
+                            <div class="upload-zone">
+                                <p:fileUpload value="#{demandeSpontaneeBean.pieceIdentiteFichier}"
+                                              mode="simple" skinSimple="true"
+                                              allowTypes="/(\.|\/)(pdf|jpg|jpeg|png)$/"
+                                              style="width:100%"/>
+                                <div class="upload-label">PDF ou image — max 5 Mo</div>
+                            </div>
+                        </div>
+
+                        <!-- Diplômes -->
+                        <div class="field">
+                            <label>Diplômes / Attestations <span class="req">*</span></label>
+                            <div class="upload-zone">
+                                <p:fileUpload value="#{demandeSpontaneeBean.diplomesFichier}"
+                                              mode="simple" skinSimple="true"
+                                              allowTypes="/(\.|\/)(pdf|jpg|jpeg|png)$/"
+                                              style="width:100%"/>
+                                <div class="upload-label">PDF ou image — max 5 Mo</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Documents spécifiques Stage -->
+                    <div id="docsStageUpload" style="display:none;">
+                        <div class="field-row">
+                            <div class="field">
+                                <label>Lettre de recommandation établissement <span class="req">*</span></label>
+                                <div class="upload-zone">
+                                    <p:fileUpload value="#{demandeSpontaneeBean.lettreEtablissementFichier}"
+                                                  mode="simple" skinSimple="true"
+                                                  allowTypes="/(\.|\/)(pdf|doc|docx)$/"
+                                                  style="width:100%"/>
+                                    <div class="upload-label">PDF, DOC — max 5 Mo</div>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label>Relevé de notes <span class="req">*</span></label>
+                                <div class="upload-zone">
+                                    <p:fileUpload value="#{demandeSpontaneeBean.releveNotesFichier}"
+                                                  mode="simple" skinSimple="true"
+                                                  allowTypes="/(\.|\/)(pdf|jpg|jpeg|png)$/"
+                                                  style="width:100%"/>
+                                    <div class="upload-label">PDF ou image — max 5 Mo</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Documents optionnels Emploi -->
+                    <div id="docsEmploiOptionnels">
+                        <div class="field-row">
+                            <div class="field">
+                                <label>Certificats de travail (optionnel)</label>
+                                <div class="upload-zone">
+                                    <p:fileUpload value="#{demandeSpontaneeBean.certificatsTravailFichier}"
+                                                  mode="simple" skinSimple="true"
+                                                  allowTypes="/(\.|\/)(pdf|doc|docx)$/"
+                                                  style="width:100%"/>
+                                    <div class="upload-label">PDF, DOC — max 5 Mo</div>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label>Casier judiciaire (optionnel)</label>
+                                <div class="upload-zone">
+                                    <p:fileUpload value="#{demandeSpontaneeBean.casierJudiciaireFichier}"
+                                                  mode="simple" skinSimple="true"
+                                                  allowTypes="/(\.|\/)(pdf|jpg|jpeg|png)$/"
+                                                  style="width:100%"/>
+                                    <div class="upload-label">PDF ou image — max 5 Mo</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                </div><!-- /resteFormulaire -->
+
+                <!-- ── Bouton soumettre ─────────────────────────────── -->
+                <div id="boutonsFormulaire" style="display:none;gap:12px;justify-content:flex-end;margin-top:8px;">
+                    <a href="#{request.contextPath}/Candidat/dashboard.xhtml"
+                       style="padding:12px 24px;border:1px solid #e2e8f0;border-radius:8px;
+                              font-size:13px;font-weight:600;color:#64748b;
+                              text-decoration:none;background:#fff;">
+                        Annuler
+                    </a>
+                    <p:commandButton value="📤 Soumettre ma demande"
+                                     action="#{demandeSpontaneeBean.soumettre}"
+                                     update="growl"
+                                     oncomplete="if(!args.validationFailed) scrollTop()"
+                                     style="padding:12px 28px;background:#0ea5e9;color:#fff;
+                                            border:none;border-radius:8px;font-size:13px;
+                                            font-weight:700;cursor:pointer;"/>
+                </div>
+
+            </h:form>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+    var typeActuel = null;
+
+    function choisirType(type) {
+        if (typeActuel === type) { reinitialiserType(); return; }
+        typeActuel = type;
+
+        // Mettre à jour les cartes
+        var cardEmploi = document.getElementById('cardEmploi');
+        var cardStage  = document.getElementById('cardStage');
+        cardEmploi.className = 'type-card' + (type === 'EMPLOI' ? ' selected' : '');
+        cardStage.className  = 'type-card' + (type === 'STAGE'  ? ' selected-stage' : '');
+
+        // Mettre à jour le champ caché
+        var hidden = document.querySelector('[id$="typeDemandeHidden"]');
+        if (hidden) hidden.value = type;
+
+        // Révéler le reste du formulaire, masquer le message d'invite
+        document.getElementById('hintChoixType').style.display  = 'none';
+        document.getElementById('resteFormulaire').style.display = 'block';
+        document.getElementById('boutonsFormulaire').style.display = 'flex';
+
+        // Afficher/masquer les sections de documents
+        document.getElementById('docsEmploi').style.display      = type === 'EMPLOI' ? 'block' : 'none';
+        document.getElementById('docsStage').style.display       = type === 'STAGE'  ? 'block' : 'none';
+        document.getElementById('champStageOnly').style.display  = type === 'STAGE'  ? 'block' : 'none';
+        document.getElementById('docsStageUpload').style.display = type === 'STAGE'  ? 'block' : 'none';
+        document.getElementById('docsEmploiOptionnels').style.display = type === 'EMPLOI' ? 'block' : 'none';
+    }
+
+    function reinitialiserType() {
+        typeActuel = null;
+        document.getElementById('cardEmploi').className = 'type-card';
+        document.getElementById('cardStage').className  = 'type-card';
+        var hidden = document.querySelector('[id$="typeDemandeHidden"]');
+        if (hidden) hidden.value = '';
+        document.getElementById('hintChoixType').style.display  = 'block';
+        document.getElementById('resteFormulaire').style.display = 'none';
+        document.getElementById('boutonsFormulaire').style.display = 'none';
+        document.getElementById('docsEmploi').style.display      = 'none';
+        document.getElementById('docsStage').style.display       = 'none';
+        document.getElementById('champStageOnly').style.display  = 'none';
+        document.getElementById('docsStageUpload').style.display = 'none';
+        document.getElementById('docsEmploiOptionnels').style.display = 'none';
+    }
+
+    function scrollTop() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+//]]>
+</script>
+
+</h:body>
+</html>

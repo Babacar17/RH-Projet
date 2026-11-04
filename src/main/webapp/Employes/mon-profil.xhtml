@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Ma fiche personnelle — Espace Employé</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <h:outputStylesheet library="css" name="employe-style.css"/>
+</h:head>
+<h:body>
+<div class="emp-layout">
+
+    <ui:include src="sidebar-employe.xhtml"/>
+
+    <main class="emp-main">
+
+        <div class="emp-page-header">
+            <div class="emp-page-title">
+                <h1><i class="pi pi-id-card" style="color:var(--emp-primary);"/> Ma fiche personnelle</h1>
+                <p>Consultez et mettez à jour vos informations</p>
+            </div>
+        </div>
+
+        <p:messages autoUpdate="true" showDetail="true"/>
+
+        <!-- Hero profil -->
+        <div class="emp-profil-hero">
+            <div class="emp-profil-avatar">
+                #{employeBean.employe.prenom != null ? employeBean.employe.prenom.substring(0,1) : '?'}#{employeBean.employe.nom != null ? employeBean.employe.nom.substring(0,1) : ''}
+            </div>
+            <div class="emp-profil-info">
+                <h2>#{employeBean.employe.prenom} #{employeBean.employe.nom}</h2>
+                <div class="profil-poste">#{employeBean.employe.intiutePoste}</div>
+                <div class="profil-meta">
+                    <span class="profil-meta-item">
+                        <i class="pi pi-building"/> #{employeBean.employe.nomDirection}
+                    </span>
+                    <span class="profil-meta-item">
+                        <i class="pi pi-briefcase"/> #{employeBean.employe.nomService}
+                    </span>
+                    <span class="profil-meta-item">
+                        <i class="pi pi-tag"/> #{employeBean.employe.matricule}
+                    </span>
+                    <span class="profil-meta-item">
+                        <i class="pi pi-file"/> #{employeBean.employe.typeContrat}
+                    </span>
+                    <span class="profil-meta-item">
+                        <i class="pi pi-calendar"/> Embauché le <h:outputText value="#{employeBean.employe.dateEmbauche}"/>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+            <!-- Informations personnelles (lecture seule) -->
+            <div class="emp-card">
+                <div class="emp-card-header">
+                    <div class="emp-card-title">
+                        <span class="card-icon"><i class="pi pi-user"/></span>
+                        Informations personnelles
+                    </div>
+                    <span class="emp-badge badge-secondary">Lecture seule</span>
+                </div>
+                <table style="width:100%;border-collapse:collapse;">
+                    <tr style="border-bottom:1px solid var(--emp-border);">
+                        <td style="padding:10px 0;color:var(--emp-muted);font-size:0.8rem;width:140px;">Nom complet</td>
+                        <td style="padding:10px 0;font-weight:600;">#{employeBean.employe.prenom} #{employeBean.employe.nom}</td>
+                    </tr>
+                    <tr style="border-bottom:1px solid var(--emp-border);">
+                        <td style="padding:10px 0;color:var(--emp-muted);font-size:0.8rem;">Date de naissance</td>
+                        <td style="padding:10px 0;"><h:outputText value="#{employeBean.employe.dateNaissance}"/></td>
+                    </tr>
+                    <tr style="border-bottom:1px solid var(--emp-border);">
+                        <td style="padding:10px 0;color:var(--emp-muted);font-size:0.8rem;">Sexe</td>
+                        <td style="padding:10px 0;">#{employeBean.employe.sexe}</td>
+                    </tr>
+                    <tr style="border-bottom:1px solid var(--emp-border);">
+                        <td style="padding:10px 0;color:var(--emp-muted);font-size:0.8rem;">CIN</td>
+                        <td style="padding:10px 0;">#{employeBean.employe.cin}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:10px 0;color:var(--emp-muted);font-size:0.8rem;">Grade / Échelon</td>
+                        <td style="padding:10px 0;">#{employeBean.employe.gradeEchelon}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Informations professionnelles (lecture seule) -->
+            <div class="emp-card">
+                <div class="emp-card-header">
+                    <div class="emp-card-title">
+                        <span class="card-icon"><i class="pi pi-briefcase"/></span>
+                        Informations professionnelles
+                    </div>
+                    <span class="emp-badge badge-secondary">Lecture seule</span>
+                </div>
+                <table style="width:100%;border-collapse:collapse;">
+                    <tr style="border-bottom:1px solid var(--emp-border);">
+                        <td style="padding:10px 0;color:var(--emp-muted);font-size:0.8rem;width:140px;">Matricule</td>
+                        <td style="padding:10px 0;font-weight:600;color:var(--emp-primary);">#{employeBean.employe.matricule}</td>
+                    </tr>
+                    <tr style="border-bottom:1px solid var(--emp-border);">
+                        <td style="padding:10px 0;color:var(--emp-muted);font-size:0.8rem;">Poste</td>
+                        <td style="padding:10px 0;">#{employeBean.employe.intiutePoste}</td>
+                    </tr>
+                    <tr style="border-bottom:1px solid var(--emp-border);">
+                        <td style="padding:10px 0;color:var(--emp-muted);font-size:0.8rem;">Département</td>
+                        <td style="padding:10px 0;">#{employeBean.employe.nomDirection}</td>
+                    </tr>
+                    <tr style="border-bottom:1px solid var(--emp-border);">
+                        <td style="padding:10px 0;color:var(--emp-muted);font-size:0.8rem;">Service</td>
+                        <td style="padding:10px 0;">#{employeBean.employe.nomService}</td>
+                    </tr>
+                    <tr style="border-bottom:1px solid var(--emp-border);">
+                        <td style="padding:10px 0;color:var(--emp-muted);font-size:0.8rem;">Type de contrat</td>
+                        <td style="padding:10px 0;">#{employeBean.employe.typeContrat}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:10px 0;color:var(--emp-muted);font-size:0.8rem;">Date d'embauche</td>
+                        <td style="padding:10px 0;"><h:outputText value="#{employeBean.employe.dateEmbauche}"/></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Formulaire modification (infos modifiables) -->
+        <div class="emp-card" style="margin-top:20px;">
+            <div class="emp-card-header">
+                <div class="emp-card-title">
+                    <span class="card-icon"><i class="pi pi-pencil"/></span>
+                    Mes coordonnées (modifiables)
+                </div>
+                <span class="emp-badge badge-primary">Vous pouvez modifier</span>
+            </div>
+            <h:form id="formProfil">
+                <div class="emp-form-grid">
+                    <div class="emp-form-group">
+                        <label class="emp-form-label">Téléphone</label>
+                        <p:inputText value="#{employeBean.telephone}" placeholder="+221 XX XXX XX XX"
+                                     style="width:100%;"/>
+                    </div>
+                    <div class="emp-form-group">
+                        <label class="emp-form-label">Email personnel</label>
+                        <p:inputText value="#{employeBean.email}" placeholder="email@exemple.com"
+                                     style="width:100%;"/>
+                    </div>
+                    <div class="emp-form-group full-width" style="grid-column:1/-1;">
+                        <label class="emp-form-label">Adresse</label>
+                        <p:inputTextarea value="#{employeBean.adresse}" rows="2"
+                                         placeholder="Votre adresse complète..."
+                                         style="width:100%;"/>
+                    </div>
+                </div>
+                <div style="margin-top:16px;display:flex;gap:10px;">
+                    <p:commandButton value="Enregistrer les modifications"
+                                     icon="pi pi-save"
+                                     action="#{employeBean.sauvegarderProfil}"
+                                     ajax="false"
+                                     styleClass="emp-btn emp-btn-primary"/>
+                </div>
+            </h:form>
+        </div>
+
+    </main>
+</div>
+</h:body>
+</html>

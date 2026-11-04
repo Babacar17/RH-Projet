@@ -1,0 +1,409 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <ui:param name="page" value="dashboard"/>
+    <ui:define name="title">Dashboard RH — SIRH</ui:define>
+    <ui:define name="pageTitle">Tableau de bord</ui:define>
+    <ui:define name="breadcrumb">Vue d'ensemble des indicateurs RH</ui:define>
+
+    <ui:define name="styles">
+        <style>
+            .kpi-grid { display: grid; grid-template-columns: repeat(6,1fr); gap: 14px; margin-bottom: 24px; }
+            .alert { display: flex; gap: 12px; padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; }
+            .alert-warning { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+
+            .rh-banner {
+                background: linear-gradient(120deg, #1d4ed8 0%, #2563eb 100%);
+                color: #fff; border-radius: 14px; padding: 22px 28px;
+                margin-bottom: 22px; display: flex; align-items: center;
+                justify-content: space-between; gap: 24px; flex-wrap: wrap;
+                box-shadow: 0 4px 18px rgba(29,78,216,.22);
+            }
+            .rh-banner-left { display:flex; align-items:center; gap:18px; }
+            .rh-banner-logo {
+                width: 54px; height: 54px; border-radius: 13px;
+                background: rgba(255,255,255,.12); display:flex;
+                align-items:center; justify-content:center; font-size: 24px;
+            }
+            .rh-banner h2 { margin:0; font-size:19px; font-weight:800; }
+            .rh-banner-sub { font-size:12px; opacity:.85; margin-top:4px; }
+            .rh-banner-stats { display:flex; gap:24px; }
+            .rh-banner-stat-val { font-size:22px; font-weight:800; }
+            .rh-banner-stat-lbl { font-size:10px; opacity:.8;
+                                   text-transform:uppercase; letter-spacing:.5px; }
+            .chart-grid { display:grid; grid-template-columns: 2fr 1fr; gap:20px; margin-bottom:22px; }
+            .chart-card { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:18px; }
+            .chart-title { font-size:13px; font-weight:800; color:#0f172a;
+                           margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+            @media (max-width: 900px) { .chart-grid { grid-template-columns: 1fr; } }
+        </style>
+    </ui:define>
+
+    <ui:define name="content">
+            <!-- ═══════════════ BANDEAU INSTITUTION RH ═══════════════ -->
+            <div class="rh-banner">
+                <div class="rh-banner-left">
+                    <div class="rh-banner-logo"><i class="fas fa-user-tie"/></div>
+                    <div>
+                        <h2>Espace Ressources Humaines</h2>
+                        <div class="rh-banner-sub">
+                            <i class="fas fa-university" style="margin-right:5px;"/>
+                            #{sessionBean.nomInstitution}
+                            &#8226;
+                            #{rhBean.employesActifs} employés actifs &#8226;
+                            #{rhBean.tauxTransformation}% de transformation candidats
+                        </div>
+                    </div>
+                </div>
+                <div class="rh-banner-stats">
+                    <div>
+                        <div class="rh-banner-stat-val">#{rhBean.congesEnAttente}</div>
+                        <div class="rh-banner-stat-lbl">Congés à traiter</div>
+                    </div>
+                    <div>
+                        <div class="rh-banner-stat-val">#{rhBean.candidaturesEnAttente}</div>
+                        <div class="rh-banner-stat-lbl">Candidatures actives</div>
+                    </div>
+                    <div>
+                        <div class="rh-banner-stat-val">#{rhBean.offresActives}</div>
+                        <div class="rh-banner-stat-lbl">Offres publiées</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI GRID -->
+            <div class="kpi-grid">
+                <div class="kpi-card blue">
+                    <div class="kpi-label">Total employes</div>
+                    <div class="kpi-value">#{rhBean.totalEmployes}</div>
+                    <div class="kpi-sub">Effectif global</div>
+                </div>
+                <div class="kpi-card green">
+                    <div class="kpi-label">Actifs</div>
+                    <div class="kpi-value">#{rhBean.employesActifs}</div>
+                    <div class="kpi-sub">Employes actifs</div>
+                </div>
+                <div class="kpi-card gold">
+                    <div class="kpi-label">Offres</div>
+                    <div class="kpi-value">#{rhBean.offresActives}</div>
+                    <div class="kpi-sub">Publiees</div>
+                </div>
+                <div class="kpi-card orange">
+                    <div class="kpi-label">Candidatures</div>
+                    <div class="kpi-value">#{rhBean.candidaturesEnAttente}</div>
+                    <div class="kpi-sub">En attente</div>
+                </div>
+                <div class="kpi-card red">
+                    <div class="kpi-label">Conges</div>
+                    <div class="kpi-value">#{rhBean.congesEnAttente}</div>
+                    <div class="kpi-sub">A valider</div>
+                </div>
+                <div class="kpi-card purple">
+                    <div class="kpi-label">Formations</div>
+                    <div class="kpi-value">#{rhBean.formationsActives}</div>
+                    <div class="kpi-sub">Planifiees</div>
+                </div>
+            </div>
+
+            <!-- ═══════════════ GRAPHIQUES RH ═══════════════ -->
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-bar" style="color:#2563eb;"/>
+                        Effectif par direction
+                    </div>
+                    <canvas id="rhChartDir" style="max-height:260px;"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-pie" style="color:#7c3aed;"/>
+                        Candidatures par statut
+                    </div>
+                    <canvas id="rhChartCand" style="max-height:260px;"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-line" style="color:#15803d;"/>
+                        Embauches sur 12 mois
+                    </div>
+                    <canvas id="rhChartEmb" style="max-height:240px;"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">
+                        <i class="fas fa-users" style="color:#f59e0b;"/>
+                        Pyramide des âges
+                    </div>
+                    <canvas id="rhChartAge" style="max-height:240px;"></canvas>
+                </div>
+            </div>
+
+            <!-- ALERTES -->
+            <h:panelGroup rendered="#{rhBean.congesEnAttente > 0 or rhBean.candidaturesEnAttente > 0}">
+                <div class="alert alert-warning">
+                    <span style="font-size:16px;">&#9888;</span>
+                    <div>
+                        <strong>Actions en attente :</strong>
+                        <span>#{rhBean.congesEnAttente} demande(s) de conge</span>
+                        <span>, #{rhBean.candidaturesEnAttente} candidature(s) a traiter.</span>
+                    </div>
+                </div>
+            </h:panelGroup>
+
+            <!-- RACCOURCIS ACTIONS -->
+            <div style="display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap;">
+                <a href="employes.xhtml" class="btn btn-primary">+ Nouvel employe</a>
+                <a href="offres.xhtml" class="btn btn-gold">+ Publier une offre</a>
+                <a href="conges.xhtml" class="btn btn-warning">Valider les conges</a>
+                <a href="evaluations.xhtml" class="btn btn-success">Lancer une evaluation</a>
+                <a href="formations.xhtml" class="btn btn-secondary">Planifier une formation</a>
+            </div>
+
+            <!-- EXPORTS + CAMPAGNE -->
+            <div style="display:flex;gap:10px;margin-bottom:28px;flex-wrap:wrap;
+                        padding:12px 14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;">
+                <span style="font-size:12px;font-weight:700;color:#475569;margin-right:8px;align-self:center;">
+                    <i class="fas fa-download"/> Exports
+                </span>
+                <h:form style="display:inline-flex;gap:8px;">
+                    <p:commandButton value="Employés CSV" icon="fas fa-users"
+                                     action="#{rhBean.exporterEmployesCsv}" ajax="false"
+                                     styleClass="btn btn-secondary"/>
+                    <p:commandButton value="Candidatures CSV" icon="fas fa-user-plus"
+                                     action="#{rhBean.exporterCandidaturesCsv}" ajax="false"
+                                     styleClass="btn btn-secondary"/>
+                    <p:commandButton value="Congés CSV" icon="fas fa-calendar-alt"
+                                     action="#{rhBean.exporterCongesCsv}" ajax="false"
+                                     styleClass="btn btn-secondary"/>
+                </h:form>
+                <span style="margin-left:auto;align-self:center;">
+                    <p:commandButton value="Lancer une campagne d'évaluation"
+                                     icon="fas fa-bullhorn"
+                                     onclick="PF('dlgCampagne').show(); return false;"
+                                     styleClass="btn btn-success"
+                                     type="button"/>
+                </span>
+            </div>
+
+            <!-- GRILLE 2 colonnes : Employes + Candidatures -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;">
+
+                <!-- Derniers employes -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <div class="section-title-dot" style="background:#2563eb;"></div>
+                            Employes recents
+                        </div>
+                        <a href="employes.xhtml" style="font-size:12px;color:#2563eb;text-decoration:none;font-weight:600;">Voir tous</a>
+                    </div>
+                    <div style="padding:0;">
+                        <p:dataTable value="#{rhBean.employes}" var="e" rows="5"
+                                     emptyMessage="Aucun employe." style="border:none;">
+                            <p:column style="padding:12px 16px;">
+                                <div style="font-weight:600;font-size:13px;">#{e.nomComplet}</div>
+                                <div style="font-size:11px;color:#64748b;">#{e.intiutePoste} — #{e.nomDirection}</div>
+                            </p:column>
+                            <p:column style="padding:12px 16px;text-align:right;">
+                                <span class="badge badge-#{e.statut}">#{e.statut}</span>
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                </div>
+
+                <!-- Candidatures recentes -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <div class="section-title-dot" style="background:#f59e0b;"></div>
+                            Candidatures recentes
+                        </div>
+                        <a href="candidatures.xhtml" style="font-size:12px;color:#2563eb;text-decoration:none;font-weight:600;">Voir toutes</a>
+                    </div>
+                    <div style="padding:0;">
+                        <p:dataTable value="#{rhBean.candidatures}" var="c" rows="5"
+                                     emptyMessage="Aucune candidature." style="border:none;">
+                            <p:column style="padding:12px 16px;">
+                                <div style="font-weight:600;font-size:13px;">#{c.nomPrenomCandidat}</div>
+                                <div style="font-size:11px;color:#64748b;">#{c.offre.titre}</div>
+                            </p:column>
+                            <p:column style="padding:12px 16px;text-align:right;">
+                                <span class="badge badge-#{c.statut}">#{c.statut}</span>
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONGES EN ATTENTE -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-title">
+                        <div class="section-title-dot" style="background:#ef4444;"></div>
+                        Demandes de conge en attente
+                    </div>
+                    <a href="conges.xhtml" style="font-size:12px;color:#2563eb;text-decoration:none;font-weight:600;">Gerer</a>
+                </div>
+                <h:form id="formCongesDash">
+                    <p:dataTable value="#{rhBean.demandesCongeEnAttente}" var="d"
+                                 emptyMessage="Aucune demande en attente."
+                                 style="border:none;">
+                        <p:column headerText="Employe" style="padding:12px 16px;">
+                            <div style="font-weight:600;font-size:13px;">#{d.employe.nomComplet}</div>
+                            <div style="font-size:11px;color:#64748b;">#{d.typeConge.libelle}</div>
+                        </p:column>
+                        <p:column headerText="Periode" style="padding:12px 16px;">
+                            <div style="font-size:12px;">
+                                <h:outputText value="#{d.dateDebut}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                                </h:outputText>
+                                <span> → </span>
+                                <h:outputText value="#{d.dateFin}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                                </h:outputText>
+                            </div>
+                            <div style="font-size:11px;color:#64748b;">#{d.nombreJours} jour(s)</div>
+                        </p:column>
+                        <p:column headerText="Statut" style="padding:12px 16px;">
+                            <span class="badge badge-#{d.statut == 'EN_ATTENTE_RH' ? 'EN_ATTENTE' : d.statut}">#{d.statut == 'EN_ATTENTE_RH' ? 'Validé par le manager' : d.statut}</span>
+                        </p:column>
+                        <p:column style="padding:12px 16px;text-align:right;width:180px;"
+                                  rendered="#{d.statut == 'EN_ATTENTE' or d.statut == 'EN_ATTENTE_RH'}">
+                            <p:commandButton value="Approuver"
+                                action="#{rhBean.approuverConge(d.id)}"
+                                update="formCongesDash growl"
+                                style="background:#10b981;color:white;border:none;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;margin-right:4px;"/>
+                            <p:commandButton value="Refuser"
+                                action="#{rhBean.refuserConge(d.id)}"
+                                update="formCongesDash growl"
+                                style="background:#ef4444;color:white;border:none;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;"/>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </div>
+    </ui:define>
+
+    <ui:define name="dialogs">
+        <!-- DIALOG : campagne d'évaluation -->
+        <h:form id="formCampagne">
+            <p:dialog header="Lancer une campagne d'évaluation"
+                      widgetVar="dlgCampagne" modal="true" width="480"
+                      resizable="false" closeOnEscape="true">
+                <div style="padding:20px;">
+                    <p style="font-size:12px;color:#64748b;margin-bottom:14px;">
+                        Crée automatiquement une évaluation EN_COURS pour chaque
+                        employé actif du périmètre choisi. L'évaluateur est le
+                        manager direct si défini, sinon l'employé lui-même
+                        (auto-évaluation).
+                    </p>
+                    <div class="form-group" style="margin-bottom:12px;">
+                        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Période</label>
+                        <p:inputText value="#{rhBean.campagnePeriode}" style="width:100%;"
+                                     placeholder="Ex : Annuelle 2026"/>
+                    </div>
+                    <div class="form-group" style="margin-bottom:12px;">
+                        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Type</label>
+                        <p:selectOneMenu value="#{rhBean.campagneType}" style="width:100%;">
+                            <f:selectItem itemLabel="Annuelle"        itemValue="ANNUELLE"/>
+                            <f:selectItem itemLabel="Semestrielle"    itemValue="SEMESTRIELLE"/>
+                            <f:selectItem itemLabel="Période d'essai" itemValue="ESSAI"/>
+                            <f:selectItem itemLabel="Promotion"       itemValue="PROMOTION"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Direction (laisser vide = toute l'institution)</label>
+                        <p:selectOneMenu value="#{rhBean.campagneDirectionId}" style="width:100%;">
+                            <f:selectItem itemLabel="— Toutes les directions —" itemValue="#{null}"/>
+                            <f:selectItems value="#{rhBean.directions}" var="d"
+                                           itemValue="#{d.id}" itemLabel="#{d.nom}"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:12px;border-top:1px solid #e2e8f0;">
+                        <p:commandButton value="Annuler" type="button"
+                                         onclick="PF('dlgCampagne').hide()"
+                                         styleClass="btn btn-secondary"/>
+                        <p:commandButton value="Lancer"
+                                         action="#{rhBean.lancerCampagneEvaluation}"
+                                         update="growl"
+                                         oncomplete="PF('dlgCampagne').hide()"
+                                         styleClass="btn btn-success"/>
+                    </div>
+                </div>
+            </p:dialog>
+        </h:form>
+    </ui:define>
+
+    <ui:define name="scripts">
+        <script id="rhChartData" type="application/json">
+        {
+            "dir":{
+                "labels":[<ui:repeat value="#{rhBean.effectifParDirection.keySet().toArray()}" var="k" varStatus="s">"#{k}"#{s.last?'':','}</ui:repeat>],
+                "values":[<ui:repeat value="#{rhBean.effectifParDirection.values().toArray()}" var="v" varStatus="s">#{v}#{s.last?'':','}</ui:repeat>]
+            },
+            "cand":{
+                "labels":[<ui:repeat value="#{rhBean.repartitionCandidatures.keySet().toArray()}" var="k" varStatus="s">"#{k}"#{s.last?'':','}</ui:repeat>],
+                "values":[<ui:repeat value="#{rhBean.repartitionCandidatures.values().toArray()}" var="v" varStatus="s">#{v}#{s.last?'':','}</ui:repeat>]
+            },
+            "emb":{
+                "labels":[<ui:repeat value="#{rhBean.evolutionEmbauches12Mois.keySet().toArray()}" var="k" varStatus="s">"#{k}"#{s.last?'':','}</ui:repeat>],
+                "values":[<ui:repeat value="#{rhBean.evolutionEmbauches12Mois.values().toArray()}" var="v" varStatus="s">#{v}#{s.last?'':','}</ui:repeat>]
+            },
+            "age":{
+                "labels":[<ui:repeat value="#{rhBean.pyramideAges.keySet().toArray()}" var="k" varStatus="s">"#{k}"#{s.last?'':','}</ui:repeat>],
+                "values":[<ui:repeat value="#{rhBean.pyramideAges.values().toArray()}" var="v" varStatus="s">#{v}#{s.last?'':','}</ui:repeat>]
+            }
+        }
+        </script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+        <script>
+            (function(){
+                var d = JSON.parse(document.getElementById('rhChartData').textContent);
+                if (!window.Chart) return;
+                var palette = ['#2563eb','#7c3aed','#15803d','#f59e0b','#dc2626','#0891b2','#94a3b8'];
+
+                new Chart(document.getElementById('rhChartDir'), {
+                    type:'bar',
+                    data:{labels:d.dir.labels,datasets:[{label:'Employés',data:d.dir.values,
+                          backgroundColor:palette,borderRadius:6}]},
+                    options:{responsive:true,maintainAspectRatio:false,
+                             plugins:{legend:{display:false}},
+                             scales:{y:{beginAtZero:true,ticks:{precision:0}}}}
+                });
+
+                new Chart(document.getElementById('rhChartCand'), {
+                    type:'doughnut',
+                    data:{labels:d.cand.labels,datasets:[{data:d.cand.values,
+                          backgroundColor:palette,borderWidth:2,borderColor:'#fff'}]},
+                    options:{responsive:true,maintainAspectRatio:false,
+                             plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}}}}
+                });
+
+                new Chart(document.getElementById('rhChartEmb'), {
+                    type:'line',
+                    data:{labels:d.emb.labels,datasets:[{label:'Embauches',data:d.emb.values,
+                          borderColor:'#15803d',backgroundColor:'rgba(21,128,61,.12)',
+                          tension:.3,fill:true,pointRadius:4,pointBackgroundColor:'#15803d'}]},
+                    options:{responsive:true,maintainAspectRatio:false,
+                             plugins:{legend:{display:false}},
+                             scales:{y:{beginAtZero:true,ticks:{precision:0}}}}
+                });
+
+                new Chart(document.getElementById('rhChartAge'), {
+                    type:'bar',
+                    data:{labels:d.age.labels,datasets:[{label:'Employés',data:d.age.values,
+                          backgroundColor:'#f59e0b',borderRadius:6}]},
+                    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+                             plugins:{legend:{display:false}},
+                             scales:{x:{beginAtZero:true,ticks:{precision:0}}}}
+                });
+            })();
+        </script>
+    </ui:define>
+
+</ui:composition>

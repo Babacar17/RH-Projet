@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Bulletins de salaire — Espace Employé</title>
+    <h:outputStylesheet library="css" name="employe-style.css"/>
+</h:head>
+<h:body>
+<div class="emp-layout">
+
+    <ui:include src="sidebar-employe.xhtml"/>
+
+    <main class="emp-main">
+
+        <div class="emp-page-header">
+            <div class="emp-page-title">
+                <h1><i class="pi pi-file-pdf" style="color:var(--emp-copper-l);"/> Bulletins de salaire</h1>
+                <p>Consultez et téléchargez vos bulletins de paie</p>
+            </div>
+        </div>
+
+        <p:messages autoUpdate="true" showDetail="true"/>
+
+        <!-- Tableau historique -->
+        <div class="emp-card">
+            <div class="emp-card-header">
+                <div class="emp-card-title">
+                    <span class="card-icon"><i class="pi pi-list"/></span>
+                    Historique de mes bulletins
+                </div>
+            </div>
+
+            <h:panelGroup rendered="#{not empty employeBean.mesBulletins}">
+                <h:form id="formBulletins">
+                    <div class="emp-table-wrap">
+                        <table class="emp-table">
+                            <thead>
+                                <tr>
+                                    <th>Période</th>
+                                    <th>Salaire brut</th>
+                                    <th>Retenues</th>
+                                    <th>Net à payer</th>
+                                    <th>Statut</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <ui:repeat value="#{employeBean.mesBulletins}" var="b">
+                                    <tr>
+                                        <td>
+                                            <i class="pi pi-calendar" style="color:var(--emp-primary);margin-right:6px;"/>
+                                            #{b.cyclePaie.periodeLibelle}
+                                        </td>
+                                        <td>
+                                            <h:outputText value="#{b.salaireBrut}">
+                                                <f:convertNumber type="currency" currencySymbol="FCFA " groupingUsed="true"/>
+                                            </h:outputText>
+                                        </td>
+                                        <td>
+                                            <h:outputText value="#{b.totalRetenues}">
+                                                <f:convertNumber type="currency" currencySymbol="FCFA " groupingUsed="true"/>
+                                            </h:outputText>
+                                        </td>
+                                        <td>
+                                            <strong>
+                                                <h:outputText value="#{b.salaireNet}">
+                                                    <f:convertNumber type="currency" currencySymbol="FCFA " groupingUsed="true"/>
+                                                </h:outputText>
+                                            </strong>
+                                        </td>
+                                        <td>
+                                            <span class="emp-badge #{employeBean.getBadgeStatutBulletin(b.statut)}">
+                                                #{employeBean.getLabelStatutBulletin(b.statut)}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <p:commandButton value="Télécharger"
+                                                             icon="pi pi-download"
+                                                             styleClass="emp-btn emp-btn-copper emp-btn-sm"
+                                                             action="#{employeBean.telechargerBulletinPdf(b.id)}"
+                                                             ajax="false"/>
+                                        </td>
+                                    </tr>
+                                </ui:repeat>
+                            </tbody>
+                        </table>
+                    </div>
+                </h:form>
+            </h:panelGroup>
+
+            <h:panelGroup rendered="#{empty employeBean.mesBulletins}">
+                <div style="text-align:center;padding:60px 40px;">
+                    <div style="width:80px;height:80px;border-radius:50%;background:rgba(124,58,237,0.1);
+                                display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+                        <i class="pi pi-file-pdf" style="font-size:2.5rem;color:var(--emp-primary);"/>
+                    </div>
+                    <h2 style="font-size:1.2rem;font-weight:600;margin-bottom:8px;">Aucun bulletin disponible</h2>
+                    <p style="color:var(--emp-muted);font-size:0.9rem;max-width:400px;margin:0 auto;">
+                        Vos bulletins de paie apparaîtront ici dès que le service RH aura validé le cycle de paie correspondant.
+                    </p>
+                </div>
+            </h:panelGroup>
+        </div>
+
+    </main>
+</div>
+</h:body>
+</html>

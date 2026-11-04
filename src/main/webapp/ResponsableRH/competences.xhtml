@@ -1,0 +1,253 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <ui:param name="page" value="competences"/>
+    <ui:define name="title">Compétences — Espace RH</ui:define>
+    <ui:define name="pageTitle">Compétences (Skills Matrix)</ui:define>
+    <ui:define name="breadcrumb">Espace RH › Référentiel + matrice des compétences</ui:define>
+
+    <ui:define name="styles">
+        <style>
+            .card { background:#fff;border:1px solid #e2e8f0;border-radius:12px;
+                    padding:18px;margin-bottom:20px; }
+            .card-title { font-size:13px;font-weight:800;color:#0f172a;margin-bottom:14px;
+                          display:flex;align-items:center;gap:8px;
+                          padding-bottom:10px;border-bottom:1px solid #f1f5f9; }
+
+            /* Matrice */
+            .matrice-wrap { overflow:auto; }
+            .niveau-cell {
+                width:36px;height:36px;border-radius:6px;cursor:pointer;
+                display:flex;align-items:center;justify-content:center;
+                font-weight:800;font-size:13px;color:#0f172a;
+                transition:transform .12s, box-shadow .12s;
+            }
+            .niveau-cell:hover { transform:scale(1.08);box-shadow:0 2px 8px rgba(0,0,0,.18); }
+            .niveau-4 { color:#fff; }
+
+            .competence-card {
+                background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;
+                padding:10px 12px;display:flex;justify-content:space-between;align-items:center;
+                margin-bottom:6px;
+            }
+            .badge-cat {
+                display:inline-block;padding:2px 8px;border-radius:5px;font-size:9px;
+                font-weight:700;text-transform:uppercase;letter-spacing:.3px;
+            }
+
+            .legende {
+                display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:#64748b;
+                padding-bottom:10px;
+            }
+            .legende-niv { display:inline-flex;align-items:center;gap:5px; }
+            .legende-niv .dot { width:14px;height:14px;border-radius:3px; }
+        </style>
+    </ui:define>
+
+    <ui:define name="content">
+            <!-- ═══ Référentiel ═══ -->
+            <div class="card">
+                <div class="card-title">
+                    <i class="pi pi-book" style="color:#7c3aed;"/>
+                    Référentiel des compétences (#{competenceBean.competences.size()})
+                    <div style="margin-left:auto;">
+                        <p:commandButton value="+ Ajouter une compétence"
+                            action="#{competenceBean.preparerNouvelle}"
+                            oncomplete="PF('dlgComp').show()"
+                            update="formComp"
+                            styleClass="btn btn-primary"/>
+                    </div>
+                </div>
+
+                <h:form id="formListeComp">
+                    <ui:repeat value="#{competenceBean.competences}" var="c">
+                        <div class="competence-card">
+                            <div>
+                                <span class="badge-cat"
+                                      style="background:#{competenceBean.getBadgeCategorie(c.categorie)};">
+                                    #{c.categorie}
+                                </span>
+                                <strong style="margin-left:8px;">#{c.libelle}</strong>
+                                <span style="color:#94a3b8;font-family:monospace;font-size:11px;margin-left:8px;">
+                                    #{c.code}
+                                </span>
+                            </div>
+                            <div>
+                                <p:commandButton icon="pi pi-pencil" title="Modifier"
+                                    action="#{competenceBean.preparerEdition(c)}"
+                                    oncomplete="PF('dlgComp').show()"
+                                    update=":formComp"
+                                    style="background:#6366f1;color:#fff;border:none;width:28px;height:28px;padding:0;border-radius:6px;margin-right:4px;"/>
+                                <p:commandButton icon="pi pi-trash" title="Supprimer"
+                                    action="#{competenceBean.supprimer(c.id)}"
+                                    update=":formListeComp :formMatrice growl"
+                                    onclick="return confirm('Supprimer cette compétence ? Les évaluations associées resteront mais sans référence.')"
+                                    style="background:#ef4444;color:#fff;border:none;width:28px;height:28px;padding:0;border-radius:6px;"/>
+                            </div>
+                        </div>
+                    </ui:repeat>
+                </h:form>
+            </div>
+
+            <!-- ═══ Matrice ═══ -->
+            <div class="card">
+                <div class="card-title">
+                    <i class="pi pi-th-large" style="color:#2563eb;"/>
+                    Matrice des compétences
+                </div>
+
+                <h:panelGroup rendered="#{competenceBean.competences.isEmpty()}">
+                    <div style="padding:40px 20px;text-align:center;color:#94a3b8;">
+                        <i class="pi pi-info-circle" style="font-size:28px;display:block;margin-bottom:10px;color:#cbd5e1;"/>
+                        Ajoutez au moins une compétence dans le référentiel ci-dessus pour faire apparaître la matrice.
+                    </div>
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{not competenceBean.competences.isEmpty()}">
+                    <div class="legende">
+                        <span style="font-weight:700;">Niveau :</span>
+                        <span class="legende-niv"><span class="dot" style="background:#f1f5f9;border:1px solid #cbd5e1;"/> 0 — Non évalué</span>
+                        <span class="legende-niv"><span class="dot" style="background:#fef3c7;"/> 1 — Débutant</span>
+                        <span class="legende-niv"><span class="dot" style="background:#dbeafe;"/> 2 — Intermédiaire</span>
+                        <span class="legende-niv"><span class="dot" style="background:#dcfce7;"/> 3 — Confirmé</span>
+                        <span class="legende-niv"><span class="dot" style="background:#7c3aed;"/> 4 — Expert</span>
+                    </div>
+
+                    <h:form id="formMatrice">
+                        <div class="matrice-wrap">
+                            <p:dataTable id="dtMatrice" value="#{competenceBean.employes}" var="emp"
+                                         rows="10" paginator="true"
+                                         paginatorTemplate="{FirstPageLink} {PreviousPageLink} {CurrentPageReport} {NextPageLink} {LastPageLink}"
+                                         currentPageReportTemplate="{startRecord}–{endRecord} sur {totalRecords} employés"
+                                         style="border:none;">
+                                <p:column headerText="Employé" filterBy="#{emp.nomComplet}" filterMatchMode="contains"
+                                          style="min-width:200px;">
+                                    <div style="font-size:12px;font-weight:700;">#{emp.nomComplet}</div>
+                                    <div style="font-size:10px;color:#94a3b8;">#{emp.matricule}</div>
+                                </p:column>
+                                <p:columns value="#{competenceBean.competences}" var="c" columnIndexVar="ci"
+                                           style="width:60px;text-align:center;">
+                                    <f:facet name="header">
+                                        <span title="#{c.libelle}" style="writing-mode:vertical-rl;transform:rotate(180deg);
+                                              font-size:10px;font-weight:700;display:inline-block;height:120px;">#{c.libelle}</span>
+                                    </f:facet>
+                                    <p:commandLink
+                                        action="#{competenceBean.ouvrirEdition(emp.id, c.id)}"
+                                        update=":formLien"
+                                        oncomplete="PF('dlgLien').show()">
+                                        <div class="niveau-cell #{competenceBean.matrice[emp.id][c.id] == 4 ? 'niveau-4' : ''}"
+                                             style="background:#{competenceBean.getCouleurNiveau(competenceBean.matrice[emp.id][c.id])};margin:0 auto;">
+                                            <span>#{competenceBean.matrice[emp.id][c.id] != null ? competenceBean.matrice[emp.id][c.id] : '·'}</span>
+                                        </div>
+                                    </p:commandLink>
+                                </p:columns>
+                            </p:dataTable>
+                        </div>
+                    </h:form>
+                </h:panelGroup>
+            </div>
+    </ui:define>
+
+    <ui:define name="dialogs">
+        <!-- ═══ DIALOG NOUVELLE COMPÉTENCE ═══ -->
+        <h:form id="formComp">
+            <p:dialog header="#{competenceBean.modeEdition ? 'Modifier la compétence' : 'Nouvelle compétence'}"
+                      widgetVar="dlgComp" modal="true" width="560" resizable="false">
+                <div style="padding:22px;">
+                    <div class="form-group">
+                        <label class="form-label">Code court *</label>
+                        <p:inputText value="#{competenceBean.competence.code}" style="width:100%;"
+                                     placeholder="Ex : JAVA_AVANCE"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Libellé *</label>
+                        <p:inputText value="#{competenceBean.competence.libelle}" style="width:100%;"
+                                     placeholder="Ex : Programmation Java avancée"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Catégorie</label>
+                        <p:selectOneMenu value="#{competenceBean.competence.categorie}" style="width:100%;">
+                            <f:selectItem itemLabel="Technique"        itemValue="TECHNIQUE"/>
+                            <f:selectItem itemLabel="Métier"           itemValue="METIER"/>
+                            <f:selectItem itemLabel="Managériale"      itemValue="MANAGERIALE"/>
+                            <f:selectItem itemLabel="Linguistique"     itemValue="LINGUISTIQUE"/>
+                            <f:selectItem itemLabel="Comportementale"  itemValue="COMPORTEMENTALE"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <p:inputTextarea value="#{competenceBean.competence.description}" rows="3" style="width:100%;"/>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;border-top:1px solid #e2e8f0;">
+                        <p:commandButton value="Annuler" type="button"
+                            onclick="PF('dlgComp').hide()" styleClass="btn btn-secondary"/>
+                        <p:commandButton value="Enregistrer"
+                            action="#{competenceBean.sauvegarder}"
+                            update="formComp :formListeComp :formMatrice growl"
+                            oncomplete="PF('dlgComp').hide()"
+                            styleClass="btn btn-primary"/>
+                    </div>
+                </div>
+            </p:dialog>
+        </h:form>
+
+        <!-- ═══ DIALOG ÉVALUATION NIVEAU ═══ -->
+        <h:form id="formLien">
+            <p:dialog header="Évaluer la compétence" widgetVar="dlgLien" modal="true" width="500" resizable="false">
+                <h:panelGroup rendered="#{competenceBean.lien.employe != null}">
+                    <div style="padding:22px;">
+                        <div style="background:#f8fafc;border-radius:8px;padding:14px;margin-bottom:18px;">
+                            <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;">Employé</div>
+                            <div style="font-size:15px;font-weight:700;">#{competenceBean.lien.employe.nomComplet}</div>
+                            <div style="font-size:11px;color:#64748b;margin-top:6px;">Compétence évaluée :</div>
+                            <div style="font-size:14px;font-weight:600;color:#1F4E79;">#{competenceBean.lien.competence.libelle}</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Niveau actuel</label>
+                            <p:selectOneMenu value="#{competenceBean.lien.niveau}" style="width:100%;">
+                                <f:selectItem itemLabel="0 — Non évalué"     itemValue="0"/>
+                                <f:selectItem itemLabel="1 — Débutant"        itemValue="1"/>
+                                <f:selectItem itemLabel="2 — Intermédiaire"   itemValue="2"/>
+                                <f:selectItem itemLabel="3 — Confirmé"        itemValue="3"/>
+                                <f:selectItem itemLabel="4 — Expert"          itemValue="4"/>
+                            </p:selectOneMenu>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Niveau attendu pour le poste</label>
+                            <p:selectOneMenu value="#{competenceBean.lien.niveauAttendu}" style="width:100%;">
+                                <f:selectItem itemLabel="— Non défini —" itemValue="#{null}"/>
+                                <f:selectItem itemLabel="1 — Débutant"        itemValue="1"/>
+                                <f:selectItem itemLabel="2 — Intermédiaire"   itemValue="2"/>
+                                <f:selectItem itemLabel="3 — Confirmé"        itemValue="3"/>
+                                <f:selectItem itemLabel="4 — Expert"          itemValue="4"/>
+                            </p:selectOneMenu>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Commentaire</label>
+                            <p:inputTextarea value="#{competenceBean.lien.commentaire}" rows="3" style="width:100%;"
+                                             placeholder="Contexte, certification, formation suivie..."/>
+                        </div>
+
+                        <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;border-top:1px solid #e2e8f0;">
+                            <p:commandButton value="Annuler" type="button"
+                                onclick="PF('dlgLien').hide()" styleClass="btn btn-secondary"/>
+                            <p:commandButton value="Enregistrer"
+                                action="#{competenceBean.sauvegarderLien}"
+                                update="formLien :formMatrice growl"
+                                oncomplete="PF('dlgLien').hide()"
+                                styleClass="btn btn-primary"/>
+                        </div>
+                    </div>
+                </h:panelGroup>
+            </p:dialog>
+        </h:form>
+    </ui:define>
+
+</ui:composition>

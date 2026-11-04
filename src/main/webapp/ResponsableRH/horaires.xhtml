@@ -1,0 +1,242 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <ui:param name="page" value="horaires"/>
+    <ui:define name="title">Horaires &amp; Plannings — SIRH</ui:define>
+    <ui:define name="pageTitle">Horaires &amp; Plannings</ui:define>
+    <ui:define name="breadcrumb">Ressources Humaines &gt; Horaires de travail — #{sessionBean.institutionCourante.nom}</ui:define>
+
+    <ui:define name="styles">
+        <style>
+            .ho-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px;}
+            .ho-kpi{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;}
+            .ho-kpi b{display:block;font-size:26px;font-weight:800;color:#0f172a;line-height:1;margin-bottom:3px;}
+            .ho-kpi.warn b{color:#b3261e;}
+            .ho-kpi span{color:#64748b;font-size:12.5px;}
+            .ho-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;}
+            .ho-bar .sp{flex:1;}
+            .ho-seg{display:inline-flex;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;}
+            .ho-seg a{border:0;background:#fff;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:600;color:#475569;font-family:inherit;text-decoration:none;display:inline-block;}
+            .ho-seg a.on{background:#0f172a;color:#fff;}
+            .ho-seg a:hover{text-decoration:none;}
+            .ho-legend{display:flex;flex-wrap:wrap;gap:14px;color:#64748b;font-size:12.5px;margin:0 0 12px;}
+            .ho-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;}
+            .ho-grid{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow-x:auto;margin-bottom:22px;}
+            .ho-grid-in{min-width:1000px;}
+            .ho-row{display:grid;grid-template-columns:230px repeat(7,1fr);}
+            .ho-cell{padding:6px;border-left:1px solid #eef1f5;border-bottom:1px solid #eef1f5;min-height:58px;}
+            .ho-cell.h{text-align:center;font-weight:700;color:#64748b;min-height:0;padding:9px 4px;font-size:12.5px;}
+            .ho-cell.h b{display:block;font-size:17px;color:#0f172a;}
+            .ho-emp{border-left:0;display:flex;flex-direction:column;justify-content:center;padding-left:26px;}
+            .ho-emp b{font-size:13.5px;color:#0f172a;}
+            .ho-emp small{color:#94a3b8;font-size:11.5px;}
+            .ho-svc-block{background:#fff;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:12px;overflow:hidden;}
+            .ho-svc{padding:12px 16px;background:color-mix(in srgb,var(--c3,#2563eb) 10%,#fff);font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+            .ho-svc:hover{background:color-mix(in srgb,var(--c3,#2563eb) 16%,#fff);}
+            .ho-svc small{font-weight:500;color:#64748b;}
+            .ho-svc .chev{margin-left:auto;color:#94a3b8;font-size:12px;transition:transform .15s;}
+            .ho-svc-block.open .ho-svc .chev{transform:rotate(90deg);}
+            .ho-svc-body{overflow-x:auto;}
+            .ho-regime-badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:11px;font-weight:700;}
+            .ho-regime-badge.fixe{background:#e0f2ea;color:#166534;}
+            .ho-regime-badge.equipes{background:#ece3f6;color:#5a1b7e;}
+            .ho-grp{background:color-mix(in srgb,var(--c2,#1b5e7e) 8%,#fff);border-left:0!important;display:flex;align-items:center;gap:8px;font-weight:700;font-size:12.5px;}
+            .ho-grp .dot{width:9px;height:9px;border-radius:50%;background:var(--c2,#1b5e7e);flex-shrink:0;}
+            .ho-grp small{font-weight:500;color:#64748b;}
+            .ho-sh{display:block;width:100%;text-align:left;border:0;border-left:4px solid var(--c,#2563eb);border-radius:6px;padding:5px 7px;cursor:pointer;font-size:11.5px;line-height:1.3;background:color-mix(in srgb,var(--c,#2563eb) 15%,#fff);font-family:inherit;}
+            .ho-sh:hover{box-shadow:0 0 0 2px var(--c,#2563eb);}
+            .ho-sh b{display:block;font-size:12.5px;}
+            .ho-sh.off{background:repeating-linear-gradient(135deg,#fff,#fff 6px,#f1f5f9 6px,#f1f5f9 12px);border-left-color:#8a93a6;}
+            .ho-sh.exc{outline:2px dashed #b3261e;outline-offset:-2px;}
+            .ho-sh .tag{color:#b3261e;font-weight:700;font-size:10px;display:block;margin-top:2px;}
+            .ho-cov{font-weight:700;text-align:center;padding-top:10px;font-size:12.5px;color:#334155;}
+            .ho-cov.low{color:#b3261e;}
+            .cfg-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 20px;margin-bottom:16px;}
+            .cfg-row{display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:12.5px;}
+            .cfg-row:last-child{border-bottom:0;}
+            .swatch{width:18px;height:18px;border-radius:5px;border:1px solid #e2e8f0;flex-shrink:0;}
+        </style>
+    </ui:define>
+
+    <ui:define name="content">
+    <h:form id="formHo">
+    <p:growl id="growlHo" showDetail="true" life="4000"/>
+
+    <div class="ho-bar">
+        <div class="ho-seg" role="group" aria-label="Affichage"><p:commandLink actionListener="#{rhHorairesBean.setVue('cal')}" update="@form" styleClass="#{rhHorairesBean.vue == 'cal' ? 'on' : ''}" value="Calendrier"/><p:commandLink actionListener="#{rhHorairesBean.setVue('cfg')}" update="@form" styleClass="#{rhHorairesBean.vue == 'cfg' ? 'on' : ''}" value="Configuration des services"/></div>
+        <p:selectOneMenu value="#{rhHorairesBean.serviceFiltreId}" converter="jakarta.faces.Long" style="min-width:220px;" filter="true" filterMatchMode="contains">
+            <f:selectItem itemLabel="— Sélectionner un service —" itemValue="#{null}" noSelectionOption="true"/>
+            <f:selectItem itemLabel="Tous les services" itemValue="#{rhHorairesBean.tousServicesSentinel}"/>
+            <f:selectItems value="#{rhHorairesBean.tousLesServices}" var="sv" itemValue="#{sv.id}" itemLabel="#{sv.nom}"/>
+            <p:ajax listener="#{rhHorairesBean.onFiltreChange}" update="@form"/>
+        </p:selectOneMenu>
+        <span class="sp"/>
+        <h:panelGroup rendered="#{rhHorairesBean.vue == 'cal'}">
+            <p:commandButton value="‹" action="#{rhHorairesBean.semainePrecedente}" update="@form" styleClass="btn btn-secondary btn-sm"/>
+            <p:commandButton value="Aujourd'hui" action="#{rhHorairesBean.aujourdhui}" update="@form" styleClass="btn btn-secondary btn-sm"/>
+            <p:commandButton value="›" action="#{rhHorairesBean.semaineSuivante}" update="@form" styleClass="btn btn-secondary btn-sm"/>
+        </h:panelGroup>
+    </div>
+
+    <p class="sub" style="margin-bottom:10px;color:#64748b;font-size:13px;" id="weekLabel">
+        <h:outputText value="#{rhHorairesBean.libelleSemaine}" rendered="#{rhHorairesBean.vue == 'cal'}"/>
+    </p>
+
+    <h:panelGroup rendered="#{rhHorairesBean.vue == 'cal'}" layout="block" styleClass="ho-kpis">
+        <div class="ho-kpi"><b>#{rhHorairesBean.nbEmployesPlanifies} / #{rhHorairesBean.nbEmployesTotal}</b><span>employés planifiés cette semaine</span></div>
+        <div class="ho-kpi #{rhHorairesBean.nbAlertesCouverture gt 0 ? 'warn' : ''}"><b>#{rhHorairesBean.nbAlertesCouverture}</b><span>alertes de sous-effectif</span></div>
+        <div class="ho-kpi"><b>#{rhHorairesBean.nbExceptionsSemaine}</b><span>exceptions ponctuelles</span></div>
+        <div class="ho-kpi"><b>#{rhHorairesBean.nbCongesSemaine}</b><span>employés en congé cette semaine</span></div>
+    </h:panelGroup>
+
+    <!-- ══════════════════════ VUE CALENDRIER ══════════════════════ -->
+    <h:panelGroup rendered="#{rhHorairesBean.vue == 'cal'}">
+
+        <p class="ho-legend">
+            <span><i style="background:#2563eb;"></i>Normal / Matin</span>
+            <span><i style="background:#c27a14;"></i>Décalé / Soir</span>
+            <span><i style="background:#5b4bb7;"></i>Nuit</span>
+            <span><i style="background:#8a93a6;"></i>Férié, congé, absence ou non planifié</span>
+            <span>Contour pointillé : exception ponctuelle</span>
+            <span>Vue de supervision — les exceptions sont gérées par le chef de service</span>
+        </p>
+
+        <h:panelGroup rendered="#{empty rhHorairesBean.tousLesServices}">
+            <div class="section-card"><div style="padding:20px;color:#64748b;font-size:13px;">Aucun service défini pour cette institution.</div></div>
+        </h:panelGroup>
+
+        <h:panelGroup rendered="#{not empty rhHorairesBean.tousLesServices and rhHorairesBean.serviceFiltreId == null}">
+            <div class="section-card"><div style="padding:20px;color:#64748b;font-size:13px;">Sélectionnez un service ci-dessus pour afficher son planning.</div></div>
+        </h:panelGroup>
+
+        <ui:repeat value="#{rhHorairesBean.servicesAffiches}" var="svc">
+            <div class="ho-svc-block #{rhHorairesBean.isDeplie(svc.id) ? 'open' : ''}">
+                <p:commandLink actionListener="#{rhHorairesBean.toggleService(svc.id)}" update="@form" style="display:block;text-decoration:none;">
+                    <div class="ho-svc" style="--c3:#{svc.regimeHoraire == 'EQUIPES' ? '#5a1b7e' : '#166534'};">
+                        #{svc.nom}
+                        <span class="ho-regime-badge #{svc.regimeHoraire == 'EQUIPES' ? 'equipes' : 'fixe'}">#{svc.regimeHoraire == 'EQUIPES' ? 'Équipes en rotation' : 'Horaires fixes'}</span>
+                        <small>#{rhHorairesBean.employesParService[svc.id].size()} agent(s)</small>
+                        <span class="chev">▸</span>
+                    </div>
+                </p:commandLink>
+
+                <h:panelGroup rendered="#{rhHorairesBean.isDeplie(svc.id)}" layout="block" styleClass="ho-svc-body">
+                <div class="ho-grid" style="margin:0;border:0;border-radius:0;">
+                <div class="ho-grid-in">
+
+                    <div class="ho-row">
+                        <div class="ho-cell h" style="border-left:0;"></div>
+                        <ui:repeat value="#{rhHorairesBean.joursSemaine}" var="j">
+                            <div class="ho-cell h">#{rhHorairesBean.getNomJour(j)}<b><h:outputText value="#{j}"><f:convertDateTime pattern="d" type="localDate"/></h:outputText></b></div>
+                        </ui:repeat>
+                    </div>
+
+                    <!-- Service en régime équipes : groupé par équipe -->
+                    <h:panelGroup rendered="#{svc.regimeHoraire == 'EQUIPES'}">
+                        <ui:repeat value="#{rhHorairesBean.equipesParService[svc.id]}" var="equipe">
+                            <div class="ho-row">
+                                <div class="ho-cell ho-grp" style="--c2:#{equipe.couleur};">
+                                    <span class="dot"></span>#{equipe.nom}
+                                    <small>cette semaine : #{rhHorairesBean.getPlageEquipeSemaine(equipe).nom}</small>
+                                </div>
+                                <ui:repeat value="#{rhHorairesBean.joursSemaine}" var="jg"><div class="ho-cell" style="border-left:0;"></div></ui:repeat>
+                            </div>
+                            <ui:repeat value="#{rhHorairesBean.getMembres(equipe.id)}" var="m">
+                                <div class="ho-row">
+                                    <div class="ho-cell ho-emp"><b>#{m.nomComplet}</b><small>#{m.poste.intitule}</small></div>
+                                    <ui:repeat value="#{rhHorairesBean.joursSemaine}" var="jc">
+                                        <div class="ho-cell">
+                                            <span class="ho-sh #{rhHorairesBean.getCellule(m.id, jc).off ? 'off' : ''} #{rhHorairesBean.getCellule(m.id, jc).exception ? 'exc' : ''}"
+                                                  style="--c:#{rhHorairesBean.getCellule(m.id, jc).couleur};cursor:default;">
+                                                <b>#{rhHorairesBean.getCellule(m.id, jc).libelle}</b>
+                                                <h:outputText rendered="#{not rhHorairesBean.getCellule(m.id, jc).off}">
+                                                    <h:outputText value="#{rhHorairesBean.getCellule(m.id, jc).heureDebut}"><f:convertDateTime pattern="HH:mm" type="localTime"/></h:outputText> – <h:outputText value="#{rhHorairesBean.getCellule(m.id, jc).heureFin}"><f:convertDateTime pattern="HH:mm" type="localTime"/></h:outputText>
+                                                </h:outputText>
+                                                <h:outputText styleClass="tag" rendered="#{rhHorairesBean.getCellule(m.id, jc).exception}" value="⚠ exception"/>
+                                            </span>
+                                        </div>
+                                    </ui:repeat>
+                                </div>
+                            </ui:repeat>
+                        </ui:repeat>
+                        <ui:repeat value="#{rhHorairesBean.plagesParService[svc.id]}" var="pc">
+                            <div class="ho-row">
+                                <div class="ho-cell ho-emp"><b>Couverture — #{pc.nom}</b><small>minimum #{pc.effectifMinimum}</small></div>
+                                <ui:repeat value="#{rhHorairesBean.joursSemaine}" var="jcov">
+                                    <div class="ho-cell ho-cov #{rhHorairesBean.getCouverture(svc, pc.id, jcov) lt pc.effectifMinimum ? 'low' : ''}">
+                                        #{rhHorairesBean.getCouverture(svc, pc.id, jcov)} / #{pc.effectifMinimum}
+                                    </div>
+                                </ui:repeat>
+                            </div>
+                        </ui:repeat>
+                    </h:panelGroup>
+
+                    <!-- Service en régime fixe : employés directement -->
+                    <h:panelGroup rendered="#{svc.regimeHoraire != 'EQUIPES'}">
+                        <ui:repeat value="#{rhHorairesBean.employesParService[svc.id]}" var="mf">
+                            <div class="ho-row">
+                                <div class="ho-cell ho-emp"><b>#{mf.nomComplet}</b><small>#{mf.poste.intitule}</small></div>
+                                <ui:repeat value="#{rhHorairesBean.joursSemaine}" var="jf">
+                                    <div class="ho-cell">
+                                        <span class="ho-sh #{rhHorairesBean.getCellule(mf.id, jf).off ? 'off' : ''} #{rhHorairesBean.getCellule(mf.id, jf).exception ? 'exc' : ''}"
+                                              style="--c:#{rhHorairesBean.getCellule(mf.id, jf).couleur};cursor:default;">
+                                            <b>#{rhHorairesBean.getCellule(mf.id, jf).libelle}</b>
+                                            <h:outputText rendered="#{not rhHorairesBean.getCellule(mf.id, jf).off}">
+                                                <h:outputText value="#{rhHorairesBean.getCellule(mf.id, jf).heureDebut}"><f:convertDateTime pattern="HH:mm" type="localTime"/></h:outputText> – <h:outputText value="#{rhHorairesBean.getCellule(mf.id, jf).heureFin}"><f:convertDateTime pattern="HH:mm" type="localTime"/></h:outputText>
+                                            </h:outputText>
+                                            <h:outputText styleClass="tag" rendered="#{rhHorairesBean.getCellule(mf.id, jf).exception}" value="⚠ exception"/>
+                                        </span>
+                                    </div>
+                                </ui:repeat>
+                            </div>
+                        </ui:repeat>
+                        <h:panelGroup rendered="#{empty rhHorairesBean.employesParService[svc.id]}">
+                            <div class="ho-row"><div class="ho-cell ho-emp" style="grid-column:1/-1;color:#94a3b8;">Aucun employé dans ce service.</div></div>
+                        </h:panelGroup>
+                    </h:panelGroup>
+
+                </div>
+                </div>
+                </h:panelGroup>
+            </div>
+        </ui:repeat>
+    </h:panelGroup>
+
+    <!-- ══════════════════════ VUE CONFIGURATION ══════════════════════ -->
+    <h:panelGroup rendered="#{rhHorairesBean.vue == 'cfg'}">
+        <ui:repeat value="#{rhHorairesBean.servicesAffiches}" var="scv">
+            <div class="cfg-card">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+                    <h3 style="font-size:16px;margin:0;">#{scv.nom}</h3>
+                    <span class="ho-regime-badge #{scv.regimeHoraire == 'EQUIPES' ? 'equipes' : 'fixe'}">#{scv.regimeHoraire == 'EQUIPES' ? 'Équipes en rotation' : 'Horaires fixes'}</span>
+                </div>
+
+                <h:panelGroup rendered="#{scv.regimeHoraire == 'EQUIPES'}">
+                    <p class="sub" style="color:#64748b;font-size:12.5px;margin:0 0 10px;">
+                        #{rhHorairesBean.employesParService[scv.id].size()} agent(s) · #{rhHorairesBean.equipesParService[scv.id].size()} équipe(s) en rotation hebdomadaire.
+                        La configuration des plages, équipes et affectations est gérée par le chef de ce service.
+                    </p>
+                    <p:commandButton value="Revenir au régime fixe" action="#{rhHorairesBean.desactiverRegimeEquipes(scv.id)}" update="@form" styleClass="btn btn-secondary btn-sm"
+                                      onclick="return confirm('Revenir au régime fixe pour ce service ? Les plages et équipes configurées seront conservées mais plus utilisées tant que le régime équipes n\'est pas réactivé. Les employés redeviendront \'Non planifié\' jusqu\'à ce que le chef de service crée leurs plannings individuels.')"/>
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{scv.regimeHoraire != 'EQUIPES'}">
+                    <p class="sub" style="color:#64748b;font-size:12.5px;margin:0 0 10px;">
+                        #{rhHorairesBean.employesParService[scv.id].size()} agent(s) · horaires individualisés.
+                        Les plannings de chaque employé sont gérés par le chef de ce service.
+                    </p>
+                    <p:commandButton value="Activer le régime par équipes" action="#{rhHorairesBean.activerRegimeEquipes(scv.id)}" update="@form" styleClass="btn btn-secondary btn-sm"
+                                      onclick="return confirm('Activer la rotation par équipes pour ce service ?')"/>
+                </h:panelGroup>
+            </div>
+        </ui:repeat>
+    </h:panelGroup>
+
+    </h:form>
+    </ui:define>
+
+</ui:composition>

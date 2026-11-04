@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+    <title>Health Check — Administration</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <style>
+        body { background:#0f172a; color:#e2e8f0;font-family:'Segoe UI',sans-serif;margin:0;display:flex;min-height:100vh; }
+        .main { flex: 1; padding: 28px; min-height:100vh; }
+        .page-title { font-size:24px;font-weight:800;color:#fff; }
+        .page-sub   { font-size:12px;color:#64748b;margin-top:4px;margin-bottom:24px; }
+
+        .card { background:#1e293b;border:1px solid #334155;border-radius:10px;padding:18px;margin-bottom:18px; }
+        .card-title { font-size:13px;font-weight:800;color:#e2e8f0;margin-bottom:14px;
+                      display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:1px; }
+
+        .kpi-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px; }
+        .kpi-tech {
+            background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;
+        }
+        .kpi-label { font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;
+                     letter-spacing:.5px;margin-bottom:6px; }
+        .kpi-val   { font-size:18px;font-weight:800;color:#f1f5f9; }
+        .kpi-sub   { font-size:11px;color:#94a3b8;margin-top:3px; }
+
+        .indicator { display:inline-flex;align-items:center;gap:6px; }
+        .indicator-dot { width:8px;height:8px;border-radius:50%;animation:pulse 1.6s infinite; }
+        .indicator-ok  { background:#16a34a;box-shadow:0 0 8px #16a34a; }
+        .indicator-ko  { background:#dc2626;box-shadow:0 0 8px #dc2626; }
+        @keyframes pulse {
+            0%   { opacity:1; }
+            50%  { opacity:.4; }
+            100% { opacity:1; }
+        }
+
+        .gauge { width:100%;height:6px;background:#0f172a;border-radius:3px;overflow:hidden;margin-top:6px; }
+        .gauge-fill { height:100%;transition:width .5s; }
+
+        .grid-2 { display:grid;grid-template-columns:1fr 1fr;gap:18px; }
+
+        .data-table { width:100%;border-collapse:collapse;font-size:12px; }
+        .data-table th { text-align:left;color:#94a3b8;font-weight:700;
+                         text-transform:uppercase;letter-spacing:.5px;
+                         padding:8px 12px;border-bottom:1px solid #334155;font-size:10px; }
+        .data-table td { padding:8px 12px;border-bottom:1px solid #1e293b;color:#cbd5e1; }
+        .data-table tr:hover td { background:rgba(255,255,255,.03); }
+
+        .btn-refresh {
+            background:#2563eb;color:#fff;border:none;padding:10px 18px;
+            border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;
+            display:inline-flex;align-items:center;gap:6px;
+        }
+    </style>
+</h:head>
+
+<h:body>
+
+<ui:include src="sidebar-admin.xhtml"/>
+
+<div class="main">
+    <p:growl id="growl"/>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+        <div>
+            <h1 class="page-title"><i class="pi pi-heart-fill" style="color:#dc2626;margin-right:8px;"/> Health Check</h1>
+            <div class="page-sub">État système, base de données, sauvegardes et activité technique</div>
+        </div>
+        <h:form>
+            <p:commandButton value="Rafraîchir" icon="pi pi-refresh"
+                action="#{healthBean.rafraichir}"
+                update="@form panelStatut panelStats panelActivites growl"
+                styleClass="btn-refresh"/>
+        </h:form>
+    </div>
+
+    <!-- ── KPI système ── -->
+    <h:panelGroup id="panelStatut">
+        <div class="kpi-grid">
+            <div class="kpi-tech">
+                <div class="kpi-label">Base de données</div>
+                <div class="kpi-val">
+                    <h:panelGroup rendered="#{healthBean.statutSysteme['bddStatut'] == 'OK'}">
+                        <span class="indicator">
+                            <span class="indicator-dot indicator-ok"/>
+                            Opérationnelle
+                        </span>
+                    </h:panelGroup>
+                    <h:panelGroup rendered="#{healthBean.statutSysteme['bddStatut'] != 'OK'}">
+                        <span class="indicator">
+                            <span class="indicator-dot indicator-ko"/>
+                            Erreur
+                        </span>
+                    </h:panelGroup>
+                </div>
+                <div class="kpi-sub">PostgreSQL via Hibernate</div>
+            </div>
+
+            <div class="kpi-tech">
+                <div class="kpi-label">Mémoire JVM</div>
+                <div class="kpi-val">#{healthBean.statutSysteme['memoireUtilisee']}</div>
+                <div class="gauge">
+                    <div class="gauge-fill"
+                         style="width:#{healthBean.statutSysteme['memoireRatio']}%;
+                                background:#{healthBean.getCouleurRatio(healthBean.statutSysteme['memoireRatio'])};"/>
+                </div>
+            </div>
+
+            <div class="kpi-tech">
+                <div class="kpi-label">Uptime</div>
+                <div class="kpi-val">#{healthBean.statutSysteme['uptime']}</div>
+                <div class="kpi-sub">Démarrage : #{healthBean.statutSysteme['demarrage']}</div>
+            </div>
+
+            <div class="kpi-tech">
+                <div class="kpi-label">Sauvegardes</div>
+                <div class="kpi-val">#{healthBean.statutSysteme['nbSauvegardes']} fichier(s)</div>
+                <div class="kpi-sub">Dernière : #{healthBean.statutSysteme['derniereSauvegarde']}</div>
+            </div>
+        </div>
+
+        <!-- ── Détails JVM / OS ── -->
+        <div class="card">
+            <div class="card-title">
+                <i class="pi pi-cog" style="color:#7c3aed;"/>
+                Détails serveur d'application
+            </div>
+            <div class="grid-2">
+                <div>
+                    <table class="data-table">
+                        <tr><th>JVM</th><td>#{healthBean.statutSysteme['jvmVersion']}</td></tr>
+                        <tr><th>Vendor</th><td>#{healthBean.statutSysteme['jvmVendor']}</td></tr>
+                        <tr><th>OS</th><td>#{healthBean.statutSysteme['osNom']}</td></tr>
+                        <tr><th>Processeurs</th><td>#{healthBean.statutSysteme['processeurs']}</td></tr>
+                    </table>
+                </div>
+                <div>
+                    <table class="data-table">
+                        <tr><th>Disque total</th><td>#{healthBean.statutSysteme['disqueTotal']}</td></tr>
+                        <tr><th>Disque libre</th><td>#{healthBean.statutSysteme['disqueLibre']}</td></tr>
+                        <tr><th>Utilisation</th>
+                            <td>
+                                #{healthBean.statutSysteme['disqueRatio']}%
+                                <div class="gauge">
+                                    <div class="gauge-fill"
+                                         style="width:#{healthBean.statutSysteme['disqueRatio']}%;
+                                                background:#{healthBean.getCouleurRatio(healthBean.statutSysteme['disqueRatio'])};"/>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </h:panelGroup>
+
+    <div class="grid-2">
+        <!-- ── Statistiques BDD ── -->
+        <h:panelGroup id="panelStats">
+            <div class="card">
+                <div class="card-title">
+                    <i class="pi pi-database" style="color:#2563eb;"/>
+                    Volumétrie base de données
+                </div>
+                <table class="data-table">
+                    <tr>
+                        <th>Table</th>
+                        <th style="text-align:right;">Lignes</th>
+                    </tr>
+                    <ui:repeat value="#{healthBean.statsBdd}" var="t">
+                        <tr>
+                            <td>
+                                <strong style="color:#f1f5f9;">#{t['libelle']}</strong>
+                                <span style="color:#64748b;font-family:monospace;font-size:10px;">
+                                    #{t['table']}
+                                </span>
+                            </td>
+                            <td style="text-align:right;font-weight:700;color:#fbbf24;">
+                                <h:outputText value="#{t['count']}">
+                                    <f:convertNumber type="number" groupingUsed="true"/>
+                                </h:outputText>
+                            </td>
+                        </tr>
+                    </ui:repeat>
+                </table>
+            </div>
+        </h:panelGroup>
+
+        <!-- ── Activités techniques ── -->
+        <h:panelGroup id="panelActivites">
+            <div class="card">
+                <div class="card-title">
+                    <i class="pi pi-history" style="color:#10b981;"/>
+                    Activités techniques récentes
+                </div>
+                <h:panelGroup rendered="#{healthBean.activites.isEmpty()}">
+                    <div style="padding:30px;text-align:center;color:#64748b;">
+                        Aucune activité technique récente.
+                    </div>
+                </h:panelGroup>
+                <h:panelGroup rendered="#{not healthBean.activites.isEmpty()}">
+                <table class="data-table">
+                    <tr>
+                        <th>Date</th>
+                        <th>Action</th>
+                        <th>Détail</th>
+                    </tr>
+                    <ui:repeat value="#{healthBean.activites}" var="a">
+                        <tr>
+                            <td style="font-family:monospace;font-size:11px;color:#94a3b8;">
+                                <h:outputText value="#{a['date']}">
+                                    <f:convertDateTime pattern="dd/MM HH:mm" type="localDateTime"/>
+                                </h:outputText>
+                            </td>
+                            <td>
+                                <span style="background:#0f172a;color:#fbbf24;padding:2px 8px;
+                                             border-radius:6px;font-size:10px;font-weight:700;">
+                                    #{a['action']}
+                                </span>
+                            </td>
+                            <td style="font-size:11px;color:#cbd5e1;">#{a['detail']}</td>
+                        </tr>
+                    </ui:repeat>
+                </table>
+                </h:panelGroup>
+            </div>
+        </h:panelGroup>
+    </div>
+</div>
+
+</h:body>
+</html>

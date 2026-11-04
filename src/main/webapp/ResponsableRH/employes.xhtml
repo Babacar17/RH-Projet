@@ -1,0 +1,453 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <ui:param name="page" value="employes"/>
+    <ui:define name="title">Fiches Employes — SIRH</ui:define>
+    <ui:define name="pageTitle">Fiches Employes</ui:define>
+    <ui:define name="breadcrumb">Gestion RH &gt; Employes</ui:define>
+
+    <ui:define name="content">
+            <div class="section-card">
+                <!-- TOOLBAR enrichie : recherche + filtres + export + ajout -->
+                <h:form id="formTableEmployes">
+                <div class="toolbar" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+                        <p:inputText value="#{rhBean.termeRecherche}"
+                                     placeholder="Nom, prenom, matricule, email..."
+                                     style="flex:1;min-width:220px;height:38px;box-sizing:border-box;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">
+                            <p:ajax event="keyup" delay="400" listener="#{rhBean.appliquerFiltresEmployes}" update="tableEmployes"/>
+                        </p:inputText>
+
+                        <p:selectOneMenu value="#{rhBean.filtreStatut}" style="width:150px;height:38px;">
+                            <f:selectItem itemLabel="Tous statuts" itemValue=""/>
+                            <f:selectItem itemLabel="Actif"        itemValue="ACTIF"/>
+                            <f:selectItem itemLabel="Inactif"      itemValue="INACTIF"/>
+                            <f:selectItem itemLabel="En cong&#233;" itemValue="EN_CONGE"/>
+                            <f:selectItem itemLabel="Anonymis&#233;" itemValue="ANONYMISE"/>
+                            <p:ajax event="change" listener="#{rhBean.appliquerFiltresEmployes}" update="tableEmployes"/>
+                        </p:selectOneMenu>
+
+                        <p:selectOneMenu value="#{rhBean.filtreTypeContrat}" style="width:150px;height:38px;">
+                            <f:selectItem itemLabel="Tous contrats" itemValue=""/>
+                            <f:selectItem itemLabel="CDI"           itemValue="CDI"/>
+                            <f:selectItem itemLabel="CDD"           itemValue="CDD"/>
+                            <f:selectItem itemLabel="STAGE"         itemValue="STAGE"/>
+                            <f:selectItem itemLabel="INTERIM"       itemValue="INTERIM"/>
+                            <f:selectItem itemLabel="ALTERNANCE"    itemValue="ALTERNANCE"/>
+                            <p:ajax event="change" listener="#{rhBean.appliquerFiltresEmployes}" update="tableEmployes"/>
+                        </p:selectOneMenu>
+
+                        <p:selectOneMenu value="#{rhBean.filtreDirectionId}" style="width:170px;height:38px;">
+                            <f:selectItem itemLabel="Toutes directions" itemValue="#{null}"/>
+                            <f:selectItems value="#{rhBean.directions}" var="d"
+                                           itemValue="#{d.id}" itemLabel="#{d.nom}"/>
+                            <p:ajax event="change" listener="#{rhBean.appliquerFiltresEmployes}" update="tableEmployes"/>
+                        </p:selectOneMenu>
+                    <p:commandButton value="Export CSV"
+                        icon="pi pi-download"
+                        action="#{rhBean.exporterEmployesCsv}"
+                        ajax="false"
+                        style="height:38px;margin-left:auto;"
+                        styleClass="btn btn-secondary"/>
+                    <p:commandButton value="+ Nouvel employe"
+                        oncomplete="PF('dlgEmploye').show()"
+                        update=":formEmploye"
+                        action="#{rhBean.preparerNouvelEmploye}"
+                        style="height:38px;"
+                        styleClass="btn btn-primary"/>
+                </div>
+
+                <!-- TABLE -->
+                    <h:panelGroup id="tableEmployes" layout="block">
+                    <h:panelGroup rendered="#{not rhBean.filtresEmployesAppliques}">
+                        <p style="color:#94a3b8;font-size:13px;padding:24px 16px;text-align:center;">
+                            ← Lancez une recherche ou appliquez un filtre ci-dessus, ou
+                            <p:commandLink value="affichez tous les employés" action="#{rhBean.appliquerFiltresEmployes}" update="tableEmployes"
+                                           style="color:#2563eb;font-weight:600;"/>.
+                        </p>
+                    </h:panelGroup>
+                    <p:dataTable rendered="#{rhBean.filtresEmployesAppliques}" value="#{rhBean.employes}" var="e"
+                                 rows="15" paginator="true"
+                                 paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink}"
+                                 emptyMessage="Aucun employe trouve."
+                                 style="border:none;">
+
+                        <p:column headerText="Matricule" style="padding:12px 16px;width:110px;">
+                            <span style="font-family:monospace;font-size:12px;background:#f1f5f9;padding:3px 8px;border-radius:4px;">#{e.matricule}</span>
+                        </p:column>
+
+                        <p:column headerText="Employe" style="padding:12px 16px;">
+                            <div style="font-weight:600;font-size:13px;color:#1e293b;">#{e.nomComplet}</div>
+                            <div style="font-size:11px;color:#64748b;">#{e.email}</div>
+                        </p:column>
+
+                        <p:column headerText="Poste / Departement" style="padding:12px 16px;">
+                            <div style="font-size:13px;font-weight:500;">#{e.intiutePoste}</div>
+                            <div style="font-size:11px;color:#64748b;">#{e.nomDirection}</div>
+                        </p:column>
+
+                        <p:column headerText="Contrat" style="padding:12px 16px;width:90px;">
+                            <span style="font-size:11px;font-weight:600;color:#475569;">#{e.typeContrat}</span>
+                        </p:column>
+
+                        <p:column headerText="Embauche" style="padding:12px 16px;width:110px;">
+                            <h:outputText value="#{e.dateEmbauche}">
+                                <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                            </h:outputText>
+                        </p:column>
+
+                        <p:column headerText="Statut" style="padding:12px 16px;width:100px;">
+                            <span class="badge badge-#{e.statut}">#{e.statut}</span>
+                        </p:column>
+
+                        <p:column headerText="Actions"
+                                  style="padding:8px 12px;width:230px;text-align:right;">
+                            <div style="display:inline-flex;gap:5px;align-items:center;
+                                        justify-content:flex-end;flex-wrap:nowrap;white-space:nowrap;">
+                                <a href="employe-360.xhtml?id=#{e.id}"
+                                   title="Vue 360° complète"
+                                   style="width:30px;height:30px;padding:0;background:#0f172a;
+                                          border:none;border-radius:6px;color:#fff;cursor:pointer;
+                                          display:inline-flex;align-items:center;justify-content:center;
+                                          text-decoration:none;">
+                                    <i class="pi pi-eye" style="font-size:13px;"/>
+                                </a>
+                                <p:commandButton
+                                    title="Télécharger le contrat PDF"
+                                    icon="pi pi-file-pdf"
+                                    action="#{rhBean.telechargerContratEmploye(e.id)}"
+                                    ajax="false"
+                                    style="width:30px;height:30px;padding:0;background:#dc2626;border:none;border-radius:6px;color:#fff;cursor:pointer;"/>
+                                <p:commandButton
+                                    title="Modifier la fiche"
+                                    icon="pi pi-pencil"
+                                    action="#{rhBean.preparerEditionEmploye(e)}"
+                                    oncomplete="PF('dlgEmploye').show()"
+                                    update="formEmploye"
+                                    style="width:30px;height:30px;padding:0;background:#6366f1;border:none;border-radius:6px;color:#fff;cursor:pointer;"/>
+                                <p:commandButton
+                                    title="Mouvement de carri&#232;re"
+                                    icon="pi pi-chart-line"
+                                    action="#{rhBean.preparerNouveauMouvementPour(e)}"
+                                    oncomplete="PF('dlgMouvement').show()"
+                                    update="formMouvement"
+                                    style="width:30px;height:30px;padding:0;background:#f59e0b;border:none;border-radius:6px;color:#fff;cursor:pointer;"/>
+                                <p:commandButton
+                                    title="D&#233;marrer une &#233;valuation"
+                                    icon="pi pi-star"
+                                    action="#{rhBean.preparerEvaluationPour(e)}"
+                                    oncomplete="PF('dlgEvalRapide').show()"
+                                    update=":formEvalRapide"
+                                    style="width:30px;height:30px;padding:0;background:#10b981;border:none;border-radius:6px;color:#fff;cursor:pointer;"/>
+                                <p:commandButton
+                                    title="Inscrire &#224; une formation"
+                                    icon="pi pi-book"
+                                    action="#{rhBean.preparerInscriptionPour(e)}"
+                                    oncomplete="PF('dlgInscritEmp').show()"
+                                    update=":formInscritEmp"
+                                    style="width:30px;height:30px;padding:0;background:#0ea5e9;border:none;border-radius:6px;color:#fff;cursor:pointer;"/>
+                                <p:commandButton
+                                    title="Supprimer"
+                                    icon="pi pi-trash"
+                                    action="#{rhBean.supprimerEmploye(e.id)}"
+                                    update="tableEmployes growl"
+                                    onclick="return confirm('Supprimer cet employ&#233; ?')"
+                                    style="width:30px;height:30px;padding:0;background:#ef4444;border:none;border-radius:6px;color:#fff;cursor:pointer;"/>
+                            </div>
+                        </p:column>
+                    </p:dataTable>
+                    </h:panelGroup>
+                </h:form>
+            </div>
+
+            <!-- DIALOG : Créer / Modifier employe -->
+            <h:form id="formEmploye">
+                <p:dialog header="#{rhBean.modeEdition ? 'Modifier la fiche employe' : 'Nouvel employe'}"
+                          widgetVar="dlgEmploye" modal="true" width="760" resizable="false">
+                    <div style="padding:20px;max-height:75vh;overflow-y:auto;">
+                        <div class="form-row col-3" style="margin-bottom:16px;">
+                            <div class="form-group">
+                                <label class="form-label">Nom *</label>
+                                <p:inputText value="#{rhBean.employe.nom}" style="width:100%;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Prenom *</label>
+                                <p:inputText value="#{rhBean.employe.prenom}" style="width:100%;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Sexe</label>
+                                <p:selectOneMenu value="#{rhBean.employe.sexe}" style="width:100%;">
+                                    <f:selectItem itemLabel="-- Choisir --" itemValue=""/>
+                                    <f:selectItem itemLabel="Masculin" itemValue="M"/>
+                                    <f:selectItem itemLabel="Feminin" itemValue="F"/>
+                                </p:selectOneMenu>
+                            </div>
+                        </div>
+                        <div class="form-row col-2" style="margin-bottom:16px;">
+                            <div class="form-group">
+                                <label class="form-label">Email *</label>
+                                <p:inputText value="#{rhBean.employe.email}" style="width:100%;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Telephone</label>
+                                <p:inputText value="#{rhBean.employe.telephone}" style="width:100%;"/>
+                            </div>
+                        </div>
+                        <div class="form-row col-3" style="margin-bottom:16px;">
+                            <div class="form-group">
+                                <label class="form-label">Poste *</label>
+                                <p:inputText value="#{rhBean.employe.librePoste}" style="width:100%;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Departement</label>
+                                <p:inputText value="#{rhBean.employe.nomDirection}" readonly="true" style="width:100%;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Service</label>
+                                <p:inputText value="#{rhBean.employe.nomService}" readonly="true" style="width:100%;"/>
+                            </div>
+                        </div>
+                        <div class="form-row col-4" style="margin-bottom:16px;">
+                            <div class="form-group">
+                                <label class="form-label">Type de contrat</label>
+                                <p:selectOneMenu value="#{rhBean.employe.typeContrat}" style="width:100%;">
+                                    <f:selectItem itemLabel="-- Choisir --" itemValue=""/>
+                                    <f:selectItem itemLabel="CDI" itemValue="CDI"/>
+                                    <f:selectItem itemLabel="CDD" itemValue="CDD"/>
+                                    <f:selectItem itemLabel="Stage" itemValue="Stage"/>
+                                    <f:selectItem itemLabel="Consultant" itemValue="Consultant"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Date d'embauche *</label>
+                                <p:datePicker value="#{rhBean.employe.dateEmbauche}"
+                                              pattern="dd/MM/yyyy" style="width:100%;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Grille salariale</label>
+                                <p:selectOneMenu value="#{rhBean.grilleIdSelectionne}" converter="jakarta.faces.Long" style="width:100%;">
+                                    <f:selectItem itemLabel="— Aucune —" itemValue="#{null}"/>
+                                    <f:selectItems value="#{rhBean.grillesSalariales}" var="gr" itemValue="#{gr.id}" itemLabel="#{gr.libelle}"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Salaire de base (FCFA)</label>
+                                <p:inputNumber value="#{rhBean.employe.salaireBase}" style="width:100%;"/>
+                            </div>
+                        </div>
+                        <div class="form-row col-2" style="margin-bottom:16px;">
+                            <div class="form-group">
+                                <label class="form-label">Grade / Echelon</label>
+                                <p:inputText value="#{rhBean.employe.gradeEchelon}" style="width:100%;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Manager</label>
+                                <p:selectOneMenu value="#{rhBean.managerIdSelectionne}" converter="jakarta.faces.Long"
+                                                 filter="true" filterMatchMode="contains" style="width:100%;">
+                                    <f:selectItem itemLabel="— Aucun —" itemValue="#{null}"/>
+                                    <f:selectItems value="#{rhBean.employes}" var="m" itemValue="#{m.id}" itemLabel="#{m.nomComplet}"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Statut</label>
+                                <p:selectOneMenu value="#{rhBean.employe.statut}" style="width:100%;">
+                                    <f:selectItem itemLabel="Actif" itemValue="ACTIF"/>
+                                    <f:selectItem itemLabel="Inactif" itemValue="INACTIF"/>
+                                    <f:selectItem itemLabel="Suspendu" itemValue="SUSPENDU"/>
+                                </p:selectOneMenu>
+                            </div>
+                        </div>
+                        <div class="form-row col-2" style="margin-bottom:16px;">
+                            <div class="form-group">
+                                <label class="form-label">Banque</label>
+                                <p:inputText value="#{rhBean.employe.banque}" style="width:100%;" placeholder="Ex : CBAO, SGBS…"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Numéro de compte / IBAN</label>
+                                <p:inputText value="#{rhBean.employe.numeroCompte}" style="width:100%;"/>
+                            </div>
+                        </div>
+                        <div style="text-align:right;padding-top:16px;border-top:1px solid #f1f5f9;">
+                            <p:commandButton value="Annuler"
+                                oncomplete="PF('dlgEmploye').hide()"
+                                styleClass="btn btn-secondary" style="margin-right:8px;" ajax="false"/>
+                            <p:commandButton value="Enregistrer"
+                                action="#{rhBean.sauvegarderEmploye}"
+                                update="formTableEmployes growl"
+                                oncomplete="if(!args.validationFailed) PF('dlgEmploye').hide();"
+                                styleClass="btn btn-primary"/>
+                        </div>
+                    </div>
+                </p:dialog>
+            </h:form>
+
+            <!-- DIALOG : Mouvement de carriere rapide -->
+            <h:form id="formMouvement">
+                <p:dialog header="Nouveau mouvement de carriere"
+                          widgetVar="dlgMouvement" modal="true" width="600">
+                    <div style="padding:20px;max-height:75vh;overflow-y:auto;">
+                        <div class="form-group">
+                            <label class="form-label">Type de mouvement</label>
+                            <p:selectOneMenu value="#{rhBean.mouvement.typeMouvement}" style="width:100%;">
+                                <f:selectItem itemLabel="-- Choisir --" itemValue=""/>
+                                <f:selectItem itemLabel="Promotion" itemValue="PROMOTION"/>
+                                <f:selectItem itemLabel="Mutation" itemValue="MUTATION"/>
+                                <f:selectItem itemLabel="Mobilite interne" itemValue="MOBILITE"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="form-row col-2" style="margin-bottom:16px;">
+                            <div class="form-group">
+                                <label class="form-label">Nouveau poste</label>
+                                <p:inputText value="#{rhBean.mouvement.nouveauPoste}" style="width:100%;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Nouveau departement</label>
+                                <p:inputText value="#{rhBean.mouvement.nouveauDepartement}" style="width:100%;"/>
+                            </div>
+                        </div>
+                        <div class="form-row col-2" style="margin-bottom:16px;">
+                            <div class="form-group">
+                                <label class="form-label">Nouveau salaire (FCFA)</label>
+                                <p:inputNumber value="#{rhBean.mouvement.nouveauSalaire}" style="width:100%;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Date d'effet</label>
+                                <p:datePicker value="#{rhBean.mouvement.dateEffet}"
+                                              pattern="dd/MM/yyyy" style="width:100%;"/>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Motif</label>
+                            <p:inputTextarea value="#{rhBean.mouvement.motif}" rows="2" style="width:100%;"/>
+                        </div>
+                        <div style="text-align:right;padding-top:16px;border-top:1px solid #f1f5f9;">
+                            <p:commandButton value="Annuler"
+                                oncomplete="PF('dlgMouvement').hide()"
+                                styleClass="btn btn-secondary" style="margin-right:8px;" ajax="false"/>
+                            <p:commandButton value="Enregistrer le mouvement"
+                                action="#{rhBean.sauvegarderMouvement}"
+                                update="formTableEmployes growl"
+                                oncomplete="if(!args.validationFailed) PF('dlgMouvement').hide();"
+                                styleClass="btn btn-gold"/>
+                        </div>
+                    </div>
+                </p:dialog>
+            </h:form>
+
+        <!-- ═══════════════ DIALOG ÉVALUATION RAPIDE ═══════════════ -->
+<h:form id="formEvalRapide">
+    <p:dialog header="Démarrer une évaluation"
+              widgetVar="dlgEvalRapide" modal="true" width="540"
+              resizable="false" closeOnEscape="true">
+        <h:panelGroup rendered="#{rhBean.evaluation.employe != null}">
+            <div style="padding:22px;">
+                <div style="background:#f0fdf4;border-radius:8px;padding:12px 14px;
+                            margin-bottom:18px;">
+                    <div style="font-size:11px;color:#15803d;text-transform:uppercase;
+                                letter-spacing:.5px;margin-bottom:4px;">Employé évalué</div>
+                    <div style="font-size:15px;font-weight:700;color:#0f172a;">
+                        #{rhBean.evaluation.employe.nomComplet}
+                    </div>
+                    <div style="font-size:12px;color:#64748b;margin-top:3px;">
+                        #{rhBean.evaluation.employe.matricule} &#8226;
+                        #{rhBean.evaluation.employe.intiutePoste}
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label class="form-label">Type d'évaluation</label>
+                    <p:selectOneMenu value="#{rhBean.evaluation.typeEvaluation}" style="width:100%;">
+                        <f:selectItem itemLabel="Annuelle"           itemValue="ANNUELLE"/>
+                        <f:selectItem itemLabel="Semestrielle"       itemValue="SEMESTRIELLE"/>
+                        <f:selectItem itemLabel="Période d'essai"    itemValue="ESSAI"/>
+                        <f:selectItem itemLabel="Promotion"          itemValue="PROMOTION"/>
+                    </p:selectOneMenu>
+                </div>
+
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label class="form-label">Période</label>
+                    <p:inputText value="#{rhBean.evaluation.periode}" style="width:100%;"
+                                 placeholder="Ex : Annuelle 2026"/>
+                </div>
+
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label class="form-label">Date prévue</label>
+                    <p:datePicker value="#{rhBean.evaluation.datePrevue}"
+                                  pattern="dd/MM/yyyy" style="width:100%;"/>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;gap:10px;
+                            padding-top:14px;border-top:1px solid #e2e8f0;">
+                    <p:commandButton value="Annuler" type="button"
+                        onclick="PF('dlgEvalRapide').hide()"
+                        styleClass="btn btn-secondary"/>
+                    <p:commandButton value="Créer l'évaluation"
+                        icon="pi pi-check"
+                        action="#{rhBean.sauvegarderEvaluation}"
+                        update="formEvalRapide growl"
+                        oncomplete="if(!args.validationFailed) PF('dlgEvalRapide').hide()"
+                        styleClass="btn btn-primary"/>
+                </div>
+            </div>
+        </h:panelGroup>
+    </p:dialog>
+</h:form>
+
+<!-- ═══════════════ DIALOG INSCRIPTION FORMATION RAPIDE ═══════════════ -->
+<h:form id="formInscritEmp">
+    <p:dialog header="Inscrire à une formation"
+              widgetVar="dlgInscritEmp" modal="true" width="540"
+              resizable="false" closeOnEscape="true">
+        <div style="padding:22px;">
+            <div style="background:#eff6ff;border-radius:8px;padding:12px 14px;margin-bottom:18px;">
+                <div style="font-size:11px;color:#1d4ed8;text-transform:uppercase;
+                            letter-spacing:.5px;margin-bottom:4px;">Employé à inscrire</div>
+                <h:panelGroup rendered="#{rhBean.employeAInscrireId != null}">
+                    <ui:repeat value="#{rhBean.employes}" var="emp">
+                        <h:panelGroup rendered="#{emp.id == rhBean.employeAInscrireId}">
+                            <div style="font-size:15px;font-weight:700;color:#0f172a;">
+                                #{emp.nomComplet}
+                            </div>
+                            <div style="font-size:12px;color:#64748b;margin-top:3px;">
+                                #{emp.matricule} &#8226; #{emp.intiutePoste}
+                            </div>
+                        </h:panelGroup>
+                    </ui:repeat>
+                </h:panelGroup>
+            </div>
+
+            <div class="form-group" style="margin-bottom:14px;">
+                <label class="form-label">Formation</label>
+                <p:selectOneMenu value="#{rhBean.formationSelectionneeId}"
+                                 style="width:100%;">
+                    <f:selectItem itemLabel="— Choisir une formation —" itemValue="#{null}"/>
+                    <f:selectItems value="#{rhBean.formations}" var="f"
+                                   itemValue="#{f.id}"
+                                   itemLabel="#{f.titre}"/>
+                </p:selectOneMenu>
+                <small style="color:#94a3b8;font-size:11px;display:block;margin-top:4px;">
+                    Toutes les formations de votre institution sont disponibles.
+                </small>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;gap:10px;
+                        padding-top:14px;border-top:1px solid #e2e8f0;">
+                <p:commandButton value="Annuler" type="button"
+                    onclick="PF('dlgInscritEmp').hide()"
+                    styleClass="btn btn-secondary"/>
+                <p:commandButton value="Inscrire"
+                    icon="pi pi-check"
+                    action="#{rhBean.inscrireEmployeFormation}"
+                    update="formInscritEmp growl"
+                    oncomplete="if(!args.validationFailed) PF('dlgInscritEmp').hide()"
+                    styleClass="btn btn-primary"/>
+            </div>
+        </div>
+    </p:dialog>
+</h:form>
+    </ui:define>
+
+</ui:composition>

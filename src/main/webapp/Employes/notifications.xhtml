@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Notifications — Espace Employé</title>
+    <h:outputStylesheet library="css" name="employe-style.css"/>
+</h:head>
+<h:body>
+<div class="emp-layout">
+
+    <ui:include src="sidebar-employe.xhtml"/>
+
+    <main class="emp-main">
+
+        <div class="emp-page-header">
+            <div class="emp-page-title">
+                <h1><i class="pi pi-bell" style="color:var(--emp-copper-l);"/> Mes notifications</h1>
+                <p>Suivez l'activité sur votre compte</p>
+            </div>
+            <h:panelGroup rendered="#{notificationBean.compteurNonLues gt 0}">
+                <span class="emp-badge badge-warning" style="font-size:0.85rem;padding:6px 14px;">
+                    #{notificationBean.compteurNonLues} non lue(s)
+                </span>
+            </h:panelGroup>
+        </div>
+
+        <div class="emp-card">
+            <div class="emp-card-header">
+                <div class="emp-card-title">
+                    <span class="card-icon"><i class="pi pi-bell"/></span>
+                    Toutes les notifications
+                </div>
+                <h:form id="formMarquerToutes">
+                    <p:commandButton value="Tout marquer comme lu"
+                        action="#{notificationBean.marquerToutesLues}"
+                        update="@form :formNotifList"
+                        rendered="#{notificationBean.compteurNonLues gt 0}"
+                        styleClass="emp-btn emp-btn-outline emp-btn-sm"/>
+                </h:form>
+            </div>
+
+            <h:form id="formNotifList">
+                <h:panelGroup rendered="#{not empty notificationBean.toutes}">
+                    <ul class="notif-list">
+                        <ui:repeat value="#{notificationBean.toutes}" var="notif">
+                            <li class="notif-item">
+                                <h:panelGroup rendered="#{not notif.estLue}">
+                                    <span style="width:8px;height:8px;border-radius:50%;background:var(--emp-primary);flex-shrink:0;margin-top:6px;"/>
+                                </h:panelGroup>
+                                <div style="width:32px;height:32px;border-radius:50%;background:rgba(124,58,237,0.15);
+                                            display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                    <i class="pi #{notificationBean.getIcone(notif.type)}" style="color:var(--emp-primary);font-size:0.85rem;"/>
+                                </div>
+                                <p:commandLink action="#{notificationBean.marquerLue(notif.id)}"
+                                               update="@form"
+                                               oncomplete="if (#{not empty notif.lienAction}) { window.location='#{request.contextPath}#{notif.lienAction}#{not empty notif.entiteLieeId ? '?entiteId=' : ''}#{notif.entiteLieeId}'; }"
+                                               style="flex:1;color:inherit;text-decoration:none;cursor:pointer;">
+                                    <span style="font-weight:700;display:block;">#{notif.titre}</span>
+                                    <span style="display:block;margin-top:2px;">#{notif.message}</span>
+                                    <span style="font-size:0.75rem;color:var(--emp-muted);display:block;margin-top:4px;">
+                                        #{notificationBean.getDateRelative(notif.dateCreation)}
+                                    </span>
+                                </p:commandLink>
+                                <p:commandLink action="#{notificationBean.marquerLue(notif.id)}"
+                                               update="@form"
+                                               rendered="#{not notif.estLue}"
+                                               styleClass="emp-btn emp-btn-outline emp-btn-sm"
+                                               style="flex-shrink:0;">
+                                    Marquer lu
+                                </p:commandLink>
+                            </li>
+                        </ui:repeat>
+                    </ul>
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{empty notificationBean.toutes}">
+                    <div style="text-align:center;padding:48px;color:var(--emp-muted);">
+                        <i class="pi pi-bell" style="font-size:2.5rem;display:block;margin-bottom:12px;opacity:0.4;"/>
+                        <p>Aucune notification pour le moment</p>
+                    </div>
+                </h:panelGroup>
+            </h:form>
+        </div>
+
+    </main>
+</div>
+</h:body>
+</html>

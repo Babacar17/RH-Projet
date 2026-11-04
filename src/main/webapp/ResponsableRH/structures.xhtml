@@ -1,0 +1,398 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <ui:param name="page" value="structures"/>
+    <ui:define name="title">Structures — SIRH</ui:define>
+    <ui:define name="pageTitle">Structures</ui:define>
+    <ui:define name="breadcrumb">Organisation &gt; Structures — #{sessionBean.institutionCourante.nom}</ui:define>
+
+    <ui:define name="content">
+        <p:tabView>
+
+            <!-- ═══ DIRECTIONS ═══ -->
+            <p:tab title="#{structureBean.labelNiveau1Pl}" rendered="#{structureBean.niveaux.contains('Direction')}">
+                <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+                    <p:commandButton value="+ Nouvelle #{structureBean.labelNiveau1}"
+                        action="#{structureBean.preparerNouvelleDirection}"
+                        oncomplete="PF('dlgDirection').show()" update="formDirection"
+                        styleClass="btn btn-primary"/>
+                </div>
+                <h:form id="formTableDirections">
+                    <p:dataTable value="#{structureBean.directions}" var="d" rows="10" paginator="true"
+                                 emptyMessage="Aucune donnée." style="border:none;">
+                        <p:column headerText="Nom" style="padding:12px 16px;" filterBy="#{d.nom}" filterMatchMode="contains" filterPlaceholder="Rechercher...">
+                            <div style="font-weight:700;font-size:13px;">#{d.nom}</div>
+                            <div style="font-size:11px;color:#64748b;">#{d.code}</div>
+                        </p:column>
+                        <p:column headerText="Chef" style="padding:12px 16px;">
+                            <h:outputText value="#{d.chef.nomComplet}" rendered="#{d.chef != null}"/>
+                            <h:panelGroup rendered="#{d.chef == null}">
+                                <span style="color:#94a3b8;">Non désigné</span>
+                            </h:panelGroup>
+                        </p:column>
+                        <p:column headerText="Statut" style="padding:12px 16px;width:110px;">
+                            <span class="badge badge-#{d.statut}">#{d.statut}</span>
+                        </p:column>
+                        <p:column style="padding:12px 16px;width:90px;text-align:right;">
+                            <p:commandButton icon="pi pi-pencil" title="Modifier"
+                                action="#{structureBean.preparerEditionDirection(d)}"
+                                oncomplete="PF('dlgDirection').show()" update="formDirection"
+                                style="width:30px;height:30px;padding:0;background:#6366f1;border:none;border-radius:6px;color:#fff;cursor:pointer;margin-right:6px;"/>
+                            <p:commandButton icon="pi pi-trash" title="Supprimer"
+                                action="#{structureBean.supprimerDirection(d.id)}"
+                                update="growl formTableDirections"
+                                onclick="if(!confirm('Supprimer cette entrée ?')) return false;"
+                                style="width:30px;height:30px;padding:0;background:#ef4444;border:none;border-radius:6px;color:#fff;cursor:pointer;"/>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </p:tab>
+
+            <!-- ═══ DIVISIONS ═══ -->
+            <p:tab title="#{structureBean.labelNiveau2Pl}" rendered="#{structureBean.niveaux.contains('Division')}">
+                <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+                    <p:commandButton value="+ Nouvelle #{structureBean.labelNiveau2}"
+                        action="#{structureBean.preparerNouvelleDivision}"
+                        oncomplete="PF('dlgDivision').show()" update="formDivision"
+                        styleClass="btn btn-primary"/>
+                </div>
+                <h:form id="formTableDivisions">
+                    <p:dataTable value="#{structureBean.divisions}" var="d" rows="10" paginator="true"
+                                 emptyMessage="Aucune donnée." style="border:none;">
+                        <p:column headerText="Nom" style="padding:12px 16px;" filterBy="#{d.nom}" filterMatchMode="contains" filterPlaceholder="Rechercher...">
+                            <div style="font-weight:700;font-size:13px;">#{d.nom}</div>
+                            <div style="font-size:11px;color:#64748b;">#{d.code}</div>
+                        </p:column>
+                        <p:column headerText="#{structureBean.labelNiveau1}" style="padding:12px 16px;" rendered="#{structureBean.niveaux.contains('Direction')}">
+                            <h:outputText value="#{d.direction.nom}" rendered="#{d.direction != null}"/>
+                            <h:panelGroup rendered="#{d.direction == null}">
+                                <span style="color:#94a3b8;">—</span>
+                            </h:panelGroup>
+                        </p:column>
+                        <p:column headerText="Chef" style="padding:12px 16px;">
+                            <h:outputText value="#{d.chef.nomComplet}" rendered="#{d.chef != null}"/>
+                            <h:panelGroup rendered="#{d.chef == null}">
+                                <span style="color:#94a3b8;">Non désigné</span>
+                            </h:panelGroup>
+                        </p:column>
+                        <p:column headerText="Statut" style="padding:12px 16px;width:110px;">
+                            <span class="badge badge-#{d.statut}">#{d.statut}</span>
+                        </p:column>
+                        <p:column style="padding:12px 16px;width:90px;text-align:right;">
+                            <p:commandButton icon="pi pi-pencil" title="Modifier"
+                                action="#{structureBean.preparerEditionDivision(d)}"
+                                oncomplete="PF('dlgDivision').show()" update="formDivision"
+                                style="width:30px;height:30px;padding:0;background:#6366f1;border:none;border-radius:6px;color:#fff;cursor:pointer;margin-right:6px;"/>
+                            <p:commandButton icon="pi pi-trash" title="Supprimer"
+                                action="#{structureBean.supprimerDivision(d.id)}"
+                                update="growl formTableDivisions"
+                                onclick="if(!confirm('Supprimer cette entrée ?')) return false;"
+                                style="width:30px;height:30px;padding:0;background:#ef4444;border:none;border-radius:6px;color:#fff;cursor:pointer;"/>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </p:tab>
+
+            <!-- ═══ SERVICES ═══ -->
+            <p:tab title="#{structureBean.labelNiveau3Pl}" rendered="#{structureBean.niveaux.contains('Service')}">
+                <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+                    <p:commandButton value="+ Nouveau #{structureBean.labelNiveau3}"
+                        action="#{structureBean.preparerNouveauService}"
+                        oncomplete="PF('dlgService').show()" update="formService"
+                        styleClass="btn btn-primary"/>
+                </div>
+                <h:form id="formTableServices">
+                    <p:dataTable value="#{structureBean.services}" var="s" rows="10" paginator="true"
+                                 emptyMessage="Aucune donnée." style="border:none;">
+                        <p:column headerText="Nom" style="padding:12px 16px;" filterBy="#{s.nom}" filterMatchMode="contains" filterPlaceholder="Rechercher...">
+                            <div style="font-weight:700;font-size:13px;">#{s.nom}</div>
+                            <div style="font-size:11px;color:#64748b;">#{s.code}</div>
+                        </p:column>
+                        <p:column headerText="#{structureBean.labelNiveau2}" style="padding:12px 16px;" rendered="#{structureBean.niveaux.contains('Division')}">
+                            <h:outputText value="#{s.division.nom}" rendered="#{s.division != null}"/>
+                            <h:panelGroup rendered="#{s.division == null}">
+                                <span style="color:#94a3b8;">—</span>
+                            </h:panelGroup>
+                        </p:column>
+                        <p:column headerText="Chef" style="padding:12px 16px;">
+                            <h:outputText value="#{s.chef.nomComplet}" rendered="#{s.chef != null}"/>
+                            <h:panelGroup rendered="#{s.chef == null}">
+                                <span style="color:#94a3b8;">Non désigné</span>
+                            </h:panelGroup>
+                        </p:column>
+                        <p:column headerText="Statut" style="padding:12px 16px;width:110px;">
+                            <span class="badge badge-#{s.statut}">#{s.statut}</span>
+                        </p:column>
+                        <p:column style="padding:12px 16px;width:90px;text-align:right;">
+                            <p:commandButton icon="pi pi-pencil" title="Modifier"
+                                action="#{structureBean.preparerEditionService(s)}"
+                                oncomplete="PF('dlgService').show()" update="formService"
+                                style="width:30px;height:30px;padding:0;background:#6366f1;border:none;border-radius:6px;color:#fff;cursor:pointer;margin-right:6px;"/>
+                            <p:commandButton icon="pi pi-trash" title="Supprimer"
+                                action="#{structureBean.supprimerService(s.id)}"
+                                update="growl formTableServices"
+                                onclick="if(!confirm('Supprimer cette entrée ?')) return false;"
+                                style="width:30px;height:30px;padding:0;background:#ef4444;border:none;border-radius:6px;color:#fff;cursor:pointer;"/>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </p:tab>
+
+            <!-- ═══ BUREAUX ═══ -->
+            <p:tab title="#{structureBean.labelNiveau4Pl}" rendered="#{structureBean.niveaux.contains('Bureau')}">
+                <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+                    <p:commandButton value="+ Nouveau #{structureBean.labelNiveau4}"
+                        action="#{structureBean.preparerNouveauBureau}"
+                        oncomplete="PF('dlgBureau').show()" update="formBureau"
+                        styleClass="btn btn-primary"/>
+                </div>
+                <h:form id="formTableBureaux">
+                    <p:dataTable value="#{structureBean.bureaux}" var="b" rows="10" paginator="true"
+                                 emptyMessage="Aucune donnée." style="border:none;">
+                        <p:column headerText="Nom" style="padding:12px 16px;" filterBy="#{b.nom}" filterMatchMode="contains" filterPlaceholder="Rechercher...">
+                            <div style="font-weight:700;font-size:13px;">#{b.nom}</div>
+                            <div style="font-size:11px;color:#64748b;">#{b.code}</div>
+                        </p:column>
+                        <p:column headerText="#{structureBean.labelNiveau3}" style="padding:12px 16px;" rendered="#{structureBean.niveaux.contains('Service')}">
+                            <h:outputText value="#{b.service.nom}" rendered="#{b.service != null}"/>
+                            <h:panelGroup rendered="#{b.service == null}">
+                                <span style="color:#94a3b8;">—</span>
+                            </h:panelGroup>
+                        </p:column>
+                        <p:column headerText="Chef" style="padding:12px 16px;">
+                            <h:outputText value="#{b.chef.nomComplet}" rendered="#{b.chef != null}"/>
+                            <h:panelGroup rendered="#{b.chef == null}">
+                                <span style="color:#94a3b8;">Non désigné</span>
+                            </h:panelGroup>
+                        </p:column>
+                        <p:column headerText="Statut" style="padding:12px 16px;width:110px;">
+                            <span class="badge badge-#{b.statut}">#{b.statut}</span>
+                        </p:column>
+                        <p:column style="padding:12px 16px;width:90px;text-align:right;">
+                            <p:commandButton icon="pi pi-pencil" title="Modifier"
+                                action="#{structureBean.preparerEditionBureau(b)}"
+                                oncomplete="PF('dlgBureau').show()" update="formBureau"
+                                style="width:30px;height:30px;padding:0;background:#6366f1;border:none;border-radius:6px;color:#fff;cursor:pointer;margin-right:6px;"/>
+                            <p:commandButton icon="pi pi-trash" title="Supprimer"
+                                action="#{structureBean.supprimerBureau(b.id)}"
+                                update="growl formTableBureaux"
+                                onclick="if(!confirm('Supprimer cette entrée ?')) return false;"
+                                style="width:30px;height:30px;padding:0;background:#ef4444;border:none;border-radius:6px;color:#fff;cursor:pointer;"/>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </p:tab>
+
+        </p:tabView>
+    </ui:define>
+
+    <ui:define name="dialogs">
+
+        <!-- DIALOG DIRECTION -->
+        <h:form id="formDirection">
+            <p:dialog header="#{structureBean.modeEditionDirection ? 'Modifier' : 'Nouvelle'} #{structureBean.labelNiveau1}"
+                      widgetVar="dlgDirection" modal="true" width="560" resizable="false">
+                <div style="padding:22px;">
+                    <div class="form-row col-2">
+                        <div class="form-group">
+                            <label class="form-label">Nom *</label>
+                            <p:inputText value="#{structureBean.direction.nom}" required="true" style="width:100%;"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Code</label>
+                            <p:inputText value="#{structureBean.direction.code}" style="width:100%;"/>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Chef</label>
+                        <p:selectOneMenu value="#{structureBean.chefDirectionId}" style="width:100%;" filter="true">
+                            <f:selectItem itemLabel="— Aucun —" itemValue="#{null}"/>
+                            <f:selectItems value="#{structureBean.employes}" var="e" itemValue="#{e.id}" itemLabel="#{e.nomComplet}"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Statut</label>
+                        <p:selectOneMenu value="#{structureBean.direction.statut}" style="width:100%;">
+                            <f:selectItem itemLabel="Active" itemValue="ACTIVE"/>
+                            <f:selectItem itemLabel="Inactive" itemValue="INACTIVE"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <p:inputTextarea value="#{structureBean.direction.description}" rows="3" style="width:100%;"/>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;border-top:1px solid #e2e8f0;">
+                        <p:commandButton value="Annuler" type="button" onclick="PF('dlgDirection').hide()" styleClass="btn btn-secondary"/>
+                        <p:commandButton value="Enregistrer"
+                            action="#{structureBean.sauvegarderDirection}"
+                            update="growl formDirection :formTableDirections"
+                            oncomplete="if(!args.validationFailed) PF('dlgDirection').hide()"
+                            styleClass="btn btn-primary"/>
+                    </div>
+                </div>
+            </p:dialog>
+        </h:form>
+
+        <!-- DIALOG DIVISION -->
+        <h:form id="formDivision">
+            <p:dialog header="#{structureBean.modeEditionDivision ? 'Modifier' : 'Nouvelle'} #{structureBean.labelNiveau2}"
+                      widgetVar="dlgDivision" modal="true" width="560" resizable="false">
+                <div style="padding:22px;">
+                    <div class="form-row col-2">
+                        <div class="form-group">
+                            <label class="form-label">Nom *</label>
+                            <p:inputText value="#{structureBean.division.nom}" required="true" style="width:100%;"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Code</label>
+                            <p:inputText value="#{structureBean.division.code}" style="width:100%;"/>
+                        </div>
+                    </div>
+                    <h:panelGroup layout="block" styleClass="form-group" rendered="#{structureBean.niveaux.contains('Direction')}">
+                        <label class="form-label">#{structureBean.labelNiveau1} parente</label>
+                        <p:selectOneMenu value="#{structureBean.directionSelectId}" style="width:100%;">
+                            <f:selectItem itemLabel="— Aucune —" itemValue="#{null}"/>
+                            <f:selectItems value="#{structureBean.directions}" var="dir" itemValue="#{dir.id}" itemLabel="#{dir.nom}"/>
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                    <div class="form-group">
+                        <label class="form-label">Chef</label>
+                        <p:selectOneMenu value="#{structureBean.chefDivisionId}" style="width:100%;" filter="true">
+                            <f:selectItem itemLabel="— Aucun —" itemValue="#{null}"/>
+                            <f:selectItems value="#{structureBean.employes}" var="e" itemValue="#{e.id}" itemLabel="#{e.nomComplet}"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Statut</label>
+                        <p:selectOneMenu value="#{structureBean.division.statut}" style="width:100%;">
+                            <f:selectItem itemLabel="Active" itemValue="ACTIVE"/>
+                            <f:selectItem itemLabel="Inactive" itemValue="INACTIVE"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <p:inputTextarea value="#{structureBean.division.description}" rows="3" style="width:100%;"/>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;border-top:1px solid #e2e8f0;">
+                        <p:commandButton value="Annuler" type="button" onclick="PF('dlgDivision').hide()" styleClass="btn btn-secondary"/>
+                        <p:commandButton value="Enregistrer"
+                            action="#{structureBean.sauvegarderDivision}"
+                            update="growl formDivision :formTableDivisions"
+                            oncomplete="if(!args.validationFailed) PF('dlgDivision').hide()"
+                            styleClass="btn btn-primary"/>
+                    </div>
+                </div>
+            </p:dialog>
+        </h:form>
+
+        <!-- DIALOG SERVICE -->
+        <h:form id="formService">
+            <p:dialog header="#{structureBean.modeEditionService ? 'Modifier' : 'Nouveau'} #{structureBean.labelNiveau3}"
+                      widgetVar="dlgService" modal="true" width="560" resizable="false">
+                <div style="padding:22px;">
+                    <div class="form-row col-2">
+                        <div class="form-group">
+                            <label class="form-label">Nom *</label>
+                            <p:inputText value="#{structureBean.service.nom}" required="true" style="width:100%;"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Code</label>
+                            <p:inputText value="#{structureBean.service.code}" style="width:100%;"/>
+                        </div>
+                    </div>
+                    <h:panelGroup layout="block" styleClass="form-group" rendered="#{structureBean.niveaux.contains('Division')}">
+                        <label class="form-label">#{structureBean.labelNiveau2} parente</label>
+                        <p:selectOneMenu value="#{structureBean.divisionSelectId}" style="width:100%;">
+                            <f:selectItem itemLabel="— Aucune —" itemValue="#{null}"/>
+                            <f:selectItems value="#{structureBean.divisions}" var="divItem" itemValue="#{divItem.id}" itemLabel="#{divItem.nom}"/>
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                    <div class="form-group">
+                        <label class="form-label">Chef</label>
+                        <p:selectOneMenu value="#{structureBean.chefServiceId}" style="width:100%;" filter="true">
+                            <f:selectItem itemLabel="— Aucun —" itemValue="#{null}"/>
+                            <f:selectItems value="#{structureBean.employes}" var="e" itemValue="#{e.id}" itemLabel="#{e.nomComplet}"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Statut</label>
+                        <p:selectOneMenu value="#{structureBean.service.statut}" style="width:100%;">
+                            <f:selectItem itemLabel="Active" itemValue="ACTIVE"/>
+                            <f:selectItem itemLabel="Inactive" itemValue="INACTIVE"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <p:inputTextarea value="#{structureBean.service.description}" rows="3" style="width:100%;"/>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;border-top:1px solid #e2e8f0;">
+                        <p:commandButton value="Annuler" type="button" onclick="PF('dlgService').hide()" styleClass="btn btn-secondary"/>
+                        <p:commandButton value="Enregistrer"
+                            action="#{structureBean.sauvegarderService}"
+                            update="growl formService :formTableServices"
+                            oncomplete="if(!args.validationFailed) PF('dlgService').hide()"
+                            styleClass="btn btn-primary"/>
+                    </div>
+                </div>
+            </p:dialog>
+        </h:form>
+
+        <!-- DIALOG BUREAU -->
+        <h:form id="formBureau">
+            <p:dialog header="#{structureBean.modeEditionBureau ? 'Modifier' : 'Nouveau'} #{structureBean.labelNiveau4}"
+                      widgetVar="dlgBureau" modal="true" width="560" resizable="false">
+                <div style="padding:22px;">
+                    <div class="form-row col-2">
+                        <div class="form-group">
+                            <label class="form-label">Nom *</label>
+                            <p:inputText value="#{structureBean.bureau.nom}" required="true" style="width:100%;"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Code</label>
+                            <p:inputText value="#{structureBean.bureau.code}" style="width:100%;"/>
+                        </div>
+                    </div>
+                    <h:panelGroup layout="block" styleClass="form-group" rendered="#{structureBean.niveaux.contains('Service')}">
+                        <label class="form-label">#{structureBean.labelNiveau3} parent</label>
+                        <p:selectOneMenu value="#{structureBean.serviceSelectId}" style="width:100%;">
+                            <f:selectItem itemLabel="— Aucun —" itemValue="#{null}"/>
+                            <f:selectItems value="#{structureBean.services}" var="srv" itemValue="#{srv.id}" itemLabel="#{srv.nom}"/>
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                    <div class="form-group">
+                        <label class="form-label">Chef</label>
+                        <p:selectOneMenu value="#{structureBean.chefBureauId}" style="width:100%;" filter="true">
+                            <f:selectItem itemLabel="— Aucun —" itemValue="#{null}"/>
+                            <f:selectItems value="#{structureBean.employes}" var="e" itemValue="#{e.id}" itemLabel="#{e.nomComplet}"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Statut</label>
+                        <p:selectOneMenu value="#{structureBean.bureau.statut}" style="width:100%;">
+                            <f:selectItem itemLabel="Active" itemValue="ACTIVE"/>
+                            <f:selectItem itemLabel="Inactive" itemValue="INACTIVE"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <p:inputTextarea value="#{structureBean.bureau.description}" rows="3" style="width:100%;"/>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;border-top:1px solid #e2e8f0;">
+                        <p:commandButton value="Annuler" type="button" onclick="PF('dlgBureau').hide()" styleClass="btn btn-secondary"/>
+                        <p:commandButton value="Enregistrer"
+                            action="#{structureBean.sauvegarderBureau}"
+                            update="growl formBureau :formTableBureaux"
+                            oncomplete="if(!args.validationFailed) PF('dlgBureau').hide()"
+                            styleClass="btn btn-primary"/>
+                    </div>
+                </div>
+            </p:dialog>
+        </h:form>
+
+    </ui:define>
+
+</ui:composition>

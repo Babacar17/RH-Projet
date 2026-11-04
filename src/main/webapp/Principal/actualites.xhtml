@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+<ui:composition template="/Principal/template.xhtml">
+<ui:param name="active" value="actualites"/>
+<ui:define name="title">Actualités</ui:define>
+<ui:define name="content">
+
+<div class="page-banner">
+    <div class="breadcrumb"><a href="#{request.contextPath}/Principal/index.xhtml">Accueil</a><span>/</span>Actualités</div>
+    <h1>Actualités du Ministère</h1>
+    <p>Communiqués, partenariats, opérations de marché et suivi de l'exécution budgétaire.</p>
+</div>
+
+<div class="section alt">
+  <div class="container" data-filterable="true">
+
+    <div class="featured">
+        <div>
+            <div class="badge">⭐ À la Une</div>
+            <h2>Ballet diplomatique au MFB : renforcement des partenariats stratégiques avec l'UE et la BAD</h2>
+            <p>Le Ministre Cheikh DIBA a reçu plusieurs délégations internationales dans le cadre de la mobilisation de ressources pour le Plan Sénégal Émergent 2.0.</p>
+        </div>
+        <div class="visual"><i class="fas fa-globe-africa"></i></div>
+    </div>
+
+    <div class="toolbar">
+        <div class="chips" role="group" aria-label="Filtrer par catégorie">
+            <button type="button" class="chip active" data-filter="all" aria-pressed="true">Toutes</button>
+            <button type="button" class="chip" data-filter="cooperation" aria-pressed="false">Coopération internationale</button>
+            <button type="button" class="chip" data-filter="gouvernance" aria-pressed="false">Gouvernance budgétaire</button>
+            <button type="button" class="chip" data-filter="ressources" aria-pressed="false">Ressources naturelles</button>
+            <button type="button" class="chip" data-filter="marche" aria-pressed="false">Marché financier</button>
+            <button type="button" class="chip" data-filter="rapport" aria-pressed="false">Rapport économique</button>
+        </div>
+        <div class="search-field">
+            <i class="fas fa-search"></i>
+            <input type="text" data-search="true" placeholder="Rechercher une actualité" aria-label="Rechercher une actualité"/>
+        </div>
+    </div>
+
+    <div class="news-grid">
+        <article class="news-card" data-cat="cooperation">
+            <div class="news-img"><i class="fas fa-handshake"></i></div>
+            <div class="news-body">
+                <div class="news-cat">Coopération internationale</div>
+                <h3>Coopération avec la BERD : nouvelles opportunités pour le secteur privé</h3>
+                <p>La Banque Européenne pour la Reconstruction et le Développement s'engage à soutenir les PME sénégalaises.</p>
+                <div class="news-meta"><i class="fas fa-calendar-alt"></i> 14 mars 2026</div>
+            </div>
+        </article>
+        <article class="news-card" data-cat="gouvernance">
+            <div class="news-img"><i class="fas fa-gavel"></i></div>
+            <div class="news-body">
+                <div class="news-cat">Gouvernance budgétaire</div>
+                <h3>Conseil des ministres – Revue du budget à mi-parcours 2025</h3>
+                <p>Le gouvernement fait le point sur l'exécution du budget et les ajustements nécessaires pour l'exercice en cours.</p>
+                <div class="news-meta"><i class="fas fa-calendar-alt"></i> 08 mars 2026</div>
+            </div>
+        </article>
+        <article class="news-card" data-cat="ressources">
+            <div class="news-img"><i class="fas fa-oil-well"></i></div>
+            <div class="news-body">
+                <div class="news-cat">Ressources naturelles</div>
+                <h3>Revenus pétroliers et gaziers : stratégie de gestion des fonds souverains</h3>
+                <p>Le MFB publie le cadre de gestion des ressources issues des hydrocarbures pour les prochaines années.</p>
+                <div class="news-meta"><i class="fas fa-calendar-alt"></i> 02 mars 2026</div>
+            </div>
+        </article>
+        <article class="news-card" data-cat="marche">
+            <div class="news-img"><i class="fas fa-university"></i></div>
+            <div class="news-body">
+                <div class="news-cat">Marché financier</div>
+                <h3>Émission d'obligations souveraines : succès de la levée de fonds</h3>
+                <p>Le Trésor public clôture avec succès une émission obligataire de 250 milliards FCFA à un taux compétitif.</p>
+                <div class="news-meta"><i class="fas fa-calendar-alt"></i> 25 fév. 2026</div>
+            </div>
+        </article>
+        <article class="news-card" data-cat="rapport">
+            <div class="news-img"><i class="fas fa-chart-bar"></i></div>
+            <div class="news-body">
+                <div class="news-cat">Rapport économique</div>
+                <h3>Rapport de suivi budgétaire T4 2025 : les résultats sont positifs</h3>
+                <p>Les recettes fiscales dépassent les prévisions de 8% grâce aux efforts de modernisation de l'administration fiscale.</p>
+                <div class="news-meta"><i class="fas fa-calendar-alt"></i> 18 fév. 2026</div>
+            </div>
+        </article>
+        <article class="news-card" data-cat="marche">
+            <div class="news-img"><i class="fas fa-coins"></i></div>
+            <div class="news-body">
+                <div class="news-cat">Marché financier</div>
+                <h3>Le Sénégal mobilise plus de 450 milliards FCFA sur le marché financier régional</h3>
+                <p>Le Trésor public a procédé avec succès à une émission d'obligations souveraines sur le marché de l'UEMOA, témoignant de la confiance des investisseurs régionaux.</p>
+                <div class="news-meta"><i class="fas fa-calendar-alt"></i> Mars 2026</div>
+            </div>
+        </article>
+    </div>
+    <p class="empty-state" hidden="hidden">Aucune actualité ne correspond à votre recherche.</p>
+  </div>
+</div>
+
+</ui:define>
+</ui:composition>
+</html>

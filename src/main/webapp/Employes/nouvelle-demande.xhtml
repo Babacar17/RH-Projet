@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Nouvelle demande de congé</title>
+    <h:outputStylesheet library="css" name="employe-style.css"/>
+</h:head>
+<h:body>
+<div class="emp-layout">
+
+    <ui:include src="sidebar-employe.xhtml"/>
+
+    <main class="emp-main">
+
+        <div class="emp-page-header">
+            <div class="emp-page-title">
+                <h1><i class="pi pi-plus-circle" style="color:var(--emp-copper-l);"/> Nouvelle demande de congé</h1>
+                <p>Remplissez le formulaire ci-dessous — votre manager en sera notifié</p>
+            </div>
+            <a href="#{request.contextPath}/Employes/mes-conges.xhtml" class="emp-btn emp-btn-outline">
+                <i class="pi pi-arrow-left"/> Retour à mes congés
+            </a>
+        </div>
+
+        <p:messages autoUpdate="true" showDetail="true"/>
+
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;">
+
+            <!-- Formulaire -->
+            <div class="emp-card">
+                <div class="emp-card-header">
+                    <div class="emp-card-title">
+                        <span class="card-icon"><i class="pi pi-file-edit"/></span>
+                        Détails de la demande
+                    </div>
+                </div>
+                <h:form id="formDemande">
+                    <div class="emp-form-grid">
+                        <!-- Type de congé -->
+                        <div class="emp-form-group full-width" style="grid-column:1/-1;">
+                            <label class="emp-form-label">Type de congé *</label>
+                            <p:selectOneMenu value="#{employeBean.typeCongeId}" converter="jakarta.faces.Long"
+                                             style="width:100%;" required="true">
+                                <f:selectItem itemLabel="— Sélectionner un type —" itemValue="#{null}"/>
+                                <f:selectItems value="#{employeBean.typesCongeDisponibles}" var="tc"
+                                               itemValue="#{tc.id}" itemLabel="#{tc.libelle}"/>
+                            </p:selectOneMenu>
+                        </div>
+
+                        <!-- Dates -->
+                        <div class="emp-form-group">
+                            <label class="emp-form-label">Date de début *</label>
+                            <p:datePicker value="#{employeBean.nouvelleDemandeConge.dateDebut}"
+                                          pattern="dd/MM/yyyy"
+                                          placeholder="jj/mm/aaaa"
+                                          style="width:100%;"
+                                          required="true"/>
+                        </div>
+                        <div class="emp-form-group">
+                            <label class="emp-form-label">Date de fin *</label>
+                            <p:datePicker value="#{employeBean.nouvelleDemandeConge.dateFin}"
+                                          pattern="dd/MM/yyyy"
+                                          placeholder="jj/mm/aaaa"
+                                          style="width:100%;"
+                                          required="true"/>
+                        </div>
+
+                        <!-- Motif -->
+                        <div class="emp-form-group full-width" style="grid-column:1/-1;">
+                            <label class="emp-form-label">Motif / Justification</label>
+                            <p:inputTextarea value="#{employeBean.nouvelleDemandeConge.motif}"
+                                             rows="3"
+                                             placeholder="Expliquez brièvement la raison de votre demande..."
+                                             style="width:100%;max-height:none;"/>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:20px;display:flex;gap:12px;align-items:center;">
+                        <p:commandButton value="Soumettre la demande"
+                                         icon="pi pi-send"
+                                         action="#{employeBean.soumettreDemandeConge}"
+                                         ajax="false"
+                                         styleClass="emp-btn emp-btn-copper"/>
+                        <a href="#{request.contextPath}/Employes/mes-conges.xhtml"
+                           class="emp-btn emp-btn-outline">
+                            <i class="pi pi-times"/> Annuler
+                        </a>
+                    </div>
+                </h:form>
+            </div>
+
+            <!-- Info solde -->
+            <div>
+                <div class="emp-card">
+                    <div class="emp-card-header">
+                        <div class="emp-card-title">
+                            <span class="card-icon"><i class="pi pi-info-circle"/></span>
+                            Mon solde
+                        </div>
+                    </div>
+                    <div class="emp-kpi" style="margin-bottom:12px;border-radius:10px;">
+                        <div class="kpi-icon"><i class="pi pi-calendar"/></div>
+                        <div class="kpi-value">#{employeBean.soldeRestant}</div>
+                        <div class="kpi-label">Jours disponibles</div>
+                    </div>
+                    <div class="solde-bar-wrap">
+                        <div class="solde-bar-track">
+                            <div class="solde-bar-fill"
+                                 style="width:#{employeBean.soldeCongesAnnuels gt 0 ? (employeBean.congesPris * 100) / employeBean.soldeCongesAnnuels : 0}%"/>
+                        </div>
+                        <div class="solde-bar-labels">
+                            <span>Pris : #{employeBean.congesPris}j</span>
+                            <span>Total : #{employeBean.soldeCongesAnnuels}j</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="emp-card" style="margin-top:16px;">
+                    <div class="emp-card-header">
+                        <div class="emp-card-title">
+                            <span class="card-icon"><i class="pi pi-question-circle"/></span>
+                            À savoir
+                        </div>
+                    </div>
+                    <ul style="list-style:none;padding:0;">
+                        <li style="padding:6px 0;font-size:0.82rem;color:var(--emp-muted);border-bottom:1px solid var(--emp-border);display:flex;gap:8px;align-items:flex-start;">
+                            <i class="pi pi-check" style="color:var(--emp-success);margin-top:2px;flex-shrink:0;"/>
+                            <span>Votre demande sera transmise à votre manager pour validation.</span>
+                        </li>
+                        <li style="padding:6px 0;font-size:0.82rem;color:var(--emp-muted);border-bottom:1px solid var(--emp-border);display:flex;gap:8px;align-items:flex-start;">
+                            <i class="pi pi-check" style="color:var(--emp-success);margin-top:2px;flex-shrink:0;"/>
+                            <span>Vous recevrez une notification dès validation ou refus.</span>
+                        </li>
+                        <li style="padding:6px 0;font-size:0.82rem;color:var(--emp-muted);display:flex;gap:8px;align-items:flex-start;">
+                            <i class="pi pi-check" style="color:var(--emp-success);margin-top:2px;flex-shrink:0;"/>
+                            <span>Vous pouvez annuler une demande tant qu'elle est en attente.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+</div>
+</h:body>
+</html>

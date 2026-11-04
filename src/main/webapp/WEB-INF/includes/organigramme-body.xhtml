@@ -1,0 +1,70 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html">
+    <h:outputStylesheet library="css" name="organigramme.css"/>
+
+    <ui:fragment rendered="#{organigrammeBean.vide}">
+        <div class="org-vide">
+            <i class="pi pi-sitemap" style="font-size:32px;"/>
+            <p>Vous n'êtes rattaché à aucune structure pour le moment.<br/>
+               Contactez les Ressources Humaines pour renseigner votre rattachement.</p>
+        </div>
+    </ui:fragment>
+
+    <ui:fragment rendered="#{not organigrammeBean.vide}">
+        <div class="org-legende">
+            <span style="--c:#7c3aed">Direction</span>
+            <span style="--c:#0891b2">Département</span>
+            <span style="--c:#2563eb">Division</span>
+            <span style="--c:#16a34a">Service</span>
+            <span style="--c:#d97706">Bureau</span>
+            <span>★ chef · votre position est entourée en violet</span>
+        </div>
+
+        <div class="org-scroll">
+            <div class="org-tree">
+                <!-- Profondeur maximale du modèle : 4 niveaux (ex. Direction › Département › Service › Bureau) -->
+                <ul>
+                    <li>
+                        <ui:include src="/WEB-INF/includes/organigramme-carte.xhtml">
+                            <ui:param name="noeud" value="#{organigrammeBean.racine}"/>
+                        </ui:include>
+                        <ui:fragment rendered="#{not empty organigrammeBean.racine.enfants}">
+                            <ul>
+                                <ui:repeat value="#{organigrammeBean.racine.enfants}" var="n2">
+                                    <li>
+                                        <ui:include src="/WEB-INF/includes/organigramme-carte.xhtml">
+                                            <ui:param name="noeud" value="#{n2}"/>
+                                        </ui:include>
+                                        <ui:fragment rendered="#{not empty n2.enfants}">
+                                            <ul>
+                                                <ui:repeat value="#{n2.enfants}" var="n3">
+                                                    <li>
+                                                        <ui:include src="/WEB-INF/includes/organigramme-carte.xhtml">
+                                                            <ui:param name="noeud" value="#{n3}"/>
+                                                        </ui:include>
+                                                        <ui:fragment rendered="#{not empty n3.enfants}">
+                                                            <ul>
+                                                                <ui:repeat value="#{n3.enfants}" var="n4">
+                                                                    <li>
+                                                                        <ui:include src="/WEB-INF/includes/organigramme-carte.xhtml">
+                                                                            <ui:param name="noeud" value="#{n4}"/>
+                                                                        </ui:include>
+                                                                    </li>
+                                                                </ui:repeat>
+                                                            </ul>
+                                                        </ui:fragment>
+                                                    </li>
+                                                </ui:repeat>
+                                            </ul>
+                                        </ui:fragment>
+                                    </li>
+                                </ui:repeat>
+                            </ul>
+                        </ui:fragment>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </ui:fragment>
+</ui:composition>

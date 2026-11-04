@@ -1,0 +1,480 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <ui:param name="page" value="organigramme"/>
+    <ui:define name="title">Organigramme — SIRH</ui:define>
+    <ui:define name="pageTitle">Organigramme</ui:define>
+    <ui:define name="breadcrumb">Gestion RH &gt; Organigramme</ui:define>
+
+    <ui:define name="styles">
+        <style>
+            /* ── Cards résumé : pleine largeur ── */
+            .summary-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 16px;
+                margin-bottom: 24px;
+                width: 100%;
+            }
+            .summary-card {
+                background: #fff;
+                border: 1px solid #e2e8f0;
+                border-radius: 10px;
+                padding: 16px 20px;
+                text-align: center;
+                width: 100%;
+            }
+            .summary-val { font-size: 30px; font-weight: 800; }
+            .summary-lbl { font-size: 12px; color: #64748b; margin-top: 4px; }
+            .c-indigo{color:#6366f1;} .c-blue{color:#2563eb;} .c-green{color:#16a34a;} .c-amber{color:#d97706;}
+
+            /* ── Structure organigramme ── */
+            .dir-block  { background:#fff; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:18px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.05); width:100%; }
+            .dir-header { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:16px 22px; background:#1e293b; color:#fff; }
+            .dir-icon   { width:42px; height:42px; border-radius:10px; background:#6366f1; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px; flex-shrink:0; }
+            .dir-name   { font-size:15px; font-weight:700; }
+            .dir-code   { font-size:11px; color:#94a3b8; margin-top:2px; }
+            .dir-chef   { margin-left:auto; text-align:right; }
+            .dir-chef-label { font-size:10px; color:#94a3b8; text-transform:uppercase; }
+            .dir-chef-name  { font-size:13px; font-weight:600; color:#e2e8f0; }
+            .badge-ACTIVE { background:#dcfce7; color:#15803d; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; }
+            .dir-stats  { display:flex; border-bottom:1px solid #f1f5f9; width:100%; }
+            .dir-stat   { flex:1; padding:10px 18px; text-align:center; border-right:1px solid #f1f5f9; }
+            .dir-stat:last-child { border-right:none; }
+            .dir-stat-val { font-size:20px; font-weight:800; color:#6366f1; }
+            .dir-stat-lbl { font-size:11px; color:#94a3b8; margin-top:2px; }
+
+            .div-list   { padding:14px 18px; display:flex; flex-direction:column; gap:10px; }
+            .div-block  { border:1px solid #e2e8f0; border-radius:10px; overflow:hidden; transition:box-shadow .2s; width:100%; }
+            .div-block:hover { box-shadow:0 4px 16px rgba(37,99,235,.1); }
+            .div-header { display:flex; align-items:center; gap:12px; padding:12px 16px; background:#f8fafc; cursor:pointer; user-select:none; border-left:4px solid #2563eb; transition:background .15s; }
+            .div-header:hover    { background:#eff6ff; }
+            .div-header.expanded { background:#eff6ff; border-left-color:#1d4ed8; }
+            .div-icon  { width:32px; height:32px; border-radius:8px; background:#dbeafe; color:#2563eb; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; flex-shrink:0; }
+            .div-info  { flex:1; min-width:0; }
+            .div-name  { font-size:13px; font-weight:700; color:#1e293b; }
+            .div-code  { font-size:11px; color:#64748b; margin-top:1px; }
+            .div-meta  { display:flex; align-items:center; gap:14px; flex-shrink:0; }
+            .div-chef-txt { font-size:12px; color:#64748b; }
+            .div-chef-txt strong { color:#1e293b; }
+            .emp-count { display:inline-flex; align-items:center; background:#f0fdf4; color:#15803d; padding:2px 9px; border-radius:999px; font-size:11px; font-weight:700; border:1px solid #bbf7d0; }
+            .expand-chevron { width:22px; height:22px; border-radius:50%; background:#e2e8f0; display:flex; align-items:center; justify-content:center; font-size:11px; color:#64748b; transition:transform .25s; flex-shrink:0; }
+            .expand-chevron.open { transform:rotate(180deg); background:#dbeafe; color:#2563eb; }
+            .div-detail      { display:none; border-top:1px solid #e2e8f0; }
+            .div-detail.open { display:block; }
+            .div-recap { display:grid; grid-template-columns:repeat(4,1fr); background:#f0f9ff; border-bottom:1px solid #bae6fd; width:100%; }
+            .div-recap-item { padding:10px 14px; text-align:center; border-right:1px solid #bae6fd; }
+            .div-recap-item:last-child { border-right:none; }
+            .div-recap-val { font-size:17px; font-weight:800; color:#2563eb; }
+            .div-recap-lbl { font-size:10px; color:#64748b; text-transform:uppercase; letter-spacing:.5px; margin-top:2px; }
+
+            .srv-list   { padding:12px 16px; display:flex; flex-direction:column; gap:8px; background:#fff; }
+            .srv-block  { border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; }
+            .srv-header { display:flex; align-items:center; gap:10px; padding:10px 13px; background:#f9fafb; cursor:pointer; user-select:none; border-left:3px solid #10b981; transition:background .15s; }
+            .srv-header:hover    { background:#f0fdf4; }
+            .srv-header.expanded { background:#f0fdf4; }
+            .srv-icon   { width:26px; height:26px; border-radius:6px; background:#d1fae5; color:#059669; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:11px; flex-shrink:0; }
+            .srv-info   { flex:1; min-width:0; }
+            .srv-name   { font-size:13px; font-weight:600; }
+            .srv-code   { font-size:11px; color:#64748b; }
+            .srv-chef-txt { font-size:12px; color:#64748b; margin-left:auto; padding-right:10px; }
+            .srv-chef-txt strong { color:#1e293b; }
+            .srv-chevron { width:20px; height:20px; border-radius:50%; background:#e2e8f0; display:flex; align-items:center; justify-content:center; font-size:10px; color:#64748b; transition:transform .2s; flex-shrink:0; }
+            .srv-chevron.open { transform:rotate(180deg); background:#d1fae5; color:#059669; }
+            .bur-list      { display:none; padding:10px 13px; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; border-top:1px solid #f1f5f9; background:#fff; }
+            .bur-list.open { display:grid; }
+            .bur-item  { display:flex; align-items:flex-start; gap:8px; background:#fafafa; border:1px solid #f1f5f9; border-radius:7px; padding:9px 11px; border-left:3px solid #f59e0b; }
+            .bur-dot   { width:8px; height:8px; border-radius:50%; background:#f59e0b; flex-shrink:0; margin-top:4px; }
+            .bur-name  { font-size:12px; font-weight:700; color:#1e293b; }
+            .bur-chef  { font-size:11px; color:#94a3b8; margin-top:2px; }
+            .bur-count { margin-left:auto; flex-shrink:0; }
+
+            .toolbar { display:flex; align-items:center; gap:10px; padding:16px 20px 14px; flex-wrap:wrap; border-bottom:1px solid #f1f5f9; }
+            .section-card { background:#fff; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; margin-bottom:24px; width:100%; }
+
+            /* ── rh-content pleine largeur ── */
+            .rh-content { width: 100%; box-sizing: border-box; }
+
+            /* ── Dialog : barre de recherche alignée ── */
+            .dlg-search-bar {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 12px;
+                width: 100%;
+            }
+            .dlg-search-input-wrap {
+                position: relative;
+                flex: 1;
+                min-width: 0;
+            }
+            .dlg-search-input-wrap input {
+                width: 100%;
+                height: 36px;
+                padding: 0 12px 0 34px;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                font-size: 13px;
+                color: #0f172a;
+                font-family: 'Segoe UI', sans-serif;
+                outline: none;
+                box-sizing: border-box;
+            }
+            .dlg-search-input-wrap .sico {
+                position: absolute;
+                left: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #94a3b8;
+                pointer-events: none;
+                font-size: 13px;
+            }
+
+            /* ── Dialog stats ── */
+            .dlg-stats {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 10px;
+                margin-bottom: 14px;
+                width: 100%;
+            }
+            .dlg-stat-card { border-radius:8px; padding:12px 10px; text-align:center; }
+            .dlg-stat-val  { font-size:22px; font-weight:800; }
+            .dlg-stat-lbl  { font-size:11px; color:#64748b; margin-top:2px; }
+
+            /* ── Dialog : forcer table pleine largeur ── */
+            .ui-datatable { width: 100% !important; table-layout: fixed !important; }
+            .ui-datatable table { width: 100% !important; }
+
+            /* ── select PF hauteur ── */
+            .dlg-sel .ui-selectonemenu { height:36px !important; width:160px !important; }
+            .dlg-sel .ui-selectonemenu .ui-selectonemenu-label { line-height:34px !important; }
+            .dlg-sel .ui-selectonemenu .ui-selectonemenu-trigger { height:34px !important; }
+        </style>
+    </ui:define>
+
+    <ui:define name="content">
+            <!-- Cards résumé : 4 colonnes égales, pleine largeur -->
+            <div class="summary-grid">
+                <div class="summary-card"><div class="summary-val c-indigo">#{rhBean.totalDirections}</div><div class="summary-lbl">Directions</div></div>
+                <div class="summary-card"><div class="summary-val c-blue">#{rhBean.totalDivisions}</div><div class="summary-lbl">Divisions</div></div>
+                <div class="summary-card"><div class="summary-val c-green">#{rhBean.totalServices}</div><div class="summary-lbl">Services</div></div>
+                <div class="summary-card"><div class="summary-val c-amber">#{rhBean.totalBureaux}</div><div class="summary-lbl">Bureaux</div></div>
+            </div>
+
+            <div class="section-card">
+                <div class="toolbar">
+                    <span style="font-size:14px;font-weight:600;color:#1e293b;">Organigramme des Directions</span>
+                    <span style="font-size:12px;color:#94a3b8;">— Cliquez sur une division pour voir son détail</span>
+                    <div style="margin-left:auto;display:flex;gap:8px;">
+                        <a onclick="toggleAll(true)"  style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:7px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;display:inline-block;text-decoration:none;">Tout ouvrir</a>
+                        <a onclick="toggleAll(false)" style="background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;padding:7px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;display:inline-block;text-decoration:none;">Tout fermer</a>
+                    </div>
+                </div>
+
+                <div style="padding:16px 20px 20px;width:100%;box-sizing:border-box;">
+                    <ui:repeat value="#{rhBean.directions}" var="direction">
+                        <div class="dir-block">
+                            <div class="dir-header">
+                                <div class="dir-icon">#{direction.code.substring(0,1)}</div>
+                                <div>
+                                    <div class="dir-name">#{direction.nom}</div>
+                                    <div class="dir-code">#{direction.code}</div>
+                                </div>
+                                <div class="dir-chef">
+                                    <div class="dir-chef-label">Directeur</div>
+                                    <div class="dir-chef-name">
+                                        <h:outputText value="#{direction.chef.nomComplet}" rendered="#{direction.chef != null}"/>
+                                        <h:outputText value="Non désigné" rendered="#{direction.chef == null}"/>
+                                    </div>
+                                </div>
+                                <span class="badge-ACTIVE" style="margin-left:16px;">#{direction.statut}</span>
+                            </div>
+                            <div class="dir-stats">
+                                <div class="dir-stat"><div class="dir-stat-val">#{rhBean.countDivisionsByDirection(direction.id)}</div><div class="dir-stat-lbl">Divisions</div></div>
+                                <div class="dir-stat"><div class="dir-stat-val">#{rhBean.countServicesByDirection(direction.id)}</div><div class="dir-stat-lbl">Services</div></div>
+                                <div class="dir-stat"><div class="dir-stat-val">#{rhBean.countBureauxByDirection(direction.id)}</div><div class="dir-stat-lbl">Bureaux</div></div>
+                                <div class="dir-stat"><div class="dir-stat-val">#{rhBean.countEmployesByDirection(direction.id)}</div><div class="dir-stat-lbl">Employés</div></div>
+                            </div>
+                            <div class="div-list">
+                                <ui:repeat value="#{rhBean.getDivisionsByDirection(direction.id)}" var="division">
+                                    <div class="div-block">
+                                        <div class="div-header" id="hdr-div-#{division.id}" onclick="toggleDiv(#{division.id})">
+                                            <div class="div-icon">D</div>
+                                            <div class="div-info">
+                                                <div class="div-name">#{division.nom}</div>
+                                                <div class="div-code">#{division.code}</div>
+                                            </div>
+                                            <div class="div-meta">
+                                                <div class="div-chef-txt">Chef : <strong>
+                                                    <h:outputText value="#{division.chef.nomComplet}" rendered="#{division.chef != null}"/>
+                                                    <h:outputText value="Non désigné" rendered="#{division.chef == null}"/>
+                                                </strong></div>
+                                                <span class="emp-count">#{rhBean.countEmployesByDivision(division.id)} agents</span>
+                                                <span style="font-size:11px;color:#64748b;margin:0 4px;">#{rhBean.countServicesByDivision(division.id)} services</span>
+                                                <div class="expand-chevron" id="chev-div-#{division.id}">▼</div>
+                                            </div>
+                                        </div>
+                                        <div class="div-detail" id="detail-#{division.id}">
+                                            <div class="div-recap">
+                                                <div class="div-recap-item"><div class="div-recap-val">#{rhBean.countServicesByDivision(division.id)}</div><div class="div-recap-lbl">Services</div></div>
+                                                <div class="div-recap-item"><div class="div-recap-val">#{rhBean.countBureauxByDivision(division.id)}</div><div class="div-recap-lbl">Bureaux</div></div>
+                                                <div class="div-recap-item"><div class="div-recap-val">#{rhBean.countEmployesByDivision(division.id)}</div><div class="div-recap-lbl">Employés</div></div>
+                                                <div class="div-recap-item" style="display:flex;align-items:center;justify-content:center;">
+                                                    <h:form>
+                                                        <p:commandButton value="&#128101; Voir les employés"
+                                                            action="#{rhBean.chargerEmployesDivision(division.id)}"
+                                                            update="fDlgEmp"
+                                                            oncomplete="PF('dlgEmpDiv').show(); document.getElementById('inputRechDlg') &amp;&amp; (document.getElementById('inputRechDlg').value='')"
+                                                            onclick="event.stopPropagation()"
+                                                            style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;"/>
+                                                    </h:form>
+                                                </div>
+                                            </div>
+                                            <div class="srv-list">
+                                                <ui:repeat value="#{rhBean.getServicesByDivision(division.id)}" var="service">
+                                                    <div class="srv-block">
+                                                        <div class="srv-header" id="hdr-srv-#{service.id}" onclick="toggleSrv(#{service.id})">
+                                                            <div class="srv-icon">S</div>
+                                                            <div class="srv-info">
+                                                                <div class="srv-name">#{service.nom}</div>
+                                                                <div class="srv-code">#{service.code}</div>
+                                                            </div>
+                                                            <div class="srv-chef-txt">Chef : <strong>
+                                                                <h:outputText value="#{service.chef.nomComplet}" rendered="#{service.chef != null}"/>
+                                                                <h:outputText value="Non désigné" rendered="#{service.chef == null}"/>
+                                                            </strong></div>
+                                                            <span class="emp-count" style="margin-right:8px;">#{rhBean.countEmployesByService(service.id)} agents</span>
+                                                            <span style="font-size:11px;color:#64748b;margin-right:8px;">#{rhBean.countBureauxByService(service.id)} bureaux</span>
+                                                            <div class="srv-chevron" id="chev-srv-#{service.id}">▼</div>
+                                                        </div>
+                                                        <div class="bur-list" id="bur-#{service.id}">
+                                                            <ui:repeat value="#{rhBean.getBureauxByService(service.id)}" var="bureau">
+                                                                <div class="bur-item">
+                                                                    <div class="bur-dot"></div>
+                                                                    <div style="flex:1;min-width:0;">
+                                                                        <div class="bur-name">#{bureau.nom}</div>
+                                                                        <div class="bur-chef">
+                                                                            <h:outputText value="Chef : #{bureau.chef.nomComplet}" rendered="#{bureau.chef != null}"/>
+                                                                            <h:outputText value="Chef : Non désigné" rendered="#{bureau.chef == null}"/>
+                                                                        </div>
+                                                                        <div style="font-size:10px;color:#94a3b8;margin-top:2px;">#{bureau.code}</div>
+                                                                    </div>
+                                                                    <div class="bur-count"><span class="emp-count">#{rhBean.countEmployesByBureau(bureau.id)}</span></div>
+                                                                </div>
+                                                            </ui:repeat>
+                                                            <h:panelGroup rendered="#{empty rhBean.getBureauxByService(service.id)}">
+                                                                <div style="color:#94a3b8;font-size:12px;padding:8px;grid-column:1/-1;">Aucun bureau.</div>
+                                                            </h:panelGroup>
+                                                        </div>
+                                                    </div>
+                                                </ui:repeat>
+                                                <h:panelGroup rendered="#{empty rhBean.getServicesByDivision(division.id)}">
+                                                    <div style="color:#94a3b8;font-size:13px;padding:10px;">Aucun service.</div>
+                                                </h:panelGroup>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ui:repeat>
+                                <h:panelGroup rendered="#{empty rhBean.getDivisionsByDirection(direction.id)}">
+                                    <div style="color:#94a3b8;font-size:13px;padding:12px;">Aucune division.</div>
+                                </h:panelGroup>
+                            </div>
+                        </div>
+                    </ui:repeat>
+                </div>
+            </div>
+    </ui:define>
+
+    <ui:define name="dialogs">
+        <!-- ═══ DIALOG : pleine largeur écran avec scroll interne ═══ -->
+        <p:dialog header="Employés de la division"
+                  widgetVar="dlgEmpDiv"
+                  modal="true"
+                  width="92vw"
+                  height="90vh"
+                  resizable="false"
+                  closeOnEscape="true"
+                  dynamic="true"
+                  contentStyle="padding:16px 20px;overflow-y:auto;height:calc(90vh - 52px);box-sizing:border-box;">
+
+            <h:form id="fDlgEmp" style="width:100%;">
+
+                <!-- Stats pleine largeur -->
+                <div class="dlg-stats">
+                    <div class="dlg-stat-card" style="background:#f0f9ff;border:1px solid #bae6fd;">
+                        <div class="dlg-stat-val" style="color:#2563eb;">#{rhBean.nbEmployesDivision}</div>
+                        <div class="dlg-stat-lbl">Total</div>
+                    </div>
+                    <div class="dlg-stat-card" style="background:#f0fdf4;border:1px solid #bbf7d0;">
+                        <div class="dlg-stat-val" style="color:#16a34a;">#{rhBean.nbActifsDivision}</div>
+                        <div class="dlg-stat-lbl">Actifs</div>
+                    </div>
+                    <div class="dlg-stat-card" style="background:#fefce8;border:1px solid #fde047;">
+                        <div class="dlg-stat-val" style="color:#ca8a04;">#{rhBean.nbCdiDivision}</div>
+                        <div class="dlg-stat-lbl">CDI</div>
+                    </div>
+                    <div class="dlg-stat-card" style="background:#faf5ff;border:1px solid #e9d5ff;">
+                        <div class="dlg-stat-val" style="color:#7c3aed;">#{rhBean.nbCadresDivision}</div>
+                        <div class="dlg-stat-lbl">Cadres</div>
+                    </div>
+                </div>
+
+                <!-- Barre de recherche alignée -->
+                <div class="dlg-search-bar">
+                    <div class="dlg-search-input-wrap">
+                        <span class="sico">🔍</span>
+                        <input type="text"
+                               id="inputRechDlg"
+                               oninput="rechercherDlg(this.value)"
+                               placeholder="Nom, prénom, matricule, email..."/>
+                    </div>
+                    <div class="dlg-sel" style="flex-shrink:0;width:160px;">
+                        <p:selectOneMenu value="#{rhBean.filtreNiveauDiv}" style="width:160px !important;">
+                            <f:ajax execute="@this" render="tblEmpDiv" listener="#{rhBean.filtrerDialogDiv}"/>
+                            <f:selectItem itemLabel="Tous les niveaux"  itemValue=""/>
+                            <f:selectItem itemLabel="Directeurs"        itemValue="DIRECTEUR"/>
+                            <f:selectItem itemLabel="Chefs Division"    itemValue="CHEF_DIV"/>
+                            <f:selectItem itemLabel="Chefs Service"     itemValue="CHEF_SERVICE"/>
+                            <f:selectItem itemLabel="Chefs Bureau"      itemValue="CHEF_BUREAU"/>
+                            <f:selectItem itemLabel="Employés"          itemValue="EMPLOYE"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <p:commandButton value="Rechercher"
+                                     update="tblEmpDiv"
+                                     style="flex-shrink:0;height:36px;padding:0 18px;
+                                            background:#2563eb;color:#fff;border:none;
+                                            border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;"/>
+                    <p:commandButton value="Réinitialiser"
+                                     action="#{rhBean.reinitialiserFiltreDiv}"
+                                     update="fDlgEmp"
+                                     oncomplete="document.getElementById('inputRechDlg').value=''; rechercherDlg('');"
+                                     style="flex-shrink:0;height:36px;padding:0 14px;
+                                            background:#f1f5f9;color:#64748b;
+                                            border:1px solid #e2e8f0;border-radius:8px;
+                                            font-size:13px;font-weight:600;cursor:pointer;"/>
+                    <span id="cptResultats" style="flex-shrink:0;font-size:12px;color:#94a3b8;white-space:nowrap;min-width:70px;"></span>
+                </div>
+
+                <!-- Tableau pleine largeur, pagination bas uniquement -->
+                <p:dataTable id="tblEmpDiv"
+                             value="#{rhBean.employesDivisionSelectionnee}" var="emp"
+                             rows="10"
+                             paginator="true"
+                             paginatorPosition="bottom"
+                             paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowsPerPageTemplate="10,20,50"
+                             emptyMessage="Aucun employé trouvé."
+                             style="width:100%;border:none;"
+                             tableStyle="width:100%;"
+                             sortBy="#{emp.niveauHierarchique}">
+
+                    <p:column headerText="Employé" sortBy="#{emp.nom}" style="padding:9px 12px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="width:32px;height:32px;border-radius:50%;flex-shrink:0;
+                                 background:linear-gradient(135deg,#6366f1,#a78bfa);
+                                 display:flex;align-items:center;justify-content:center;
+                                 font-weight:800;font-size:11px;color:#fff;">
+                                #{not empty emp.prenom ? emp.prenom.substring(0,1) : '?'}#{not empty emp.nom ? emp.nom.substring(0,1) : '?'}
+                            </div>
+                            <div style="min-width:0;">
+                                <div style="font-weight:700;font-size:13px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">#{emp.nomComplet}</div>
+                                <div style="font-size:11px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">#{emp.email}</div>
+                            </div>
+                        </div>
+                    </p:column>
+
+                    <p:column headerText="Matricule" sortBy="#{emp.matricule}" style="padding:9px 8px;width:120px;">
+                        <span style="font-family:monospace;font-size:10px;background:#ede9fe;color:#6d28d9;padding:2px 6px;border-radius:4px;white-space:nowrap;">#{emp.matricule}</span>
+                    </p:column>
+
+                    <p:column headerText="Poste" sortBy="#{emp.intiutePoste}" style="padding:9px 8px;width:170px;">
+                        <div style="font-size:12px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">#{emp.intiutePoste}</div>
+                        <div style="font-size:10px;color:#64748b;margin-top:1px;">#{emp.getLabelNiveau()}</div>
+                    </p:column>
+
+                    <p:column headerText="Service / Bureau" sortBy="#{emp.nomService}" style="padding:9px 8px;width:180px;">
+                        <div style="font-size:12px;font-weight:600;color:#059669;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px;">
+                            <h:outputText value="#{emp.nomService}" rendered="#{not empty emp.nomService}"/>
+                            <h:outputText value="—" rendered="#{empty emp.nomService}" style="color:#94a3b8;font-weight:400;"/>
+                        </div>
+                        <div style="font-size:10px;color:#94a3b8;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px;">
+                            <h:outputText value="#{emp.nomBureau}" rendered="#{not empty emp.nomBureau}"/>
+                            <h:outputText value="Pas de bureau" rendered="#{empty emp.nomBureau}" style="color:#cbd5e1;font-style:italic;"/>
+                        </div>
+                    </p:column>
+
+                    <p:column headerText="Grade" sortBy="#{emp.gradeEchelon}" style="padding:9px 8px;width:150px;">
+                        <div style="font-size:11px;color:#475569;">
+                            <h:outputText value="#{emp.gradeEchelon}" rendered="#{not empty emp.gradeEchelon}"/>
+                            <h:outputText value="—" rendered="#{empty emp.gradeEchelon}" style="color:#94a3b8;"/>
+                        </div>
+                    </p:column>
+
+                    <p:column headerText="Contrat" sortBy="#{emp.typeContrat}" style="padding:9px 6px;width:75px;text-align:center;">
+                        <span style="font-size:11px;font-weight:700;background:#f1f5f9;color:#475569;padding:2px 6px;border-radius:4px;">#{emp.typeContrat}</span>
+                    </p:column>
+
+                    <p:column headerText="Statut" sortBy="#{emp.statut}" style="padding:9px 6px;width:80px;text-align:center;">
+                        <span style="padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700;
+                              background:#{emp.statut == 'ACTIF' ? '#dcfce7' : '#fee2e2'};
+                              color:#{emp.statut == 'ACTIF' ? '#15803d' : '#b91c1c'};">
+                            #{emp.statut}
+                        </span>
+                    </p:column>
+
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+
+    <ui:define name="scripts">
+        <script>
+            function toggleDiv(divId) {
+                var detail  = document.getElementById('detail-' + divId);
+                var chevron = document.getElementById('chev-div-' + divId);
+                var header  = document.getElementById('hdr-div-' + divId);
+                if (!detail) return;
+                var open = detail.classList.contains('open');
+                detail.classList.toggle('open', !open);
+                chevron.classList.toggle('open', !open);
+                header.classList.toggle('expanded', !open);
+            }
+            function toggleSrv(srvId) {
+                var burList = document.getElementById('bur-' + srvId);
+                var chevron = document.getElementById('chev-srv-' + srvId);
+                var header  = document.getElementById('hdr-srv-' + srvId);
+                if (!burList) return;
+                var open = burList.classList.contains('open');
+                burList.classList.toggle('open', !open);
+                chevron.classList.toggle('open', !open);
+                header.classList.toggle('expanded', !open);
+            }
+            function toggleAll(open) {
+                document.querySelectorAll('.div-detail').forEach(function(el){ el.classList.toggle('open', open); });
+                document.querySelectorAll('.expand-chevron').forEach(function(el){ el.classList.toggle('open', open); });
+                document.querySelectorAll('.div-header').forEach(function(el){ el.classList.toggle('expanded', open); });
+            }
+            function rechercherDlg(val) {
+                val = val.trim().toLowerCase();
+                var tbl = document.querySelector('[id$="tblEmpDiv"]');
+                if (!tbl) return;
+                var rows = tbl.querySelectorAll('tbody tr');
+                var nb = 0;
+                rows.forEach(function(row) {
+                    var txt = row.textContent.toLowerCase();
+                    var show = !val || txt.includes(val);
+                    row.style.display = show ? '' : 'none';
+                    if (show) nb++;
+                });
+                var cpt = document.getElementById('cptResultats');
+                if (cpt) cpt.textContent = val ? nb + ' résultat(s)' : '';
+            }
+        </script>
+    </ui:define>
+
+</ui:composition>

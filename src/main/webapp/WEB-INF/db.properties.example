@@ -1,0 +1,5 @@
+# Copier ce fichier en db.properties et renseigner vos identifiants.
+# db.properties est ignoré par git — ne jamais versionner de mot de passe.
+db.url=jdbc:postgresql://localhost:5432/soutenance_db
+db.username=postgres
+db.password=CHANGEZ_MOI

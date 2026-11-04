@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+<ui:composition template="/Principal/template.xhtml">
+<ui:param name="active" value="loi-finances"/>
+<ui:define name="title">Loi de Finances 2026</ui:define>
+<ui:define name="content">
+
+<div class="page-banner">
+    <div class="breadcrumb"><a href="#{request.contextPath}/Principal/index.xhtml">Accueil</a><span>/</span>Loi de Finances 2026</div>
+    <h1>Loi de Finances 2026</h1>
+    <p>Budget général de l'État, cadre macroéconomique et documents de référence de l'exercice 2026.</p>
+</div>
+
+<div class="section alt">
+  <div class="container">
+    <div class="section-header">
+        <div><div class="section-title">Les chiffres <span>du budget</span></div></div>
+    </div>
+    <div class="stats-grid">
+        <div class="stat-card"><div class="val">6 800 Mds</div><div class="lbl">Budget général 2026 (FCFA)</div></div>
+        <div class="stat-card"><div class="val">3%</div><div class="lbl">Déficit budgétaire cible (du PIB)</div></div>
+        <div class="stat-card"><div class="val">+4.3%</div><div class="lbl">Croissance du PIB 2025</div><div class="trend up"><i class="fas fa-arrow-up"></i> +0.8 pt vs 2024</div></div>
+        <div class="stat-card"><div class="val">1.4%</div><div class="lbl">Taux d'inflation</div><div class="trend up"><i class="fas fa-arrow-down"></i> -0.3 pt vs 2024</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="container two-col wide-left">
+    <div>
+        <div class="section-header">
+            <div class="section-title">Documents <span>de référence</span></div>
+        </div>
+        <ul class="doc-list">
+            <li>
+                <div><h4>Loi de Finances initiale 2026</h4><small>Texte intégral de la loi de finances pour l'exercice 2026</small></div>
+                <a href="#{request.contextPath}/resources/docs/loi-finances-2026.pdf">Télécharger le PDF</a>
+            </li>
+            <li>
+                <div><h4>Stratégie nationale de financement 2026–2030</h4><small>Mobilisation des ressources internes et externes</small></div>
+                <a href="#{request.contextPath}/resources/docs/strategie-financement-2026-2030.pdf">Télécharger le PDF</a>
+            </li>
+            <li>
+                <div><h4>Rapport DSNT 2026–2028</h4><small>Stratégie pour les négociations et transactions financières</small></div>
+                <a href="#{request.contextPath}/resources/docs/rapport-dsnt-2026-2028.pdf">Télécharger le PDF</a>
+            </li>
+            <li>
+                <div><h4>Rapport de suivi budgétaire – T4 2025</h4><small>Exécution budgétaire du quatrième trimestre 2025</small></div>
+                <a href="#{request.contextPath}/resources/docs/rapport-suivi-budgetaire-t4-2025.pdf">Télécharger le PDF</a>
+            </li>
+        </ul>
+    </div>
+    <div>
+        <div class="info-card">
+            <h3>Points à retenir</h3>
+            <ul class="check-list">
+                <li><i class="fas fa-check-circle"></i><span>Recettes fiscales supérieures de 8% aux prévisions au T4 2025.</span></li>
+                <li><i class="fas fa-check-circle"></i><span>Exportations en forte progression (+155%) et importations en baisse (-23.6%).</span></li>
+                <li><i class="fas fa-check-circle"></i><span>Émission obligataire de 250 milliards FCFA sur le marché UEMOA.</span></li>
+                <li><i class="fas fa-check-circle"></i><span>Cadre de gestion des revenus pétroliers et gaziers publié.</span></li>
+            </ul>
+        </div>
+    </div>
+  </div>
+</div>
+
+<div class="section alt">
+  <div class="container">
+    <div class="section-header">
+        <div class="section-title">Prochains <span>rendez-vous budgétaires</span></div>
+    </div>
+    <div class="event-item">
+        <div class="event-date"><div class="day">02</div><div class="month">Avr</div></div>
+        <div class="event-info"><h4>Présentation du rapport d'exécution budgétaire T1 2026</h4><p><i class="fas fa-map-marker-alt"></i> Siège du MFB, Rue René Ndiaye – 10h00</p></div>
+    </div>
+    <div class="event-item">
+        <div class="event-date"><div class="day">10</div><div class="month">Avr</div></div>
+        <div class="event-info"><h4>Forum régional UEMOA sur la dette publique</h4><p><i class="fas fa-map-marker-alt"></i> BCEAO, Dakar – 08h30</p></div>
+    </div>
+  </div>
+</div>
+
+</ui:define>
+</ui:composition>
+</html>

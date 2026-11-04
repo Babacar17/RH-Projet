@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+<ui:composition template="/Principal/template.xhtml">
+<ui:param name="active" value="ministere"/>
+<ui:define name="title">Le Ministre</ui:define>
+<ui:define name="content">
+
+<div class="page-banner">
+    <div class="breadcrumb"><a href="@P@/index.xhtml">Accueil</a><span>/</span><a href="@P@/ministere.xhtml">Le Ministère</a><span>/</span>Le Ministre</div>
+    <h1>M. Cheikh DIBA</h1>
+    <p>Ministre des Finances et du Budget de la République du Sénégal.</p>
+    <div class="anchor-nav">
+        <a href="#biographie">Biographie</a>
+        <a href="#cabinet">Cabinet</a>
+        <a href="#discours">Discours</a>
+        <a href="#secretaire-general">Secrétaire Général</a>
+    </div>
+</div>
+
+<div class="section" id="biographie">
+  <div class="container two-col wide-left">
+    <div>
+        <div class="section-header"><div class="section-title">Biographie</div></div>
+        <p style="font-size:15px;color:#555;margin-bottom:16px">M. Cheikh DIBA est Ministre des Finances et du Budget. Il pilote la politique budgétaire et financière de l'État : préparation et exécution de la Loi de Finances, mobilisation des ressources internes et externes, relations avec les partenaires techniques et financiers.</p>
+        <p style="font-size:15px;color:#555;margin-bottom:20px">Il a récemment reçu plusieurs délégations internationales, dont l'Union européenne et la Banque africaine de développement, dans le cadre de la mobilisation de ressources pour le Plan Sénégal Émergent 2.0.</p>
+        <div class="quote-big">« La discipline budgétaire est le fondement de notre souveraineté économique. »</div>
+        <!-- TODO : compléter avec le parcours officiel du ministre -->
+    </div>
+    <div class="minister-card">
+        <div class="avatar">CD</div>
+        <h3>M. Cheikh DIBA</h3>
+        <div class="role">Ministre des Finances et du Budget</div>
+        <a href="@P@/actualites.xhtml" class="btn outline">Voir ses actualités</a>
+    </div>
+  </div>
+</div>
+
+<div class="section alt" id="cabinet">
+  <div class="container">
+    <div class="section-header"><div class="section-title">Cabinet du Ministre</div></div>
+    <!-- TODO : liste des membres du cabinet -->
+    <div class="notice">La composition du cabinet sera publiée prochainement. Pour toute demande, utilisez la <a href="@P@/contact.xhtml" style="color:#b58a3a;font-weight:700">page Contact</a>.</div>
+  </div>
+</div>
+
+<div class="section" id="discours">
+  <div class="container">
+    <div class="section-header"><div class="section-title">Discours</div></div>
+    <!-- TODO : liste des discours (titre, date, PDF) -->
+    <div class="notice">Les discours du Ministre seront publiés ici. Les documents officiels sont déjà disponibles dans les <a href="@P@/publications.xhtml" style="color:#b58a3a;font-weight:700">publications</a>.</div>
+  </div>
+</div>
+
+<div class="section alt" id="secretaire-general">
+  <div class="container">
+    <div class="section-header"><div class="section-title">Le Secrétaire Général</div></div>
+    <!-- TODO : nom et mot du Secrétaire Général -->
+    <div class="notice">La présentation du Secrétaire Général sera publiée prochainement. Découvrez en attendant l'<a href="@P@/ministere.xhtml#organisation" style="color:#b58a3a;font-weight:700">organisation du Ministère</a>.</div>
+  </div>
+</div>
+
+</ui:define>
+</ui:composition>
+</html>

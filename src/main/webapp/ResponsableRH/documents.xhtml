@@ -1,0 +1,234 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <ui:param name="page" value="documents"/>
+    <ui:define name="title">Gestion documentaire — SIRH</ui:define>
+    <ui:define name="pageTitle">Gestion documentaire</ui:define>
+    <ui:define name="breadcrumb">Documents &gt; Modèles &amp; Archives — #{sessionBean.institutionCourante.nom}</ui:define>
+
+    <ui:define name="content">
+        <div class="kpi-grid">
+            <div class="kpi-card blue">
+                <div class="kpi-label">Modèles</div>
+                <div class="kpi-value">#{adminDocumentBean.totalModeles}</div>
+            </div>
+            <div class="kpi-card gold">
+                <div class="kpi-label">Documents archivés</div>
+                <div class="kpi-value">#{adminDocumentBean.totalDocuments}</div>
+            </div>
+            <div class="kpi-card orange">
+                <div class="kpi-label">En signature</div>
+                <div class="kpi-value">#{adminDocumentBean.totalEnSignature}</div>
+            </div>
+            <div class="kpi-card red">
+                <div class="kpi-label">Expirés</div>
+                <div class="kpi-value">#{adminDocumentBean.totalExpires}</div>
+            </div>
+        </div>
+
+        <!-- ══════ Générer un document ══════ -->
+        <div class="section-card">
+            <div class="section-header">
+                <div class="section-title"><div class="section-title-dot" style="background:#7c3aed;"></div>Générer un document depuis un modèle</div>
+            </div>
+            <h:form id="formGenerer">
+                <div class="form-row col-3">
+                    <div class="form-group">
+                        <label class="form-label">Modèle *</label>
+                        <p:selectOneMenu value="#{adminDocumentBean.modeleGenerId}" style="width:100%;"
+                                         filter="true" filterMatchMode="contains">
+                            <f:selectItem itemLabel="-- Choisir --" itemValue="#{null}"/>
+                            <f:selectItems value="#{adminDocumentBean.modeles}" var="m" itemLabel="#{m.titre}" itemValue="#{m.id}"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Employé (optionnel)</label>
+                        <p:selectOneMenu value="#{adminDocumentBean.employeGenerId}" style="width:100%;"
+                                         filter="true" filterMatchMode="contains">
+                            <f:selectItem itemLabel="-- Aucun --" itemValue="#{null}"/>
+                            <f:selectItems value="#{adminDocumentBean.employes}" var="e" itemLabel="#{e.prenom} #{e.nom}" itemValue="#{e.id}"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group" style="display:flex;align-items:flex-end;">
+                        <p:commandButton value="Générer le document" icon="pi pi-file-export"
+                            action="#{adminDocumentBean.genererDocument}"
+                            update="growl formGenerer :formArchives:dtArchives"
+                            styleClass="btn btn-primary" style="width:100%;"/>
+                    </div>
+                </div>
+            </h:form>
+        </div>
+
+        <!-- ══════ Modèles de documents ══════ -->
+        <div class="section-card">
+            <div class="section-header">
+                <div class="section-title"><div class="section-title-dot" style="background:#2563eb;"></div>Modèles de documents</div>
+                <p:commandButton value="+ Nouveau modèle"
+                    action="#{adminDocumentBean.preparerNouveauModele}"
+                    oncomplete="PF('dlgModele').show()" update="formModele"
+                    styleClass="btn btn-primary"/>
+            </div>
+            <h:form id="formTableModeles">
+                <p:dataTable value="#{adminDocumentBean.modeles}" var="m" rows="10" paginator="true"
+                             emptyMessage="Aucun modèle enregistré." style="border:none;">
+                    <p:column headerText="Titre" style="padding:12px 16px;">
+                        <div style="font-weight:700;font-size:13px;">#{m.titre}</div>
+                        <div style="font-size:11px;color:#64748b;">#{m.typeDocument}</div>
+                    </p:column>
+                    <p:column headerText="Catégorie" style="padding:12px 16px;width:140px;">#{m.categorie}</p:column>
+                    <p:column headerText="Statut" style="padding:12px 16px;width:110px;">
+                        <span class="badge badge-#{m.statut}">#{m.statut}</span>
+                    </p:column>
+                    <p:column style="padding:12px 16px;width:220px;text-align:right;">
+                        <p:commandButton value="Modifier" styleClass="btn btn-secondary" style="margin-right:6px;"
+                            action="#{adminDocumentBean.preparerEditionModele(m)}"
+                            oncomplete="PF('dlgModele').show()" update="formModele"/>
+                        <p:commandButton value="#{m.statut == 'ACTIF' ? 'Désactiver' : 'Activer'}" styleClass="btn btn-secondary"
+                            action="#{adminDocumentBean.changerStatut(m.id, m.statut == 'ACTIF' ? 'INACTIF' : 'ACTIF')}"
+                            update="growl formTableModeles"/>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </div>
+
+        <!-- ══════ Documents archivés ══════ -->
+        <div class="section-card">
+            <div class="section-header">
+                <div class="section-title"><div class="section-title-dot" style="background:#d4a017;"></div>Documents archivés</div>
+                <p:commandButton value="+ Ajouter un document"
+                    action="#{adminDocumentBean.preparerUploadDocument}"
+                    oncomplete="PF('dlgUpload').show()" update="formUpload"
+                    styleClass="btn btn-primary"/>
+            </div>
+            <h:form id="formArchives">
+                <p:dataTable id="dtArchives" value="#{adminDocumentBean.documents}" var="d" rows="12" paginator="true"
+                             emptyMessage="Aucun document archivé." style="border:none;">
+                    <p:column headerText="Titre" style="padding:12px 16px;">
+                        <div style="font-weight:700;font-size:13px;">#{d.titre}</div>
+                        <div style="font-size:11px;color:#64748b;">#{d.employe != null ? d.employe.prenom.concat(' ').concat(d.employe.nom) : 'Général'}</div>
+                    </p:column>
+                    <p:column headerText="Dépôt" style="padding:12px 16px;width:120px;">
+                        <h:outputText value="#{d.dateDepot}"><f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/></h:outputText>
+                    </p:column>
+                    <p:column headerText="Statut" style="padding:12px 16px;width:130px;">
+                        <span class="badge badge-#{d.statut}">#{d.statut}</span>
+                    </p:column>
+                    <p:column style="padding:12px 16px;width:220px;text-align:right;">
+                        <p:commandButton value="Marquer signé" styleClass="btn btn-secondary" style="margin-right:6px;"
+                            rendered="#{d.statut != 'SIGNE'}"
+                            action="#{adminDocumentBean.marquerSigne(d.id)}"
+                            update="growl dtArchives"/>
+                        <p:commandButton value="Archiver" styleClass="btn btn-secondary" style="margin-right:6px;"
+                            rendered="#{d.statut != 'ARCHIVE'}"
+                            action="#{adminDocumentBean.changerStatut(d.id, 'ARCHIVE')}"
+                            update="growl dtArchives"/>
+                        <p:commandButton value="Supprimer" styleClass="btn btn-danger"
+                            action="#{adminDocumentBean.supprimerDocument(d.id)}"
+                            update="growl dtArchives"
+                            onclick="if(!confirm('Supprimer ce document ?')) return false;"/>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </div>
+    </ui:define>
+
+    <ui:define name="dialogs">
+        <!-- ═══════════════ DIALOG MODÈLE ═══════════════ -->
+        <h:form id="formModele" enctype="multipart/form-data">
+            <p:dialog header="#{adminDocumentBean.modele.id != null ? 'Modifier le modèle' : 'Nouveau modèle'}"
+                      widgetVar="dlgModele" modal="true" width="600" resizable="false">
+                <div style="padding:22px;">
+                    <div class="form-group">
+                        <label class="form-label">Titre du modèle *</label>
+                        <p:inputText value="#{adminDocumentBean.newModele.titre}" required="true" style="width:100%;"/>
+                    </div>
+                    <div class="form-row col-2">
+                        <div class="form-group">
+                            <label class="form-label">Catégorie *</label>
+                            <p:selectOneMenu value="#{adminDocumentBean.newModele.categorie}" style="width:100%;">
+                                <f:selectItem itemLabel="Contrat" itemValue="CONTRAT"/>
+                                <f:selectItem itemLabel="Attestation" itemValue="ATTESTATION"/>
+                                <f:selectItem itemLabel="Lettre RH" itemValue="LETTRE"/>
+                                <f:selectItem itemLabel="Fiche" itemValue="FICHE"/>
+                                <f:selectItem itemLabel="Autre" itemValue="AUTRE"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Type de document</label>
+                            <p:inputText value="#{adminDocumentBean.newModele.typeDocument}" style="width:100%;"/>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fichier modèle (texte/HTML, DOCX non converti)</label>
+                        <p:fileUpload fileUploadListener="#{adminDocumentBean.handleModeleUpload}"
+                                      mode="advanced" auto="true" dragDropSupport="false"
+                                      allowTypes="/(\.|\/)(txt|html|htm)$/" update="growl" style="width:100%;"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <p:inputTextarea value="#{adminDocumentBean.newModele.description}" rows="3" style="width:100%;"/>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;border-top:1px solid #e2e8f0;">
+                        <p:commandButton value="Annuler" type="button" onclick="PF('dlgModele').hide()" styleClass="btn btn-secondary"/>
+                        <p:commandButton value="Enregistrer" icon="pi pi-check"
+                            action="#{adminDocumentBean.sauvegarderModele}"
+                            update="growl formModele :formTableModeles :formGenerer"
+                            oncomplete="if(!args.validationFailed) PF('dlgModele').hide()"
+                            styleClass="btn btn-primary"/>
+                    </div>
+                </div>
+            </p:dialog>
+        </h:form>
+
+        <!-- ═══════════════ DIALOG UPLOAD DOCUMENT ═══════════════ -->
+        <h:form id="formUpload" enctype="multipart/form-data">
+            <p:dialog header="Ajouter un document" widgetVar="dlgUpload" modal="true" width="560" resizable="false">
+                <div style="padding:22px;">
+                    <div class="form-row col-2">
+                        <div class="form-group">
+                            <label class="form-label">Catégorie *</label>
+                            <p:selectOneMenu value="#{adminDocumentBean.document.categorie}" style="width:100%;">
+                                <f:selectItem itemLabel="Contrat" itemValue="CONTRAT"/>
+                                <f:selectItem itemLabel="Attestation" itemValue="ATTESTATION"/>
+                                <f:selectItem itemLabel="Bulletin de paie" itemValue="BULLETIN"/>
+                                <f:selectItem itemLabel="Lettre RH" itemValue="LETTRE"/>
+                                <f:selectItem itemLabel="Diplôme" itemValue="DIPLOME"/>
+                                <f:selectItem itemLabel="Autre" itemValue="AUTRE"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Employé concerné</label>
+                            <p:selectOneMenu value="#{adminDocumentBean.employeDocId}" style="width:100%;">
+                                <f:selectItem itemLabel="-- Général --" itemValue="#{null}"/>
+                                <f:selectItems value="#{adminDocumentBean.employes}" var="e" itemLabel="#{e.prenom} #{e.nom}" itemValue="#{e.id}"/>
+                            </p:selectOneMenu>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Titre du document *</label>
+                        <p:inputText value="#{adminDocumentBean.document.titre}" required="true" style="width:100%;"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fichier (PDF, DOCX, XLSX) *</label>
+                        <p:fileUpload value="#{adminDocumentBean.fichierUploade}"
+                                      mode="simple" skinSimple="true"
+                                      allowTypes="/(\.|\/)(pdf|docx|xlsx)$/" style="width:100%;"/>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;border-top:1px solid #e2e8f0;">
+                        <p:commandButton value="Annuler" type="button" onclick="PF('dlgUpload').hide()" styleClass="btn btn-secondary"/>
+                        <p:commandButton value="Enregistrer" icon="pi pi-check"
+                            action="#{adminDocumentBean.sauvegarderDocument}"
+                            update="growl formUpload :formArchives:dtArchives"
+                            oncomplete="if(!args.validationFailed) PF('dlgUpload').hide()"
+                            styleClass="btn btn-primary"/>
+                    </div>
+                </div>
+            </p:dialog>
+        </h:form>
+    </ui:define>
+
+</ui:composition>

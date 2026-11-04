@@ -1,0 +1,108 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <ui:param name="page" value="annonces"/>
+    <ui:define name="title">Annonces — SIRH</ui:define>
+    <ui:define name="pageTitle">Annonces</ui:define>
+    <ui:define name="breadcrumb">Communication &gt; Diffuser une annonce — #{sessionBean.institutionCourante.nom}</ui:define>
+
+    <ui:define name="content">
+        <div class="section-card">
+            <div class="section-header">
+                <div class="section-title"><div class="section-title-dot" style="background:#dc2626;"></div>Diffuser une annonce à votre institution</div>
+            </div>
+            <h:form id="formAnnonce" style="padding:16px 20px 24px;">
+                <div class="form-group">
+                    <label class="form-label">Destinataires</label>
+                    <p:selectOneRadio value="#{rhAnnonceBean.cible}" layout="grid" columns="2">
+                        <f:selectItem itemLabel="Tous les utilisateurs actifs de mon institution" itemValue="TOUS"/>
+                        <f:selectItem itemLabel="Par rôle (dans mon institution)"                 itemValue="ROLE"/>
+                        <p:ajax update="formAnnonce"/>
+                    </p:selectOneRadio>
+                </div>
+
+                <h:panelGroup rendered="#{rhAnnonceBean.cible == 'ROLE'}">
+                    <div class="form-group">
+                        <label class="form-label">Rôle ciblé</label>
+                        <p:selectOneMenu value="#{rhAnnonceBean.roleCible}" style="width:100%;">
+                            <f:selectItem itemLabel="— Choisir un rôle —" itemValue="#{null}"/>
+                            <f:selectItems value="#{rhAnnonceBean.rolesDisponibles}" var="r"
+                                           itemValue="#{r.nom}" itemLabel="#{r.nom}"/>
+                        </p:selectOneMenu>
+                    </div>
+                </h:panelGroup>
+
+                <div class="form-group">
+                    <label class="form-label">Titre de l'annonce *</label>
+                    <p:inputText value="#{rhAnnonceBean.titre}" style="width:100%;"
+                                 placeholder="Ex : Clôture des congés — date limite de dépôt" maxlength="200"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Message</label>
+                    <p:inputTextarea value="#{rhAnnonceBean.message}" rows="6" style="width:100%;"
+                                     placeholder="Décrivez l'information, les actions à entreprendre..." maxlength="2000"/>
+                </div>
+
+                <div class="form-row col-2">
+                    <div class="form-group">
+                        <label class="form-label">Priorité</label>
+                        <p:selectOneMenu value="#{rhAnnonceBean.priorite}" style="width:100%;">
+                            <f:selectItem itemLabel="Basse"   itemValue="BASSE"/>
+                            <f:selectItem itemLabel="Normale" itemValue="NORMALE"/>
+                            <f:selectItem itemLabel="Haute"   itemValue="HAUTE"/>
+                            <f:selectItem itemLabel="Urgente" itemValue="URGENTE"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:6px;">
+                        <p:selectBooleanCheckbox value="#{rhAnnonceBean.avecEmail}"/>
+                        <label class="form-label" style="margin:0 0 0 8px;text-transform:none;font-weight:600;">Envoyer aussi par email</label>
+                    </div>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;border-top:1px solid #e2e8f0;">
+                    <p:commandButton value="Diffuser l'annonce" icon="pi pi-send"
+                        action="#{rhAnnonceBean.diffuser}" update="growl formAnnonce :formHistoAnnonces"
+                        styleClass="btn btn-primary"/>
+                </div>
+            </h:form>
+        </div>
+
+        <div class="section-card" style="margin-top:20px;">
+            <div class="section-header">
+                <div class="section-title"><div class="section-title-dot" style="background:#2563eb;"></div>Historique des annonces diffusées</div>
+            </div>
+            <h:form id="formHistoAnnonces" style="padding:8px 20px 20px;">
+                <h:panelGroup rendered="#{empty rhAnnonceBean.historique}">
+                    <div style="padding:24px;text-align:center;color:#94a3b8;font-size:13px;">
+                        Aucune annonce diffusée pour le moment.
+                    </div>
+                </h:panelGroup>
+                <h:panelGroup rendered="#{not empty rhAnnonceBean.historique}">
+                    <ui:repeat value="#{rhAnnonceBean.historique}" var="log">
+                        <div style="display:flex;gap:14px;padding:12px 4px;border-bottom:1px solid #f1f5f9;">
+                            <div style="width:34px;height:34px;border-radius:8px;background:#eff6ff;color:#2563eb;
+                                        display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <i class="pi pi-megaphone"/>
+                            </div>
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-size:13px;color:#0f172a;">#{log.detail}</div>
+                                <div style="font-size:11px;color:#94a3b8;margin-top:3px;">
+                                    Par #{log.username} —
+                                    <h:outputText value="#{log.dateAction}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy 'à' HH:mm" type="localDateTime"/>
+                                    </h:outputText>
+                                </div>
+                            </div>
+                        </div>
+                    </ui:repeat>
+                </h:panelGroup>
+            </h:form>
+        </div>
+    </ui:define>
+
+</ui:composition>

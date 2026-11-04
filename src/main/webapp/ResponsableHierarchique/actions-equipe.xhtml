@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+    <title>Actions d'équipe — Manager</title>
+    <style>
+        body { background:#f1f5f9;font-family:'Segoe UI',sans-serif;margin:0;font-size:14px; }
+        .mg-main { flex:1;min-width:0; }
+        .mg-topbar { display:flex;justify-content:space-between;align-items:center;
+                     padding:14px 28px;background:#fff;border-bottom:1px solid #e2e8f0; }
+        .mg-topbar h1 { font-size:20px;font-weight:700; }
+        .breadcrumb { font-size:12px;color:#64748b;margin-top:2px; }
+        .mg-content { padding:24px 28px; }
+
+        .actions-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:24px; }
+        @media (max-width:1100px) { .actions-grid { grid-template-columns:1fr; } }
+        .action-card {
+            background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:24px;
+            cursor:pointer;transition:transform .15s,box-shadow .15s;
+            display:flex;flex-direction:column;gap:14px;text-align:center;
+        }
+        .action-card:hover {
+            transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,.10);
+        }
+        .action-icon {
+            width:64px;height:64px;border-radius:18px;
+            display:flex;align-items:center;justify-content:center;
+            font-size:28px;color:#fff;margin:0 auto;
+        }
+        .action-icon.reunion { background:linear-gradient(135deg,#7c3aed,#5b21b6); }
+        .action-icon.formation { background:linear-gradient(135deg,#0891b2,#0e7490); }
+        .action-icon.recrutement { background:linear-gradient(135deg,#16a34a,#15803d); }
+        .action-title { font-size:16px;font-weight:800;color:#0f172a; }
+        .action-desc { font-size:12px;color:#64748b;line-height:1.5; }
+        .btn-card {
+            background:#0f172a;color:#fff;border:none;padding:10px 18px;border-radius:8px;
+            font-size:12px;font-weight:700;cursor:pointer;
+            display:inline-flex;align-items:center;gap:6px;justify-content:center;
+        }
+
+        .card { background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin-bottom:20px; }
+        .card-title { font-size:13px;font-weight:800;color:#0f172a;margin-bottom:14px;
+                      display:flex;align-items:center;gap:8px;
+                      padding-bottom:10px;border-bottom:1px solid #f1f5f9; }
+        .form-group { margin-bottom:14px; }
+        .form-label { display:block;font-size:12px;font-weight:700;color:#475569;margin-bottom:5px; }
+        .form-row-2 { display:grid;grid-template-columns:1fr 1fr;gap:14px; }
+
+        .btn { display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:7px;
+               font-size:13px;font-weight:600;cursor:pointer;border:none; }
+        .btn-primary { background:#2563eb;color:#fff; }
+        .btn-secondary { background:#f1f5f9;color:#475569;border:1px solid #e2e8f0; }
+    </style>
+</h:head>
+
+<h:body>
+<div style="display:flex;">
+    <ui:include src="sidebar-manager.xhtml"><ui:param name="page" value="actions"/></ui:include>
+
+    <div class="mg-main">
+        <div class="mg-topbar">
+            <div>
+                <h1>Actions d'équipe</h1>
+                <div class="breadcrumb">Manager › Raccourcis et demandes vers le service RH</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span style="font-size:13px;font-weight:600;">#{sessionBean.nomComplet}</span>
+                <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:999px;
+                             font-size:10px;font-weight:700;">MANAGER</span>
+                <h:form>
+                    <p:commandButton value="Deconnexion" action="#{loginBean.logout}"
+                        ajax="false"
+                        style="background:#ef4444;color:#fff;border:none;padding:7px 14px;border-radius:7px;font-size:12px;"/>
+                </h:form>
+            </div>
+        </div>
+
+        <div class="mg-content">
+            <p:growl id="growl" showDetail="true"/>
+
+            <!-- ═══ 3 cartes d'action ═══ -->
+            <div class="actions-grid">
+                <div class="action-card" onclick="PF('dlgReunion').show();">
+                    <div class="action-icon reunion"><i class="pi pi-users"/></div>
+                    <div class="action-title">Programmer une réunion d'équipe</div>
+                    <div class="action-desc">
+                        Crée un événement de type RÉUNION et invite automatiquement
+                        tous les membres actifs de votre équipe.
+                    </div>
+                    <button type="button" class="btn-card"
+                            onclick="document.getElementById('formPrepReunion:btnPrepR').click();">
+                        <i class="pi pi-plus"/> Nouvelle réunion
+                    </button>
+                </div>
+
+                <div class="action-card" onclick="PF('dlgFormation').show();">
+                    <div class="action-icon formation"><i class="pi pi-book"/></div>
+                    <div class="action-title">Inscrire un membre à une formation</div>
+                    <div class="action-desc">
+                        Choisissez un employé de votre équipe et une formation
+                        au catalogue. Le service RH sera notifié.
+                    </div>
+                    <button type="button" class="btn-card"
+                            style="background:#0891b2;">
+                        <i class="pi pi-graduation-cap"/> Demander une formation
+                    </button>
+                </div>
+
+                <div class="action-card" onclick="PF('dlgRecrut').show();">
+                    <div class="action-icon recrutement"><i class="pi pi-user-plus"/></div>
+                    <div class="action-title">Demande de recrutement</div>
+                    <div class="action-desc">
+                        Proposez l'ouverture d'un poste au service RH avec le profil
+                        recherché et le motif. Le RH publiera l'offre si la demande est validée.
+                    </div>
+                    <button type="button" class="btn-card"
+                            style="background:#16a34a;">
+                        <i class="pi pi-send"/> Soumettre une demande
+                    </button>
+                </div>
+            </div>
+
+            <!-- ═══ Aide ═══ -->
+            <div class="card">
+                <div class="card-title">
+                    <i class="pi pi-info-circle" style="color:#0891b2;"/>
+                    Comment ça marche ?
+                </div>
+                <ul style="font-size:13px;color:#475569;line-height:1.8;padding-left:20px;">
+                    <li><strong>Réunion d'équipe</strong> : le système crée un événement
+                    PROGRAMME et envoie automatiquement une invitation email à chaque
+                    membre actif de votre équipe. Vous pouvez ensuite gérer les
+                    participants depuis la liste des événements.</li>
+                    <li><strong>Demande de formation</strong> : votre employé est inscrit
+                    immédiatement à la formation choisie. Le service RH reçoit une
+                    notification haute priorité avec votre justification.</li>
+                    <li><strong>Demande de recrutement</strong> : aucune offre n'est publiée
+                    automatiquement — le RH étudie votre demande et décide de la
+                    publication (ou non) sur le portail des candidats.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bouton invisible pour déclencher preparerReunionEquipe avant d'afficher la dialog -->
+<h:form id="formPrepReunion">
+    <p:commandButton id="btnPrepR" style="display:none;"
+        action="#{managerBean.preparerReunionEquipe}"
+        update=":formDlgReunion"
+        oncomplete="PF('dlgReunion').show();"/>
+</h:form>
+
+<!-- ═══ DIALOG RÉUNION ═══ -->
+<h:form id="formDlgReunion">
+    <p:dialog header="Programmer une réunion d'équipe"
+              widgetVar="dlgReunion" modal="true" width="640" resizable="false">
+        <div style="padding:22px;">
+            <div class="form-group">
+                <label class="form-label">Titre de la réunion *</label>
+                <p:inputText value="#{managerBean.reunion.titre}" style="width:100%;"/>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description / Ordre du jour</label>
+                <p:inputTextarea value="#{managerBean.reunion.description}" rows="3" style="width:100%;"/>
+            </div>
+            <div class="form-row-2">
+                <div class="form-group">
+                    <label class="form-label">Date de début</label>
+                    <p:datePicker value="#{managerBean.reunion.dateDebut}"
+                                  showTime="true" pattern="dd/MM/yyyy HH:mm"
+                                  style="width:100%;"/>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date de fin</label>
+                    <p:datePicker value="#{managerBean.reunion.dateFin}"
+                                  showTime="true" pattern="dd/MM/yyyy HH:mm"
+                                  style="width:100%;"/>
+                </div>
+            </div>
+            <div class="form-row-2">
+                <div class="form-group">
+                    <label class="form-label">Lieu</label>
+                    <p:inputText value="#{managerBean.reunion.lieu}" style="width:100%;"
+                                 placeholder="Salle de réunion, étage..."/>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Modalité</label>
+                    <p:selectOneMenu value="#{managerBean.reunion.modalite}" style="width:100%;">
+                        <f:selectItem itemLabel="Présentiel" itemValue="PRESENTIEL"/>
+                        <f:selectItem itemLabel="Distanciel" itemValue="DISTANCIEL"/>
+                        <f:selectItem itemLabel="Hybride"    itemValue="HYBRIDE"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">URL visio (si applicable)</label>
+                <p:inputText value="#{managerBean.reunion.urlVisio}" style="width:100%;"
+                             placeholder="https://meet.google.com/..."/>
+            </div>
+            <div style="background:#f0fdf4;padding:10px 12px;border-radius:8px;font-size:12px;
+                        color:#15803d;margin-bottom:14px;">
+                <i class="pi pi-info-circle"/>
+                Tous les <strong>#{managerBean.monEquipe.size()}</strong> membre(s) actif(s) de votre équipe
+                recevront une invitation par email.
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:10px;border-top:1px solid #e2e8f0;padding-top:14px;">
+                <p:commandButton value="Annuler" type="button"
+                    onclick="PF('dlgReunion').hide()" styleClass="btn btn-secondary"/>
+                <p:commandButton value="Créer la réunion"
+                    action="#{managerBean.creerReunionEquipe}"
+                    update="formDlgReunion growl"
+                    oncomplete="if(!args.validationFailed) PF('dlgReunion').hide();"
+                    styleClass="btn btn-primary"/>
+            </div>
+        </div>
+    </p:dialog>
+</h:form>
+
+<!-- ═══ DIALOG FORMATION ═══ -->
+<h:form id="formDlgFormation">
+    <p:dialog header="Demande de formation pour un membre"
+              widgetVar="dlgFormation" modal="true" width="560" resizable="false">
+        <div style="padding:22px;">
+            <div class="form-group">
+                <label class="form-label">Membre de l'équipe *</label>
+                <p:selectOneMenu value="#{managerBean.membreCibleFormationId}"
+                                 style="width:100%;">
+                    <f:selectItem itemLabel="— Choisir un membre —" itemValue="#{null}"/>
+                    <f:selectItems value="#{managerBean.monEquipe}" var="m"
+                                   itemValue="#{m.id}"
+                                   itemLabel="#{m.matricule} — #{m.nomComplet}"/>
+                </p:selectOneMenu>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Formation *</label>
+                <p:selectOneMenu value="#{managerBean.formationDemandeeId}" style="width:100%;">
+                    <f:selectItem itemLabel="— Choisir une formation —" itemValue="#{null}"/>
+                    <f:selectItems value="#{managerBean.formationsDisponibles}" var="f"
+                                   itemValue="#{f.id}" itemLabel="#{f.titre}"/>
+                </p:selectOneMenu>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Justification</label>
+                <p:inputTextarea value="#{managerBean.justificationFormation}" rows="3" style="width:100%;"
+                                 placeholder="Pourquoi cette formation est-elle nécessaire ?"/>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:10px;border-top:1px solid #e2e8f0;padding-top:14px;">
+                <p:commandButton value="Annuler" type="button"
+                    onclick="PF('dlgFormation').hide()" styleClass="btn btn-secondary"/>
+                <p:commandButton value="Envoyer la demande"
+                    action="#{managerBean.envoyerDemandeFormation}"
+                    update="formDlgFormation growl"
+                    oncomplete="if(!args.validationFailed) PF('dlgFormation').hide();"
+                    styleClass="btn btn-primary"/>
+            </div>
+        </div>
+    </p:dialog>
+</h:form>
+
+<!-- ═══ DIALOG RECRUTEMENT ═══ -->
+<h:form id="formDlgRecrut">
+    <p:dialog header="Demande de recrutement"
+              widgetVar="dlgRecrut" modal="true" width="600" resizable="false">
+        <div style="padding:22px;">
+            <div class="form-group">
+                <label class="form-label">Poste recherché *</label>
+                <p:inputText value="#{managerBean.posteRecherche}" style="width:100%;"
+                             placeholder="Ex : Comptable junior, Développeur Java..."/>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Profil recherché</label>
+                <p:inputTextarea value="#{managerBean.profilRecherche}" rows="4" style="width:100%;"
+                                 placeholder="Compétences, expérience, diplôme requis..."/>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Motif de la demande</label>
+                <p:inputTextarea value="#{managerBean.motifRecrutement}" rows="3" style="width:100%;"
+                                 placeholder="Remplacement, création de poste, surcroît d'activité..."/>
+            </div>
+            <div style="background:#fef3c7;padding:10px 12px;border-radius:8px;font-size:12px;
+                        color:#92400e;margin-bottom:14px;">
+                <i class="pi pi-info-circle"/>
+                Cette demande sera transmise au service RH. <strong>Aucune offre n'est publiée
+                automatiquement.</strong> Le RH évaluera votre demande et publiera l'offre
+                d'emploi sur le portail des candidats si elle est validée.
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:10px;border-top:1px solid #e2e8f0;padding-top:14px;">
+                <p:commandButton value="Annuler" type="button"
+                    onclick="PF('dlgRecrut').hide()" styleClass="btn btn-secondary"/>
+                <p:commandButton value="Soumettre au RH"
+                    action="#{managerBean.envoyerDemandeRecrutement}"
+                    update="formDlgRecrut growl"
+                    oncomplete="if(!args.validationFailed) PF('dlgRecrut').hide();"
+                    styleClass="btn btn-primary"/>
+            </div>
+        </div>
+    </p:dialog>
+</h:form>
+
+</h:body>
+</html>

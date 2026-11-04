@@ -1,0 +1,945 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <f:metadata>
+        <f:viewParam name="tab" value="#{recrutementBean.activeTabIndex}"/>
+        <f:viewParam name="offreId" value="#{recrutementBean.offreSelectionneeId}"/>
+    </f:metadata>
+
+    <ui:param name="page" value="recrutement"/>
+    <ui:define name="title">Concours de recrutement — SIRH</ui:define>
+    <ui:define name="pageTitle">Concours de recrutement</ui:define>
+    <ui:define name="breadcrumb">Recrutement &gt; Référentiel, jury, notation &amp; décision</ui:define>
+
+    <ui:define name="styles">
+        <style>
+            .drill-col { display:flex; flex-direction:column; gap:14px; }
+            .drill-item {
+                display:flex; justify-content:space-between; align-items:center;
+                padding:9px 12px; border-radius:8px; border:1px solid #e2e8f0;
+                cursor:pointer; margin-bottom:6px; font-size:13px;
+                color:#1e293b; text-decoration:none;
+            }
+            .drill-item:hover { background:#f8fafc; text-decoration:none; }
+            .drill-item.active {
+                background:#eff6ff; border-color:#2563eb; border-width:2px;
+                color:#1d4ed8; font-weight:700;
+            }
+            .drill-empty { color:#94a3b8; font-size:12px; font-style:italic; padding:8px 0; }
+            .mini-form { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+            .note-table th, .note-table td { padding:8px 10px; border-bottom:1px solid #f1f5f9; text-align:left; }
+            .note-table input { width:70px; }
+
+            .ui-widget-overlay { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); background: rgba(15,23,42,.35) !important; }
+
+            /* ══════ Onglets recrutement : occuper toute la largeur, sans bordure par onglet ══════ */
+            #tabs .ui-tabs { background:#fff; border:1px solid #e2e8f0; border-radius:12px; box-shadow:none; }
+            #tabs .ui-tabs-nav {
+                display:flex; flex-wrap:nowrap; width:100%; box-sizing:border-box;
+                background:#fafbfc; border:none; border-bottom:1px solid #e2e8f0; border-radius:12px 12px 0 0;
+                padding:0 12px; margin:0;
+            }
+            #tabs .ui-tabs-nav li {
+                float:none; flex:1 1 0; min-width:0; margin:0; text-align:center;
+                background:transparent !important; border:none !important; border-radius:0 !important;
+            }
+            #tabs .ui-tabs-nav li a {
+                display:block; padding:16px 6px; color:#64748b; font-weight:700; font-size:12.5px;
+                text-decoration:none; border-bottom:3px solid transparent; outline:none;
+                white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+            }
+            #tabs .ui-tabs-nav li:not(.ui-tabs-selected):hover a { color:#1e293b; }
+            #tabs .ui-tabs-nav li.ui-tabs-selected a,
+            #tabs .ui-tabs-nav li.ui-state-active a { color:#1d4ed8; border-bottom-color:#2563eb; }
+            #tabs .ui-tabs-panel { background:#fff; border:none; border-radius:0 0 12px 12px; padding:24px; }
+
+            /* ══════ Barre de sélection d'offre — plate, alignée avec le style des onglets ══════ */
+            .offre-bar { padding:14px 4px 22px; }
+            .offre-bar-label {
+                display:block; font-size:11px; font-weight:700; color:#94a3b8;
+                text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px;
+            }
+            .offre-bar-box {
+                display:inline-flex; align-items:center; gap:12px; flex-wrap:wrap;
+                border:1px solid #e2e8f0; border-radius:10px; background:#fff;
+                padding:10px 16px;
+            }
+            .offre-bar-sep { font-size:12.5px; color:#64748b; font-weight:600; }
+
+            /* ══════ Stepper + cartes de phase (onglet Phases &amp; Notation) ══════ */
+            .btn-outline { background:#fff; border:1px solid #cbd5e1; color:#334155; }
+            .btn-outline:hover { background:#f8fafc; }
+            .btn-outline-danger { background:#fff; border:1px solid #fecaca; color:#dc2626; }
+            .btn-outline-danger:hover { background:#fef2f2; }
+
+            .ph-stepper { display:flex; align-items:flex-start; margin-bottom:28px; padding:4px 4px 0; }
+            .ph-step { display:flex; flex-direction:column; align-items:center; text-align:center; min-width:120px; }
+            .ph-step-circle {
+                width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+                font-size:13px; font-weight:700; margin-bottom:8px; border:2px solid #cbd5e1; background:#fff; color:#94a3b8;
+            }
+            .ph-step-circle.ph-step-EN_COURS { background:#2563eb; border-color:#2563eb; color:#fff; }
+            .ph-step-circle.ph-step-PLANIFIEE { border-color:#2563eb; color:#2563eb; }
+            .ph-step-circle.ph-step-CLOTUREE { background:#16a34a; border-color:#16a34a; color:#fff; }
+            .ph-step-circle.ph-step-FINAL { border-style:dashed; }
+            .ph-step-label { font-size:11.5px; color:#334155; font-weight:600; line-height:1.4; }
+            .ph-step-sub { font-size:10.5px; color:#94a3b8; font-weight:500; }
+            .ph-step-line { flex:1; height:2px; background:#e2e8f0; margin-top:15px; min-width:24px; }
+
+            .ph-layout { display:grid; grid-template-columns:1fr 480px; gap:18px; align-items:start; }
+            .ph-cards { display:flex; flex-direction:column; gap:14px; }
+            .ph-card { border:1px solid #e2e8f0; border-radius:10px; padding:13px 15px; }
+            .ph-card-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:13px; }
+            .ph-info-box { background:#f8fafc; color:#64748b; font-size:12px; padding:9px 11px; border-radius:6px; }
+            .ph-dates { font-size:11.5px; color:#64748b; margin-bottom:8px; }
+            .ph-progress-label { font-size:11.5px; color:#64748b; display:flex; justify-content:space-between; margin-bottom:5px; }
+            .ph-progress-count { font-weight:700; color:#334155; }
+            .ph-progress-bar { background:#f1f5f9; border-radius:20px; height:7px; overflow:hidden; margin-bottom:10px; }
+            .ph-progress-fill { background:#2563eb; height:100%; border-radius:20px; }
+            .ph-actions { display:flex; gap:6px; flex-wrap:wrap; }
+            .ph-actions .ui-button { flex:0 0 auto; font-size:11.5px; padding:6px 10px; }
+
+            .ph-side-panel { border:1px solid #e2e8f0; border-radius:10px; padding:14px 16px; background:#fafbfc; position:sticky; top:12px; }
+
+            @media (max-width: 700px) {
+                .ph-layout { grid-template-columns:1fr; }
+                .ph-side-panel { position:static; }
+            }
+        </style>
+    </ui:define>
+
+    <ui:define name="content">
+
+        <!-- ══════ Sélecteur d'offre (contexte commun) ══════ -->
+        <div class="offre-bar">
+            <h:form id="formSelectOffre">
+                <label class="offre-bar-label">Offre</label>
+                <div class="offre-bar-box">
+                    <p:selectOneMenu value="#{recrutementBean.offreSelectionneeId}" converter="jakarta.faces.Long"
+                                     style="min-width:220px;" filter="true" filterMatchMode="contains">
+                        <f:selectItem itemLabel="— Choisir une offre —" itemValue="#{null}" noSelectionOption="true"/>
+                        <f:selectItems value="#{recrutementBean.offres}" var="o" itemValue="#{o.id}" itemLabel="#{o.titre}"/>
+                        <p:ajax update="@form :tabs"/>
+                    </p:selectOneMenu>
+                    <h:panelGroup rendered="#{recrutementBean.offreSelectionnee != null}">
+                        <span class="badge badge-#{recrutementBean.offreSelectionnee.statut}">#{recrutementBean.offreSelectionnee.statut}</span>
+                    </h:panelGroup>
+                    <h:panelGroup rendered="#{recrutementBean.offreSelectionnee != null and recrutementBean.offreSelectionnee.referentiel != null}">
+                        <span class="offre-bar-sep">Référentiel :</span>
+                        <span class="badge" style="background:#dcfce7;color:#15803d;">
+                            #{recrutementBean.offreSelectionnee.referentiel.libelle}
+                        </span>
+                    </h:panelGroup>
+                    <h:panelGroup rendered="#{recrutementBean.offreSelectionnee != null and recrutementBean.offreSelectionnee.referentiel == null}">
+                        <span class="offre-bar-sep">Référentiel :</span>
+                        <p:selectOneMenu value="#{recrutementBean.referentielAAssocierId}" converter="jakarta.faces.Long" style="min-width:160px;" filter="true" filterMatchMode="contains">
+                            <f:selectItem itemLabel="— Choisir —" itemValue="#{null}"/>
+                            <f:selectItems value="#{recrutementBean.referentiels}" var="r" itemValue="#{r.id}" itemLabel="#{r.libelle}"/>
+                        </p:selectOneMenu>
+                        <p:commandButton value="Associer" action="#{recrutementBean.associerReferentiel}" update="@form :tabs :growl" styleClass="btn btn-secondary"/>
+                    </h:panelGroup>
+                </div>
+            </h:form>
+        </div>
+
+        <script>
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest || !e.target.closest('.ui-selectonemenu-trigger')) return;
+                setTimeout(function () {
+                    var f = document.querySelector('.ui-selectonemenu-filter');
+                    if (f) f.placeholder = 'Rechercher…';
+                }, 50);
+            }, true);
+        </script>
+
+        <h:form id="tabs">
+        <p:tabView activeIndex="#{recrutementBean.activeTabIndex}">
+
+            <!-- ══════════════════ ONGLET 1 : RÉFÉRENTIELS ══════════════════ -->
+            <p:tab title="Référentiels d'évaluation">
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
+
+                    <!-- Référentiels -->
+                    <div class="drill-col">
+                        <h4 style="font-size:12px;color:#64748b;text-transform:uppercase;">Référentiel de l'offre</h4>
+                        <h:panelGroup rendered="#{recrutementBean.offreSelectionnee == null}">
+                            <div class="drill-empty">← Choisissez d'abord une offre</div>
+                        </h:panelGroup>
+                        <h:panelGroup rendered="#{recrutementBean.offreSelectionnee != null and recrutementBean.referentielSelectionne != null}">
+                            <div class="drill-item active"><span>#{recrutementBean.referentielSelectionne.libelle}</span></div>
+                        </h:panelGroup>
+                        <h:panelGroup rendered="#{recrutementBean.offreSelectionnee != null and recrutementBean.referentielSelectionne == null}">
+                            <div class="drill-empty">Aucun référentiel — associez-en un existant (en haut) ou créez-en un :</div>
+                            <div class="mini-form">
+                                <p:inputText value="#{recrutementBean.nouveauReferentielLibelle}" placeholder="Nouveau référentiel" style="flex:1;"/>
+                                <p:commandButton value="+" action="#{recrutementBean.creerReferentiel}" update=":tabs :formSelectOffre :growl" styleClass="btn btn-primary"/>
+                            </div>
+                        </h:panelGroup>
+                    </div>
+
+                    <!-- Phases -->
+                    <div class="drill-col">
+                        <h4 style="font-size:12px;color:#64748b;text-transform:uppercase;">Phases</h4>
+                        <h:panelGroup rendered="#{recrutementBean.referentielSelectionne == null}">
+                            <div class="drill-empty">← Choisissez un référentiel</div>
+                        </h:panelGroup>
+                        <h:panelGroup rendered="#{recrutementBean.referentielSelectionne != null and recrutementBean.phases.isEmpty()}">
+                            <div class="drill-empty">Aucune phase — ajoutez-en une ci-dessous.</div>
+                        </h:panelGroup>
+                        <ui:repeat value="#{recrutementBean.phases}" var="p">
+                            <p:commandLink action="#{recrutementBean.selectionnerPhase(p)}" update=":tabs"
+                                           styleClass="drill-item #{recrutementBean.phaseSelectionnee != null and recrutementBean.phaseSelectionnee.id == p.id ? 'active' : ''}">
+                                <span>#{p.numeroOrdre}. #{p.libelle}</span>
+                            </p:commandLink>
+                        </ui:repeat>
+                        <h:panelGroup rendered="#{recrutementBean.referentielSelectionne != null}">
+                            <div class="mini-form" style="flex-direction:column;">
+                                <p:inputText value="#{recrutementBean.nouvellePhaseLibelle}" placeholder="Nouvelle phase" style="width:100%;"/>
+                                <p:inputNumber value="#{recrutementBean.nouvellePhaseNoteEliminatoire}" placeholder="Note éliminatoire (opt.)" style="width:100%;"/>
+                                <p:commandButton value="+ Ajouter" action="#{recrutementBean.ajouterPhase}" update=":tabs :growl" styleClass="btn btn-secondary"/>
+                            </div>
+                        </h:panelGroup>
+                    </div>
+
+                    <!-- Rubriques -->
+                    <div class="drill-col">
+                        <h4 style="font-size:12px;color:#64748b;text-transform:uppercase;">Rubriques</h4>
+                        <h:panelGroup rendered="#{recrutementBean.phaseSelectionnee == null}">
+                            <div class="drill-empty">← Choisissez une phase</div>
+                        </h:panelGroup>
+                        <h:panelGroup rendered="#{recrutementBean.phaseSelectionnee != null and recrutementBean.rubriques.isEmpty()}">
+                            <div class="drill-empty">Aucune rubrique — ajoutez-en une ci-dessous.</div>
+                        </h:panelGroup>
+                        <ui:repeat value="#{recrutementBean.rubriques}" var="r">
+                            <p:commandLink action="#{recrutementBean.selectionnerRubrique(r)}" update=":tabs"
+                                           styleClass="drill-item #{recrutementBean.rubriqueSelectionnee != null and recrutementBean.rubriqueSelectionnee.id == r.id ? 'active' : ''}">
+                                <span>#{r.libelle}</span><span style="color:#94a3b8;">coeff. #{r.coefficient}</span>
+                            </p:commandLink>
+                        </ui:repeat>
+                        <h:panelGroup rendered="#{recrutementBean.phaseSelectionnee != null}">
+                            <div class="mini-form" style="flex-direction:column;">
+                                <p:inputText value="#{recrutementBean.nouvelleRubriqueLibelle}" placeholder="Nouvelle rubrique" style="width:100%;"/>
+                                <p:inputNumber value="#{recrutementBean.nouvelleRubriqueCoefficient}" placeholder="Coefficient" style="width:100%;"/>
+                                <p:commandButton value="+ Ajouter" action="#{recrutementBean.ajouterRubrique}" update=":tabs :growl" styleClass="btn btn-secondary"/>
+                            </div>
+                        </h:panelGroup>
+                    </div>
+
+                    <!-- Éléments -->
+                    <div class="drill-col">
+                        <h4 style="font-size:12px;color:#64748b;text-transform:uppercase;">Éléments notés</h4>
+                        <h:panelGroup rendered="#{recrutementBean.rubriqueSelectionnee == null}">
+                            <div class="drill-empty">← Choisissez une rubrique</div>
+                        </h:panelGroup>
+                        <h:panelGroup rendered="#{recrutementBean.rubriqueSelectionnee != null and recrutementBean.elements.isEmpty()}">
+                            <div class="drill-empty">Aucun critère — ajoutez-en un ci-dessous.</div>
+                        </h:panelGroup>
+                        <ui:repeat value="#{recrutementBean.elements}" var="e">
+                            <div class="drill-item">
+                                <span>#{e.libelle}</span><span style="color:#94a3b8;">/ #{e.pointsMax}</span>
+                            </div>
+                        </ui:repeat>
+                        <h:panelGroup rendered="#{recrutementBean.rubriqueSelectionnee != null}">
+                            <div class="mini-form" style="flex-direction:column;">
+                                <p:inputText value="#{recrutementBean.nouvelElementLibelle}" placeholder="Nouveau critère" style="width:100%;"/>
+                                <p:inputNumber value="#{recrutementBean.nouvelElementPointsMax}" placeholder="Points max" style="width:100%;"/>
+                                <p:commandButton value="+ Ajouter" action="#{recrutementBean.ajouterElement}" update=":tabs :growl" styleClass="btn btn-secondary"/>
+                            </div>
+                        </h:panelGroup>
+                    </div>
+
+                </div>
+            </p:tab>
+
+            <!-- ══════════════════ ONGLET 2 : JURY ══════════════════ -->
+            <p:tab title="Jury #{recrutementBean.offreSelectionnee != null and recrutementBean.nbMembresJury > 0 ? '('.concat(recrutementBean.nbMembresJury).concat(')') : ''}">
+                <h:panelGroup rendered="#{recrutementBean.offreSelectionnee == null}">
+                    <p style="color:#94a3b8;">Sélectionnez d'abord une offre ci-dessus.</p>
+                </h:panelGroup>
+                <h:panelGroup rendered="#{recrutementBean.offreSelectionnee != null}">
+                    <div style="display:grid;grid-template-columns:1fr 2fr;gap:20px;">
+                        <div class="drill-col">
+                            <h4 style="font-size:12px;color:#64748b;text-transform:uppercase;">Comités</h4>
+                            <ui:repeat value="#{recrutementBean.comites}" var="c">
+                                <p:commandLink action="#{recrutementBean.selectionnerComite(c)}" update=":tabs"
+                                               styleClass="drill-item #{recrutementBean.comiteSelectionne != null and recrutementBean.comiteSelectionne.id == c.id ? 'active' : ''}">
+                                    <span>#{c.libelle}</span>
+                                </p:commandLink>
+                            </ui:repeat>
+                            <div class="mini-form" style="flex-direction:column;">
+                                <p:inputText value="#{recrutementBean.nouveauComiteLibelle}" placeholder="Nouveau comité" style="width:100%;"/>
+                                <p:commandButton value="+ Créer" action="#{recrutementBean.creerComite}" update=":tabs :growl" styleClass="btn btn-secondary"/>
+                            </div>
+                        </div>
+                        <div>
+                            <h:panelGroup rendered="#{recrutementBean.comiteSelectionne != null}">
+                                <h4 style="font-size:12px;color:#64748b;text-transform:uppercase;">Membres du jury — #{recrutementBean.comiteSelectionne.libelle}</h4>
+                                <p:dataTable value="#{recrutementBean.membres}" var="m" rowKey="#{m.id}" style="border:none;margin-bottom:14px;" emptyMessage="Aucun membre.">
+                                    <p:column headerText="Employé">#{m.evaluateur.nomComplet}</p:column>
+                                    <p:column headerText="Rôle">#{m.role}</p:column>
+                                    <p:column style="width:80px;text-align:right;">
+                                        <p:commandButton icon="pi pi-trash" action="#{recrutementBean.retirerMembre(m)}" update=":tabs :growl" styleClass="btn btn-danger"/>
+                                    </p:column>
+                                </p:dataTable>
+                                <div class="mini-form">
+                                    <p:selectOneMenu value="#{recrutementBean.employeAAjouterId}" converter="jakarta.faces.Long" style="flex:1;" filter="true">
+                                        <f:selectItem itemLabel="— Choisir un employé —" itemValue="#{null}"/>
+                                        <f:selectItemGroup label="Unité du poste (#{recrutementBean.offreSelectionnee.poste.unite})">
+                                            <f:selectItems value="#{recrutementBean.employesUniteConcernee}" var="e" itemValue="#{e.id}" itemLabel="#{e.poste != null or not empty e.librePoste ? e.nomComplet.concat(' — ').concat(e.intiutePoste) : e.nomComplet}"/>
+                                        </f:selectItemGroup>
+                                        <f:selectItemGroup label="Autres employés">
+                                            <f:selectItems value="#{recrutementBean.employesAutres}" var="e" itemValue="#{e.id}" itemLabel="#{e.poste != null or not empty e.librePoste ? e.nomComplet.concat(' — ').concat(e.intiutePoste) : e.nomComplet}"/>
+                                        </f:selectItemGroup>
+                                    </p:selectOneMenu>
+                                    <p:selectOneMenu value="#{recrutementBean.roleMembre}" style="width:160px;">
+                                        <f:selectItem itemLabel="Président" itemValue="PRESIDENT"/>
+                                        <f:selectItem itemLabel="Membre" itemValue="MEMBRE"/>
+                                        <f:selectItem itemLabel="Secrétaire" itemValue="SECRETAIRE"/>
+                                        <f:selectItem itemLabel="Rapporteur" itemValue="RAPPORTEUR"/>
+                                    </p:selectOneMenu>
+                                    <p:commandButton value="Ajouter" action="#{recrutementBean.ajouterMembre}" update=":tabs :growl" styleClass="btn btn-primary"/>
+                                </div>
+                            </h:panelGroup>
+                        </div>
+                    </div>
+                </h:panelGroup>
+            </p:tab>
+
+            <!-- ══════════════════ ONGLET 3 : PHASES & NOTATION ══════════════════ -->
+            <p:tab title="Phases &amp; Notation">
+                <h:panelGroup rendered="#{recrutementBean.offreSelectionnee == null}">
+                    <p style="color:#94a3b8;">Sélectionnez d'abord une offre ci-dessus.</p>
+                </h:panelGroup>
+                <h:panelGroup rendered="#{recrutementBean.offreSelectionnee != null}">
+
+                    <!-- ── Stepper du parcours de l'offre ── -->
+                    <div class="ph-stepper">
+                        <ui:repeat value="#{recrutementBean.etapesPhases}" var="etape" varStatus="st">
+                            <div class="ph-step">
+                                <div class="ph-step-circle ph-step-#{etape.statutAffiche}">#{st.index + 1}</div>
+                                <div class="ph-step-label">
+                                    #{etape.phase.libelle}<br/>
+                                    <span class="ph-step-sub">[#{etape.statutAffiche eq 'NON_PLANIFIEE' ? 'Non planifiée' : (etape.statutAffiche eq 'INDISPONIBLE' ? 'Indisponible' : etape.statutAffiche)}]</span>
+                                </div>
+                            </div>
+                            <div class="ph-step-line"/>
+                        </ui:repeat>
+                        <h:panelGroup rendered="#{recrutementBean.toutesPhasesCloturees}">
+                            <p:commandLink action="#{recrutementBean.setActiveTabIndex(4)}" update=":tabs" style="text-decoration:none;">
+                                <div class="ph-step">
+                                    <div class="ph-step-circle ph-step-EN_COURS">#{recrutementBean.etapesPhases.size() + 1}</div>
+                                    <div class="ph-step-label">Décision finale</div>
+                                </div>
+                            </p:commandLink>
+                        </h:panelGroup>
+                        <h:panelGroup rendered="#{not recrutementBean.toutesPhasesCloturees}">
+                            <div class="ph-step">
+                                <div class="ph-step-circle ph-step-FINAL">#{recrutementBean.etapesPhases.size() + 1}</div>
+                                <div class="ph-step-label">Décision finale</div>
+                            </div>
+                        </h:panelGroup>
+                    </div>
+
+                    <!-- ── Cartes de phase + panneau de planification ── -->
+                    <div class="ph-layout">
+                        <div class="ph-cards">
+                            <ui:repeat value="#{recrutementBean.etapesPhases}" var="etape">
+                                <div class="ph-card">
+                                    <div class="ph-card-head">
+                                        <strong>#{etape.phase.libelle}</strong>
+                                        <h:panelGroup rendered="#{etape.statutAffiche eq 'NON_PLANIFIEE' or etape.statutAffiche eq 'INDISPONIBLE'}">
+                                            <span class="badge" style="background:#f1f5f9;color:#64748b;">#{etape.statutAffiche eq 'NON_PLANIFIEE' ? 'Non planifiée' : 'Indisponible'}</span>
+                                        </h:panelGroup>
+                                        <h:panelGroup rendered="#{etape.statutAffiche eq 'PLANIFIEE' or etape.statutAffiche eq 'EN_COURS' or etape.statutAffiche eq 'CLOTUREE'}">
+                                            <span class="badge badge-#{etape.statutAffiche}">#{etape.statutAffiche}</span>
+                                        </h:panelGroup>
+                                    </div>
+
+                                    <!-- Phase précédente pas encore close -->
+                                    <h:panelGroup rendered="#{etape.statutAffiche eq 'INDISPONIBLE'}">
+                                        <div class="ph-info-box">Disponible après la clôture de la phase précédente.</div>
+                                    </h:panelGroup>
+
+                                    <!-- Pas encore lancée, mais disponible -->
+                                    <h:panelGroup rendered="#{etape.statutAffiche eq 'NON_PLANIFIEE'}">
+                                        <p:commandButton value="Planifier la phase" action="#{recrutementBean.ouvrirPlanification(etape.phase)}"
+                                                         update=":tabs" styleClass="btn btn-primary"/>
+                                    </h:panelGroup>
+
+                                    <!-- Planifiée (lancement automatique à venir) -->
+                                    <h:panelGroup rendered="#{etape.statutAffiche eq 'PLANIFIEE'}">
+                                        <h:panelGroup rendered="#{etape.phaseOffre.dateDebutPrevue != null}">
+                                            <div class="ph-dates">
+                                                Lancement auto le
+                                                <h:outputText value="#{etape.phaseOffre.dateDebutPrevue}">
+                                                    <f:convertDateTime pattern="dd/MM/yyyy HH:mm" type="localDateTime"/>
+                                                </h:outputText>
+                                            </div>
+                                        </h:panelGroup>
+                                        <h:panelGroup rendered="#{etape.phaseOffre.dateDebutPrevue == null}">
+                                            <div class="ph-dates">Lancement manuel (aucune date programmée)</div>
+                                        </h:panelGroup>
+                                        <div class="ph-actions">
+                                            <p:commandButton value="Lancer maintenant" action="#{recrutementBean.activerPhaseMaintenant(etape.phaseOffre)}"
+                                                             update=":tabs :growl" styleClass="btn btn-gold"/>
+                                            <p:commandButton value="Modifier" action="#{recrutementBean.ouvrirPlanification(etape.phase)}"
+                                                             update=":tabs" styleClass="btn btn-outline"/>
+                                        </div>
+                                    </h:panelGroup>
+
+                                    <!-- En cours -->
+                                    <h:panelGroup rendered="#{etape.statutAffiche eq 'EN_COURS'}">
+                                        <div class="ph-dates">
+                                            <h:outputText rendered="#{etape.phaseOffre.dateLimite != null}" value="Fin prévue : "/>
+                                            <h:outputText value="#{etape.phaseOffre.dateLimite}" rendered="#{etape.phaseOffre.dateLimite != null}">
+                                                <f:convertDateTime pattern="dd/MM/yyyy HH:mm" type="localDateTime"/>
+                                            </h:outputText>
+                                            <h:outputText value="Aucune échéance fixée" rendered="#{etape.phaseOffre.dateLimite == null}"/>
+                                        </div>
+                                        <div class="ph-progress-label">
+                                            Candidats notés
+                                            <span class="ph-progress-count">#{etape.candidatsNotes} / #{etape.candidatsTotal}</span>
+                                        </div>
+                                        <div class="ph-progress-bar">
+                                            <div class="ph-progress-fill" style="width:#{etape.candidatsTotal > 0 ? (etape.candidatsNotes * 100 / etape.candidatsTotal) : 0}%;"/>
+                                        </div>
+                                        <div class="ph-actions">
+                                            <p:commandButton value="Voir les notes" action="#{recrutementBean.selectionnerPhaseOffre(etape.phaseOffre)}"
+                                                             update=":tabs" styleClass="btn btn-primary"/>
+                                            <p:commandButton value="Modifier" action="#{recrutementBean.ouvrirPlanification(etape.phase)}"
+                                                             update=":tabs" styleClass="btn btn-outline"/>
+                                            <p:commandButton value="Clôturer" action="#{recrutementBean.cloturerPhase(etape.phaseOffre)}"
+                                                             update=":tabs :growl" styleClass="btn btn-outline-danger"
+                                                             onclick="return confirm('Clôturer cette phase et calculer le classement ?')"/>
+                                        </div>
+                                    </h:panelGroup>
+
+                                    <!-- Clôturée -->
+                                    <h:panelGroup rendered="#{etape.statutAffiche eq 'CLOTUREE'}">
+                                        <div class="ph-progress-label">
+                                            Candidats notés
+                                            <span class="ph-progress-count">#{etape.candidatsNotes} / #{etape.candidatsTotal}</span>
+                                        </div>
+                                        <div class="ph-progress-bar">
+                                            <div class="ph-progress-fill" style="width:#{etape.candidatsTotal > 0 ? (etape.candidatsNotes * 100 / etape.candidatsTotal) : 0}%;"/>
+                                        </div>
+                                        <div class="ph-actions">
+                                            <p:commandButton value="Voir les notes" action="#{recrutementBean.selectionnerPhaseOffre(etape.phaseOffre)}"
+                                                             update=":tabs" styleClass="btn btn-primary"/>
+                                            <p:commandButton value="Réouvrir" icon="pi pi-replay" action="#{recrutementBean.preparerReouverture(etape.phaseOffre)}"
+                                                             update=":tabs" oncomplete="PF('dlgReouvrirPhase').show()" styleClass="btn btn-outline"/>
+                                        </div>
+                                    </h:panelGroup>
+                                </div>
+                            </ui:repeat>
+                        </div>
+
+                        <div class="ph-side-panel">
+                            <h:panelGroup rendered="#{recrutementBean.phaseActionEnCours == null}">
+                                <div class="ph-info-box">Cliquez sur « Planifier la phase » ou « Modifier » sur une carte pour configurer ses dates.</div>
+                            </h:panelGroup>
+                            <h:panelGroup rendered="#{recrutementBean.phaseActionEnCours != null}">
+                                <h4 style="font-size:13px;color:#0f172a;margin:0 0 4px;">
+                                    #{recrutementBean.phaseOffreActionEnCours != null ? 'Modifier' : 'Planifier'} « #{recrutementBean.phaseActionEnCours.libelle} »
+                                </h4>
+                                <p style="font-size:11.5px;color:#94a3b8;margin:0 0 14px;">Fenêtre qui s'ouvre au clic sur « Planifier la phase » ou « Modifier ».</p>
+                                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+                                    <div class="form-group" style="flex:1;min-width:140px;">
+                                        <label class="form-label" style="font-size:11px;">Début (optionnel)</label>
+                                        <p:datePicker value="#{recrutementBean.dateDebutPhase}"
+                                                      pattern="dd/MM/yyyy HH:mm" showTime="true" hourFormat="24" showButtonBar="true"
+                                                      mindate="#{recrutementBean.maintenant}" style="width:100%;"/>
+                                    </div>
+                                    <div class="form-group" style="flex:1;min-width:140px;">
+                                        <label class="form-label" style="font-size:11px;">Fin / délai de notation</label>
+                                        <p:datePicker value="#{recrutementBean.dateLimitePhase}"
+                                                      pattern="dd/MM/yyyy HH:mm" showTime="true" hourFormat="24" showButtonBar="true"
+                                                      mindate="#{recrutementBean.maintenant}" style="width:100%;"/>
+                                    </div>
+                                </div>
+                                <small style="color:#94a3b8;font-size:11px;display:block;margin-bottom:14px;">
+                                    Début vide : lancement immédiat. Date future : lancement automatique. Si une fin est fournie, la phase se clôture automatiquement.
+                                </small>
+                                <div class="ph-actions">
+                                    <p:commandButton value="Annuler" action="#{recrutementBean.fermerPlanification}" update=":tabs" styleClass="btn btn-outline"/>
+                                    <p:commandButton value="#{recrutementBean.phaseOffreActionEnCours != null ? 'Enregistrer' : 'Lancer / planifier'}"
+                                                     action="#{recrutementBean.confirmerPlanification}" update=":tabs :growl" styleClass="btn btn-primary"/>
+                                </div>
+                            </h:panelGroup>
+                        </div>
+                    </div>
+
+                    <p:remoteCommand name="fermerReouvertureRC" action="#{recrutementBean.fermerReouverture}" update=":tabs"/>
+                    <p:dialog id="dlgReouvrir" header="Réouvrir une phase" widgetVar="dlgReouvrirPhase" modal="true" dynamic="true"
+                              visible="#{recrutementBean.phaseAReouvrir != null}"
+                              width="420" closable="true"
+                              onHide="fermerReouvertureRC();">
+                        <h:panelGroup rendered="#{recrutementBean.phaseAReouvrir != null}">
+                            <p style="font-size:13px;color:#334155;margin-bottom:14px;">
+                                Repousser la clôture de « #{recrutementBean.phaseAReouvrir.phase.libelle} » — la phase repasse en cours jusqu'à la nouvelle date choisie.
+                            </p>
+                            <div class="form-group">
+                                <label class="form-label">Nouvelle date et heure de fin</label>
+                                <p:datePicker value="#{recrutementBean.nouvelleDateFinReouverture}"
+                                              pattern="dd/MM/yyyy HH:mm" showTime="true" hourFormat="24" showButtonBar="true"
+                                              mindate="#{recrutementBean.maintenant}" style="width:100%;"/>
+                            </div>
+                            <p:commandButton value="Confirmer la réouverture" action="#{recrutementBean.confirmerReouverture}"
+                                             update=":tabs :growl" oncomplete="PF('dlgReouvrirPhase').hide();" styleClass="btn btn-gold"/>
+                        </h:panelGroup>
+                    </p:dialog>
+
+                    <h:panelGroup rendered="#{recrutementBean.phaseOffreSelectionnee != null}">
+                        <h4 style="font-size:12px;color:#64748b;text-transform:uppercase;margin-top:16px;">
+                            Avancement de la notation par membre du jury — #{recrutementBean.phaseOffreSelectionnee.phase.libelle}
+                        </h4>
+                        <h:panelGroup rendered="#{empty recrutementBean.suiviJury}">
+                            <p style="color:#94a3b8;font-size:13px;">Aucun membre de jury pour cette offre.</p>
+                        </h:panelGroup>
+                        <ui:repeat value="#{recrutementBean.suiviJury}" var="sj">
+                            <div class="drill-item" style="cursor:default;">
+                                <span>#{sj.membre.evaluateur.nomComplet} — #{sj.membre.role}</span>
+                                <span>
+                                    <span style="color:#94a3b8;margin-right:8px;">#{sj.saisies} / #{sj.attendues} notes</span>
+                                    <h:outputText value="A noté" rendered="#{sj.statut == 'TERMINE'}" styleClass="badge badge-APPROUVE"/>
+                                    <h:outputText value="En cours" rendered="#{sj.statut == 'EN_COURS'}" styleClass="badge badge-EN_ATTENTE"/>
+                                    <h:outputText value="N'a pas encore noté" rendered="#{sj.statut == 'PAS_COMMENCE'}" styleClass="badge badge-REFUSE"/>
+                                </span>
+                            </div>
+                        </ui:repeat>
+                    </h:panelGroup>
+                </h:panelGroup>
+            </p:tab>
+
+            <!-- ══════════════════ ONGLET 4 : DÉCISION FINALE ══════════════════ -->
+            <p:tab title="Décision finale">
+                <h:panelGroup rendered="#{recrutementBean.offreSelectionnee == null}">
+                    <p style="color:#94a3b8;">Sélectionnez d'abord une offre ci-dessus.</p>
+                </h:panelGroup>
+                <h:panelGroup rendered="#{recrutementBean.offreSelectionnee != null and recrutementBean.decisionFinaleTerminee}">
+                    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+                        <i class="pi pi-check-circle" style="color:#16a34a;font-size:18px;"/>
+                        <div>
+                            <div style="font-weight:700;color:#166534;font-size:13.5px;">Recrutement terminé pour cette offre.</div>
+                            <div style="font-size:12.5px;color:#15803d;">
+                                <strong>#{recrutementBean.nbCandidatsRetenus}</strong> candidat(s) recruté(s)
+                                <h:outputText value=" sur #{recrutementBean.offreSelectionnee.nombrePostes} poste(s) disponible(s)" rendered="#{recrutementBean.offreSelectionnee.nombrePostes != null}"/>.
+                            </div>
+                        </div>
+                    </div>
+
+                    <p style="font-size:12px;color:#94a3b8;margin-bottom:10px;">
+                        Besoin de recruter un candidat refusé pour un poste qui se libère ou s'ajoute ? Utilisez « Reconsidérer » sur sa ligne.
+                    </p>
+                    <p:dataTable value="#{recrutementBean.candidatsFinaux}" var="cf" rowKey="#{cf.id}" style="border:none;" emptyMessage="Aucun candidat finaliste.">
+                            <p:column headerText="Rang" style="width:60px;">#{cf.rang}</p:column>
+                            <p:column headerText="Candidat">#{cf.candidature.prenomCandidat} #{cf.candidature.nomCandidat}</p:column>
+                            <p:column headerText="Points" style="width:90px;">#{recrutementBean.getPointsCumules(cf.candidature)}/#{recrutementBean.getPointsMaxCumules(cf.candidature)}</p:column>
+                            <p:column headerText="Statut" style="width:110px;"><span class="badge badge-#{cf.statut}">#{cf.statut}</span></p:column>
+                            <p:column style="width:130px;text-align:right;">
+                                <p:commandButton value="Reconsidérer" rendered="#{cf.statut == 'NON_RETENU'}"
+                                                  action="#{recrutementBean.selectionnerCandidatFinal(cf)}" update=":tabs"
+                                                  styleClass="btn btn-secondary btn-sm"/>
+                            </p:column>
+                    </p:dataTable>
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{recrutementBean.offreSelectionnee != null and not recrutementBean.decisionFinaleTerminee}">
+                    <p:commandButton value="Construire / rafraîchir le classement final" action="#{recrutementBean.construireClassementFinal}"
+                                      update=":tabs :growl" styleClass="btn btn-gold" style="margin-bottom:12px;"/>
+
+                    <h:panelGroup rendered="#{recrutementBean.offreSelectionnee.nombrePostes != null and recrutementBean.toutesPhasesCloturees}">
+                        <p:commandButton value="Recruter automatiquement les meilleurs" action="#{recrutementBean.deciderAutomatiquement}"
+                                          update=":tabs :growl" styleClass="btn btn-primary" style="margin-bottom:12px;margin-left:8px;"
+                                          onclick="return confirm('Recruter automatiquement les ' + #{recrutementBean.offreSelectionnee.nombrePostes} + ' meilleur(s) candidat(s) selon le total cumulé, et refuser les autres ? Cette action crée réellement les comptes employés.')"/>
+                    </h:panelGroup>
+
+                    <h:panelGroup rendered="#{recrutementBean.offreSelectionnee.seuilRecrutementAutoPct != null}">
+                        <div style="font-size:12.5px;color:#64748b;margin-bottom:12px;">
+                            <i class="pi pi-info-circle" style="color:#d97706;margin-right:4px;"/>
+                            Seuil de recrutement automatique pour cette offre :
+                            <strong>#{recrutementBean.offreSelectionnee.seuilRecrutementAutoPct}%</strong>
+                            <h:outputText value=" (soit #{recrutementBean.seuilPointsTotalConcours} points sur #{recrutementBean.pointsMaxTotalConcours}, cumulé sur toutes les phases)"
+                                          rendered="#{recrutementBean.pointsMaxTotalConcours != null}"/>
+                            — les candidats l'atteignant sont signalés ci-dessous, mais la décision finale reste manuelle.
+                        </div>
+                    </h:panelGroup>
+
+                    <h:panelGroup rendered="#{recrutementBean.offreSelectionnee.nombrePostes != null}">
+                        <div style="font-size:12.5px;color:#64748b;margin-bottom:12px;">
+                            <i class="pi pi-users" style="color:#2563eb;margin-right:4px;"/>
+                            <strong>#{recrutementBean.offreSelectionnee.nombrePostes}</strong> poste(s) disponible(s) pour cette offre —
+                            les <strong>#{recrutementBean.offreSelectionnee.nombrePostes}</strong> meilleurs candidats selon le total cumulé sont signalés ci-dessous.
+                            Vous pouvez décider candidat par candidat, ou utiliser « Recruter automatiquement les meilleurs » une fois toutes les phases clôturées.
+                        </div>
+                    </h:panelGroup>
+
+                    <p:dataTable value="#{recrutementBean.candidatsFinaux}" var="cf" rowKey="#{cf.id}" style="border:none;" emptyMessage="Aucun candidat finaliste.">
+                            <p:column headerText="Rang" style="width:60px;">#{cf.rang}</p:column>
+                            <p:column headerText="Candidat">#{cf.candidature.prenomCandidat} #{cf.candidature.nomCandidat}</p:column>
+                            <p:column headerText="Points" style="width:90px;">#{recrutementBean.getPointsCumules(cf.candidature)}/#{recrutementBean.getPointsMaxCumules(cf.candidature)}</p:column>
+                            <p:column headerText="Statut" style="width:110px;"><span class="badge badge-#{cf.statut}">#{cf.statut}</span></p:column>
+                            <p:column headerText="" style="width:150px;">
+                                <h:panelGroup rendered="#{recrutementBean.isCandidatEligibleAuto(cf)}">
+                                    <span class="badge" style="background:#fef3c7;color:#92400e;">
+                                        <i class="pi pi-star-fill" style="font-size:10px;margin-right:3px;"/>Seuil atteint
+                                    </span>
+                                </h:panelGroup>
+                                <h:panelGroup rendered="#{recrutementBean.isCandidatDansQuotaPostes(cf)}">
+                                    <span class="badge" style="background:#dbeafe;color:#1e40af;">
+                                        <i class="pi pi-users" style="font-size:10px;margin-right:3px;"/>Dans le quota
+                                    </span>
+                                </h:panelGroup>
+                            </p:column>
+                            <p:column style="width:100px;text-align:right;">
+                                <p:commandButton value="Choisir" action="#{recrutementBean.selectionnerCandidatFinal(cf)}" update=":tabs" styleClass="btn btn-secondary btn-sm"/>
+                            </p:column>
+                    </p:dataTable>
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{recrutementBean.offreSelectionnee != null}">
+                    <p:remoteCommand name="fermerDecisionRC" action="#{recrutementBean.fermerDecision}" update=":tabs"/>
+                    <p:dialog header="Décision finale" widgetVar="dlgDecision" modal="true" dynamic="true"
+                              visible="#{recrutementBean.candidatFinalSelectionne != null}"
+                              width="680" style="max-width:95vw;" closable="true"
+                              onHide="fermerDecisionRC();">
+                        <h:panelGroup rendered="#{recrutementBean.candidatFinalSelectionne != null}">
+                            <h4 style="font-size:13px;color:#0f172a;margin-bottom:12px;">
+                                #{recrutementBean.candidatFinalSelectionne.candidature.prenomCandidat} #{recrutementBean.candidatFinalSelectionne.candidature.nomCandidat}
+                            </h4>
+
+                            <h:panelGroup rendered="#{recrutementBean.decisionFinaleTerminee and recrutementBean.candidatFinalSelectionne.statut == 'NON_RETENU'}">
+                                <div style="background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;font-size:12.5px;margin-bottom:16px;">
+                                    <i class="pi pi-replay" style="margin-right:6px;"/>
+                                    Ce candidat avait été écarté. Le recruter maintenant est possible si un poste se libère ou s'ajoute pour cette offre.
+                                </div>
+                            </h:panelGroup>
+
+                            <h:panelGroup rendered="#{recrutementBean.isCandidatEligibleAuto(recrutementBean.candidatFinalSelectionne)}">
+                                <div style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:12.5px;margin-bottom:16px;">
+                                    <i class="pi pi-star-fill" style="margin-right:6px;"/>
+                                    Ce candidat atteint le seuil de #{recrutementBean.offreSelectionnee.seuilRecrutementAutoPct}% fixé pour cette offre.
+                                    À vous de confirmer la décision.
+                                </div>
+                            </h:panelGroup>
+
+                            <h:panelGroup rendered="#{recrutementBean.isCandidatDansQuotaPostes(recrutementBean.candidatFinalSelectionne)}">
+                                <div style="background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;font-size:12.5px;margin-bottom:16px;">
+                                    <i class="pi pi-users" style="margin-right:6px;"/>
+                                    Ce candidat fait partie des #{recrutementBean.offreSelectionnee.nombrePostes} meilleurs selon le classement pour les #{recrutementBean.offreSelectionnee.nombrePostes} poste(s) disponible(s).
+                                </div>
+                            </h:panelGroup>
+
+                            <h:panelGroup rendered="#{not empty recrutementBean.avisPourSelection}">
+                                <div class="form-group">
+                                    <label class="form-label">Avis du président du jury</label>
+                                    <p:dataTable value="#{recrutementBean.avisPourSelection}" var="a" rowKey="#{a.id}" style="border:none;">
+                                        <p:column headerText="Autorité">#{a.autorite.nomComplet}</p:column>
+                                        <p:column headerText="Avis" style="width:110px;"><span class="badge badge-#{a.avis}">#{a.avis}</span></p:column>
+                                        <p:column headerText="Commentaire">#{a.commentaire}</p:column>
+                                    </p:dataTable>
+                                </div>
+                            </h:panelGroup>
+                            <h:panelGroup rendered="#{empty recrutementBean.avisPourSelection}">
+                                <div style="font-size:12px;color:#94a3b8;margin-bottom:16px;">
+                                    Le président du jury n'a pas encore donné son avis sur ce candidat.
+                                </div>
+                            </h:panelGroup>
+
+                            <div class="form-group">
+                                <label class="form-label">Notes de décision</label>
+                                <p:inputTextarea value="#{recrutementBean.notesDecision}" rows="2" style="width:100%;"/>
+                            </div>
+                            <div style="display:flex;gap:10px;">
+                                <p:commandButton value="Retenir (recrute l'employé)" action="#{recrutementBean.decider('RETENU')}"
+                                                  update=":tabs :growl" styleClass="btn btn-primary"
+                                                  onclick="return confirm('Confirmer le recrutement de ce candidat ?')"/>
+                                <p:commandButton value="Ne pas retenir" action="#{recrutementBean.decider('NON_RETENU')}"
+                                                  update=":tabs :growl" styleClass="btn btn-danger"/>
+                            </div>
+                        </h:panelGroup>
+                    </p:dialog>
+                </h:panelGroup>
+            </p:tab>
+
+            <!-- ══════════════════ ONGLET 5 : RAPPORTS & PV ══════════════════ -->
+            <p:tab title="Rapports &amp; PV">
+                <h:panelGroup rendered="#{recrutementBean.offreSelectionnee == null}">
+                    <p style="color:#94a3b8;">Sélectionnez d'abord une offre ci-dessus.</p>
+                </h:panelGroup>
+                <h:panelGroup rendered="#{recrutementBean.offreSelectionnee != null}">
+                    <div style="display:flex;flex-direction:column;gap:28px;">
+                        <div>
+                            <h4 style="font-size:12px;color:#64748b;text-transform:uppercase;">Rapport de phase <span style="font-weight:400;color:#94a3b8;text-transform:none;">— archive interne</span></h4>
+                            <p:dataTable value="#{recrutementBean.rapports}" var="r" rowKey="#{r.id}" style="border:none;margin-bottom:12px;table-layout:fixed;width:100%;" emptyMessage="Aucun rapport.">
+                                <p:column headerText="Libellé">#{r.libelle}</p:column>
+                                <p:column headerText="Candidats retenus" style="width:12%;text-align:center;">#{r.candidatsRetenus}</p:column>
+                                <p:column headerText="Créé le" style="width:14%;">
+                                    <h:outputText value="#{r.dateCreation}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy HH:mm" type="localDateTime"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:column style="width:84px;">
+                                    <div style="display:flex;gap:4px;">
+                                        <p:commandButton icon="pi pi-download" title="Télécharger en PDF"
+                                            action="#{recrutementBean.telechargerRapport(r.id)}"
+                                            ajax="false" styleClass="ui-button-flat" style="width:30px;height:30px;"/>
+                                        <p:commandButton icon="pi pi-bell" title="Notifier le jury"
+                                            action="#{recrutementBean.notifierJuryRapport(r.id)}"
+                                            update=":growl" styleClass="ui-button-flat" style="width:30px;height:30px;"/>
+                                    </div>
+                                </p:column>
+                            </p:dataTable>
+
+                            <h:panelGroup rendered="#{not empty recrutementBean.phasesOffre}">
+                                <label class="form-label" style="display:block;margin-bottom:6px;">Générer un rapport pour :</label>
+                                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+                                    <ui:repeat value="#{recrutementBean.phasesOffre}" var="po">
+                                        <p:commandButton value="#{po.phase.libelle} (#{po.statut})"
+                                            action="#{recrutementBean.togglePhaseNotes(po)}" update=":tabs"
+                                            style="background:#{recrutementBean.phaseOffreSelectionnee != null and recrutementBean.phaseOffreSelectionnee.id == po.id ? '#2563eb' : '#f1f5f9'};color:#{recrutementBean.phaseOffreSelectionnee != null and recrutementBean.phaseOffreSelectionnee.id == po.id ? '#fff' : '#475569'};border:none;padding:6px 14px;font-size:12px;font-weight:700;border-radius:20px;"/>
+                                    </ui:repeat>
+                                </div>
+                            </h:panelGroup>
+
+                            <h:panelGroup rendered="#{empty recrutementBean.phasesOffre}">
+                                <p style="color:#94a3b8;font-size:12.5px;">Aucune phase lancée pour cette offre — rien à rapporter pour l'instant.</p>
+                            </h:panelGroup>
+
+                            <h:panelGroup rendered="#{not empty recrutementBean.phasesOffre and recrutementBean.phaseOffreSelectionnee == null}">
+                                <p style="color:#94a3b8;font-size:12.5px;">← Choisissez une phase ci-dessus pour rédiger son rapport.</p>
+                            </h:panelGroup>
+
+                            <h:panelGroup rendered="#{recrutementBean.phaseOffreSelectionnee != null}">
+                                <p:commandButton value="Générer le rapport complet pour « #{recrutementBean.phaseOffreSelectionnee.phase.libelle} »"
+                                                  action="#{recrutementBean.ouvrirDlgRapport}" update=":tabs" styleClass="btn btn-primary"/>
+                            </h:panelGroup>
+
+                            <p:remoteCommand name="fermerDlgRapportRC" action="#{recrutementBean.fermerDlgRapport}" update=":tabs"/>
+                            <p:dialog id="dlgRapport" header="Rapport de recrutement" widgetVar="dlgRapport" modal="true" dynamic="true"
+                                      visible="#{recrutementBean.dlgRapportOuvert}" width="680" style="max-width:95vw;" closable="true"
+                                      onHide="fermerDlgRapportRC();">
+                                <h:panelGroup rendered="#{recrutementBean.dlgRapportOuvert and recrutementBean.phaseOffreSelectionnee != null}"
+                                              layout="block" style="max-height:72vh;overflow-y:auto;padding-right:10px;">
+                                    <p style="font-size:12.5px;color:#64748b;margin-bottom:14px;">
+                                        Phase « #{recrutementBean.phaseOffreSelectionnee.phase.libelle} » — offre « #{recrutementBean.offreSelectionnee.titre} ».
+                                        Les sections non renseignées ci-dessous resteront simplement absentes du PDF.
+                                    </p>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Libellé du rapport</label>
+                                        <p:inputText value="#{recrutementBean.nouveauRapportLibelle}" style="width:100%;"/>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Motif du recrutement <span style="color:#94a3b8;font-weight:400;">(création de poste, remplacement, renfort... — repris de l'offre si renseigné, modifiable)</span></label>
+                                        <p:inputTextarea value="#{recrutementBean.nouveauRapportMotif}" rows="2" style="width:100%;"/>
+                                    </div>
+
+                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                                        <div class="form-group">
+                                            <label class="form-label">Candidatures recevables <span style="color:#94a3b8;font-weight:400;">(sur #{recrutementBean.candidatures.size()} reçues — estimé, à vérifier)</span></label>
+                                            <p:inputNumber value="#{recrutementBean.nouveauRapportCandidaturesRecevables}" style="width:100%;"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Candidatures irrecevables <span style="color:#94a3b8;font-weight:400;">(estimé, à vérifier)</span></label>
+                                            <p:inputNumber value="#{recrutementBean.nouveauRapportCandidaturesIrrecevables}" style="width:100%;"/>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Motifs d'exclusion <span style="color:#94a3b8;font-weight:400;">(hors délai, dossier incomplet, profil non conforme... — pré-rempli depuis les refus déjà enregistrés, modifiable)</span></label>
+                                        <p:inputTextarea value="#{recrutementBean.nouveauRapportMotifsExclusion}" rows="2" style="width:100%;"/>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Composition du comité de sélection <span style="color:#94a3b8;font-weight:400;">(pré-rempli depuis le jury de cette offre, modifiable)</span></label>
+                                        <p:inputTextarea value="#{recrutementBean.nouveauRapportCompositionComite}" rows="2" style="width:100%;" placeholder="Ex : Mme X (présidente), M. Y (membre), Mme Z (secrétaire de séance)"/>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Notes <span style="color:#94a3b8;font-weight:400;">(commentaire interne, archivé avec le rapport)</span></label>
+                                        <p:inputTextarea value="#{recrutementBean.nouveauRapportNotes}" rows="2" style="width:100%;"/>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Difficultés rencontrées / améliorations possibles</label>
+                                        <p:inputTextarea value="#{recrutementBean.nouveauRapportDifficultes}" rows="2" style="width:100%;"/>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Décision proposée à la direction / justification du choix</label>
+                                        <p:inputTextarea value="#{recrutementBean.nouveauRapportRecommandation}" rows="2" style="width:100%;"/>
+                                    </div>
+
+                                    <p:commandButton value="Générer le rapport" action="#{recrutementBean.genererRapport}" update=":tabs :growl"
+                                                      oncomplete="PF('dlgRapport').hide();" styleClass="btn btn-primary"/>
+                                </h:panelGroup>
+                            </p:dialog>
+                        </div>
+                        <div>
+                            <h4 style="font-size:12px;color:#64748b;text-transform:uppercase;">
+                                Procès-verbal de délibération <span style="font-weight:400;color:#94a3b8;text-transform:none;">— cliquez une ligne pour voir le détail de la décision</span>
+                            </h4>
+                            <p:dataTable value="#{recrutementBean.pvs}" var="pv" rowKey="#{pv.id}" style="border:none;margin-bottom:12px;table-layout:fixed;width:100%;" emptyMessage="Aucun PV.">
+                                <p:column style="width:30px;"><p:rowToggler/></p:column>
+                                <p:column headerText="Libellé">#{pv.libelle}</p:column>
+                                <p:column headerText="Membres" style="width:10%;">#{pv.nombreMembres}</p:column>
+                                <p:column headerText="Date" style="width:14%;">
+                                    <h:outputText value="#{pv.dateCreation}"><f:convertDateTime pattern="dd/MM/yyyy HH:mm" type="localDateTime"/></h:outputText>
+                                </p:column>
+                                <p:column style="width:84px;">
+                                    <div style="display:flex;gap:4px;">
+                                        <p:commandButton icon="pi pi-download" title="Télécharger en PDF"
+                                            action="#{recrutementBean.telechargerPv(pv.id)}"
+                                            ajax="false" styleClass="ui-button-flat" style="width:30px;height:30px;"/>
+                                        <p:commandButton icon="pi pi-bell" title="Notifier le jury"
+                                            action="#{recrutementBean.notifierJuryPv(pv.id)}"
+                                            update=":growl" styleClass="ui-button-flat" style="width:30px;height:30px;"/>
+                                    </div>
+                                </p:column>
+                                <p:rowExpansion>
+                                    <h:panelGroup rendered="#{empty recrutementBean.candidatsFinaux}">
+                                        <p style="color:#94a3b8;font-size:12.5px;">Aucun candidat finaliste pour cette offre.</p>
+                                    </h:panelGroup>
+                                    <p:dataTable value="#{recrutementBean.candidatsFinaux}" var="cf" rowKey="#{cf.id}" style="border:none;table-layout:fixed;width:100%;" rendered="#{not empty recrutementBean.candidatsFinaux}">
+                                        <p:column style="width:28px;"><p:rowToggler/></p:column>
+                                        <p:column headerText="Rang" style="width:60px;">#{cf.rang}</p:column>
+                                        <p:column headerText="Candidat" style="width:16%;">#{cf.candidature.prenomCandidat} #{cf.candidature.nomCandidat}</p:column>
+                                        <p:column headerText="Points" style="width:90px;">#{recrutementBean.getPointsCumules(cf.candidature)}/#{recrutementBean.getPointsMaxCumules(cf.candidature)}</p:column>
+                                        <p:column headerText="Avis du jury" style="width:32%;">
+                                            <h:panelGroup rendered="#{empty recrutementBean.getAvisCandidature(cf.candidature)}">
+                                                <span class="dl-none">Aucun avis.</span>
+                                            </h:panelGroup>
+                                            <ui:repeat value="#{recrutementBean.getAvisCandidature(cf.candidature)}" var="a">
+                                                <div style="margin-bottom:4px;">
+                                                    <span class="badge badge-#{a.avis}">#{a.avis}</span>
+                                                    <span style="font-size:11.5px;color:#64748b;"> — #{a.autorite.nomComplet} : #{a.commentaire}</span>
+                                                </div>
+                                            </ui:repeat>
+                                        </p:column>
+                                        <p:column headerText="Décision" style="width:110px;">
+                                            <span class="badge badge-#{cf.statut}">#{cf.statut}</span>
+                                        </p:column>
+                                        <p:column headerText="Notes de décision">
+                                            <h:outputText value="#{cf.notesAutorite}" rendered="#{not empty cf.notesAutorite}"/>
+                                            <h:outputText value="—" styleClass="dl-none" rendered="#{empty cf.notesAutorite}"/>
+                                        </p:column>
+                                        <p:rowExpansion>
+                                            <h:panelGroup rendered="#{empty recrutementBean.getNotesParCandidature(cf.candidature.id)}">
+                                                <p style="color:#94a3b8;font-size:12px;padding:6px 0;">Aucune note enregistrée pour ce candidat.</p>
+                                            </h:panelGroup>
+                                            <p:dataTable value="#{recrutementBean.getNotesParCandidature(cf.candidature.id)}" var="n" rowKey="#{n.id}"
+                                                         style="border:none;table-layout:fixed;width:100%;" rendered="#{not empty recrutementBean.getNotesParCandidature(cf.candidature.id)}">
+                                                <p:column headerText="Phase" style="width:16%;">#{n.phaseOffre.phase.libelle}</p:column>
+                                                <p:column headerText="Membre du jury" style="width:18%;">#{n.evaluateur.nomComplet}</p:column>
+                                                <p:column headerText="Élément noté" style="width:20%;">#{n.element.libelle}</p:column>
+                                                <p:column headerText="Points" style="width:80px;text-align:center;">#{n.points}</p:column>
+                                                <p:column headerText="Commentaire">
+                                                    <h:outputText value="#{n.commentaire}" rendered="#{not empty n.commentaire}"/>
+                                                    <span style="color:#94a3b8;" rendered="#{empty n.commentaire}">—</span>
+                                                </p:column>
+                                            </p:dataTable>
+                                        </p:rowExpansion>
+                                    </p:dataTable>
+                                </p:rowExpansion>
+                            </p:dataTable>
+                            <h:panelGroup rendered="#{empty recrutementBean.pvs}">
+                                <p:commandButton value="Enregistrer un PV complet" action="#{recrutementBean.ouvrirDlgPv}" update=":tabs" styleClass="btn btn-primary"/>
+                            </h:panelGroup>
+                            <h:panelGroup rendered="#{not empty recrutementBean.pvs}">
+                                <p style="color:#94a3b8;font-size:12.5px;">
+                                    <i class="pi pi-check-circle" style="color:#16a34a;margin-right:4px;"/>
+                                    Le PV de délibération de cette offre a déjà été enregistré — un seul PV officiel par offre.
+                                </p>
+                            </h:panelGroup>
+
+                            <p:remoteCommand name="fermerDlgPvRC" action="#{recrutementBean.fermerDlgPv}" update=":tabs"/>
+                            <p:dialog id="dlgPv" header="Procès-verbal de la commission de recrutement" widgetVar="dlgPv" modal="true" dynamic="true"
+                                      visible="#{recrutementBean.dlgPvOuvert}" width="680" style="max-width:95vw;" closable="true"
+                                      onHide="fermerDlgPvRC();">
+                                <h:panelGroup rendered="#{recrutementBean.dlgPvOuvert and recrutementBean.offreSelectionnee != null}"
+                                              layout="block" style="max-height:72vh;overflow-y:auto;padding-right:10px;">
+                                    <p style="font-size:12.5px;color:#64748b;margin-bottom:14px;">
+                                        Offre « #{recrutementBean.offreSelectionnee.titre} ». Les sections non renseignées ci-dessous resteront simplement absentes du PDF.
+                                    </p>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Libellé du PV</label>
+                                        <p:inputText value="#{recrutementBean.nouveauPvLibelle}" style="width:100%;"/>
+                                    </div>
+
+                                    <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px;">
+                                        <div class="form-group">
+                                            <label class="form-label">Lieu de la réunion</label>
+                                            <p:inputText value="#{recrutementBean.nouveauPvLieu}" style="width:100%;"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Heure début</label>
+                                            <p:inputText value="#{recrutementBean.nouveauPvHeureDebut}" placeholder="14h00" style="width:100%;"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Heure clôture</label>
+                                            <p:inputText value="#{recrutementBean.nouveauPvHeureCloture}" placeholder="16h30" style="width:100%;"/>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Nombre de membres présents</label>
+                                        <p:inputNumber value="#{recrutementBean.nouveauPvNombreMembres}" style="width:100%;"/>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Participants <span style="color:#94a3b8;font-weight:400;">(un par ligne : Nom - Fonction - Présent/Absent/Excusé — pré-rempli depuis le jury de cette offre, modifiable)</span></label>
+                                        <p:inputTextarea value="#{recrutementBean.nouveauPvMembresJury}" rows="3" style="width:100%;"
+                                                          placeholder="Mme X - Présidente - Présente&#10;M. Y - Membre - Présent&#10;Mme Z - Secrétaire de séance - Présente"/>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Déclaration d'absence de conflit d'intérêts</label>
+                                        <p:inputTextarea value="#{recrutementBean.nouveauPvDeclarationConflitInteret}" rows="2" style="width:100%;" placeholder="Aucun membre n'a déclaré de conflit d'intérêts."/>
+                                    </div>
+
+                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                                        <div class="form-group">
+                                            <label class="form-label">Mode de décision</label>
+                                            <p:selectOneMenu value="#{recrutementBean.nouveauPvModeDecision}" style="width:100%;">
+                                                <f:selectItem itemLabel="— Choisir —" itemValue="#{null}" noSelectionOption="true"/>
+                                                <f:selectItem itemLabel="Consensus" itemValue="CONSENSUS"/>
+                                                <f:selectItem itemLabel="Vote" itemValue="VOTE"/>
+                                            </p:selectOneMenu>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Résultat du vote <span style="color:#94a3b8;font-weight:400;">(si vote)</span></label>
+                                            <p:inputText value="#{recrutementBean.nouveauPvResultatVote}" placeholder="Ex : 6 voix pour, 1 abstention" style="width:100%;"/>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Réserves ou observations éventuelles</label>
+                                        <p:inputTextarea value="#{recrutementBean.nouveauPvReserves}" rows="2" style="width:100%;"/>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Suites à donner <span style="color:#94a3b8;font-weight:400;">(notification des candidats, délais, prochaines étapes)</span></label>
+                                        <p:inputTextarea value="#{recrutementBean.nouveauPvSuitesADonner}" rows="2" style="width:100%;"/>
+                                    </div>
+
+                                    <p:commandButton value="Enregistrer le PV" action="#{recrutementBean.creerPv}" update=":tabs :growl"
+                                                      oncomplete="PF('dlgPv').hide();" styleClass="btn btn-primary"/>
+                                </h:panelGroup>
+                            </p:dialog>
+                        </div>
+                    </div>
+                </h:panelGroup>
+            </p:tab>
+
+        </p:tabView>
+        </h:form>
+    </ui:define>
+
+</ui:composition>

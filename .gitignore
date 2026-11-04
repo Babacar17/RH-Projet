@@ -1,0 +1,32 @@
+# Maven
+target/
+build/
+
+# Eclipse
+.settings/
+.classpath
+.project
+.metadata/
+
+# IDE divers
+.vscode/
+.idea/
+*.swp
+
+# Identifiants — jamais versionnés
+src/main/webapp/WEB-INF/db.properties
+.env
+.env.*
+!.env.example
+
+# OS / temporaires
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+.sync_test*
+
+# Documents de travail
+*.docx
+backups/
+.claude/

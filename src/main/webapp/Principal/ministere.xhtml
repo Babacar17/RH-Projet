@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+<ui:composition template="/Principal/template.xhtml">
+<ui:param name="active" value="ministere"/>
+<ui:define name="title">Le Ministère</ui:define>
+<ui:define name="content">
+
+<div class="page-banner">
+    <div class="breadcrumb"><a href="#{request.contextPath}/Principal/index.xhtml">Accueil</a><span>/</span>Le Ministère</div>
+    <h1>Le Ministère des Finances et du Budget</h1>
+    <p>Pour une gestion transparente et efficace des finances publiques.</p>
+</div>
+
+<div class="section" id="ministre">
+  <div class="container two-col wide-left">
+    <div>
+        <div class="section-header"><div class="section-title">Le Ministre</div></div>
+        <p style="font-size:15px;color:#555;margin-bottom:16px">M. Cheikh DIBA, Ministre des Finances et du Budget, conduit la politique budgétaire et financière de l'État et reçoit régulièrement les partenaires techniques et financiers (UE, BAD, BERD) pour la mobilisation de ressources.</p>
+        <div class="minister-quote">« La discipline budgétaire est le fondement de notre souveraineté économique. »</div>
+    </div>
+    <div class="minister-card">
+        <div class="avatar">CD</div>
+        <h3>M. Cheikh DIBA</h3>
+        <div class="role">Ministre des Finances et du Budget</div>
+    </div>
+  </div>
+</div>
+
+<div class="section alt" id="missions">
+  <div class="container two-col">
+    <div class="info-card">
+        <h3>Notre mission</h3>
+        <p>Le Ministère des Finances et du Budget mobilise les ressources nécessaires pour le développement durable et équitable du Sénégal.</p>
+        <p>Il veille à la transparence et à l'efficacité de la gestion des finances publiques, avec un déficit budgétaire cible de 3% du PIB.</p>
+    </div>
+    <div class="info-card">
+        <h3>Priorités et réformes</h3>
+        <ul class="check-list">
+            <li><i class="fas fa-check-circle"></i><span>Budget-Programme</span></li>
+            <li><i class="fas fa-check-circle"></i><span>SRMT</span></li>
+            <li><i class="fas fa-check-circle"></i><span>Plan Sénégal Émergent</span></li>
+            <li><i class="fas fa-check-circle"></i><span>Réforme fiscale 2026</span></li>
+            <li><i class="fas fa-check-circle"></i><span>Modernisation douanière</span></li>
+        </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="organisation">
+  <div class="container">
+    <div class="section-header">
+        <div><div class="section-title">Organisation</div><div class="section-sub">38 directions et services rattachés au Ministère.</div></div>
+    </div>
+    <div class="stats-grid">
+        <div class="stat-card"><div class="val">38</div><div class="lbl">Directions rattachées</div></div>
+        <div class="stat-card"><div class="val">6 800 Mds</div><div class="lbl">Budget général 2026 (FCFA)</div></div>
+        <div class="stat-card"><div class="val">17 M</div><div class="lbl">Habitants desservis</div></div>
+        <div class="stat-card"><div class="val">3%</div><div class="lbl">Déficit budgétaire cible</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="section alt" id="directions">
+  <div class="container">
+    <div class="section-header"><div class="section-title">Principales directions</div></div>
+    <div class="dir-grid">
+        <div class="dir-card"><h3>Direction Générale du Trésor</h3><p>Gestion de la trésorerie de l'État et émissions de titres publics.</p><a href="#">Site officiel</a></div>
+        <div class="dir-card"><h3>Direction Générale des Douanes</h3><p>Recouvrement des droits de douane et modernisation douanière.</p><a href="#">Site officiel</a></div>
+        <div class="dir-card"><h3>Direction Générale des Impôts</h3><p>Assiette et recouvrement des impôts et taxes.</p><a href="#">Site officiel</a></div>
+        <div class="dir-card"><h3>Direction Générale du Budget</h3><p>Préparation et suivi de l'exécution du budget de l'État.</p><a href="#">Site officiel</a></div>
+        <div class="dir-card"><h3>DTAI</h3><p>Technologies de l'information et de l'administration électronique.</p><a href="#">Site officiel</a></div>
+        <div class="dir-card"><h3>APIX SA</h3><p>Promotion de l'investissement et des grands projets.</p><a href="#">Site officiel</a></div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="container">
+    <div class="section-header">
+        <div><div class="section-title">Partenaires institutionnels</div><div class="section-sub">Le Ministère collabore avec les principales institutions financières nationales et internationales.</div></div>
+    </div>
+    <div class="partner-row">
+        <div class="partner">Banque Mondiale</div><div class="partner">FMI</div><div class="partner">BAD</div><div class="partner">BCEAO</div>
+        <div class="partner">UEMOA</div><div class="partner">Union Européenne</div><div class="partner">BERD</div><div class="partner">AFD</div>
+    </div>
+  </div>
+</div>
+
+</ui:define>
+</ui:composition>
+</html>

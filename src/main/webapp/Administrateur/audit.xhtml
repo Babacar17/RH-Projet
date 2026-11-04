@@ -1,0 +1,917 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+    <title>Sécurité &amp; Audit &#8212; Administration SIRH</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <h:outputStylesheet library="css" name="admin-style.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'DM Sans', 'Segoe UI', sans-serif;
+            background: #f1f5f9; color: #0f172a;
+            display: flex; min-height: 100vh; font-size: 14px;
+        }
+        a { text-decoration: none; color: inherit; }
+        :root {
+            --sidebar-w: 256px;
+            --navy: #0f172a; --navy2: #1e293b;
+            --gold: #b58a3a; --gold-l: #f0c97a;
+            --purple: #7c3aed; --purple-l: #a78bfa;
+            --green: #10b981; --red: #ef4444;
+            --yellow: #f59e0b; --blue: #3b82f6;
+        }
+
+        .main { flex: 1; padding: 28px; min-width: 0; }
+
+        /* ── Page header ── */
+        .page-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+        }
+        .page-title { font-size: 22px; font-weight: 800; color: #0f172a; }
+        .page-subtitle { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+
+        /* ── KPI cards ── */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px; margin-bottom: 22px;
+        }
+        .kpi-card {
+            background: #fff; border: 1px solid #e2e8f0;
+            border-radius: 12px; padding: 18px 16px;
+            display: flex; align-items: center; gap: 14px;
+        }
+        .kpi-icon {
+            width: 42px; height: 42px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; flex-shrink: 0;
+        }
+        .kpi-icon.purple { background: #ede9fe; color: var(--purple); }
+        .kpi-icon.green  { background: #dcfce7; color: var(--green); }
+        .kpi-icon.red    { background: #fee2e2; color: var(--red); }
+        .kpi-icon.gold   { background: rgba(181,138,58,.15); color: var(--gold); }
+        .kpi-val  { font-size: 24px; font-weight: 800; color: #0f172a; line-height: 1; }
+        .kpi-lbl  { font-size: 11px; color: #64748b; margin-top: 3px; font-weight: 600; }
+
+        /* ── Section card ── */
+        .section-card {
+            background: #fff; border: 1px solid #e2e8f0;
+            border-radius: 12px; margin-bottom: 20px; overflow: hidden;
+        }
+        .section-head {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 20px; border-bottom: 1px solid #f1f5f9;
+        }
+        .section-title {
+            font-size: 14px; font-weight: 800; color: #0f172a;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .section-body { padding: 20px; }
+
+        /* ── Tabs ── */
+        .tabs-bar {
+            display: flex; gap: 0;
+            border-bottom: 2px solid #e2e8f0; margin-bottom: 0;
+            padding: 0 20px; background: #fafbfc;
+        }
+        .tab-btn {
+            padding: 12px 18px; font-size: 13px; font-weight: 600;
+            color: #64748b; cursor: pointer;
+            border-bottom: 2px solid transparent; margin-bottom: -2px;
+            background: none; border-top: none; border-left: none; border-right: none;
+            font-family: inherit; transition: color .15s, border-color .15s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .tab-btn.active { color: var(--purple); border-bottom-color: var(--purple); }
+        .tab-btn:hover:not(.active) { color: #374151; }
+        .tab-pane { display: none; padding: 20px; }
+        .tab-pane.active { display: block; }
+
+        /* ── Log badges ── */
+        .log-badge {
+            display: inline-flex; padding: 2px 9px; border-radius: 12px;
+            font-size: 10px; font-weight: 700; white-space: nowrap;
+        }
+        .log-CONNEXION           { background: #ede9fe; color: #7c3aed; }
+        .log-DECONNEXION         { background: #f1f5f9; color: #64748b; }
+        .log-CREATION_USER       { background: #dcfce7; color: #15803d; }
+        .log-MODIFICATION_USER   { background: #dbeafe; color: #1d4ed8; }
+        .log-SUPPRESSION_USER    { background: #fee2e2; color: #b91c1c; }
+        .log-RESET_MDP           { background: #fef3c7; color: #b45309; }
+        .log-ACTIVATION_USER     { background: #dcfce7; color: #15803d; }
+        .log-DESACTIVATION_USER  { background: #fee2e2; color: #b91c1c; }
+        .log-CREATION_INSTITUTION    { background: rgba(181,138,58,.15); color: #b58a3a; }
+        .log-MODIFICATION_INSTITUTION{ background: rgba(181,138,58,.1);  color: #b58a3a; }
+        .log-ACTIVATION_INSTITUTION  { background: #dcfce7; color: #15803d; }
+        .log-DESACTIVATION_INSTITUTION { background: #fee2e2; color: #b91c1c; }
+        .log-SUPPRESSION_INSTITUTION { background: #fee2e2; color: #b91c1c; }
+        .log-CREATION_EMPLOYE    { background: #dcfce7; color: #15803d; }
+        .log-MODIFICATION_EMPLOYE{ background: #dbeafe; color: #1d4ed8; }
+        .log-SUPPRESSION_EMPLOYE { background: #fee2e2; color: #b91c1c; }
+        .log-EXPORT              { background: #fef3c7; color: #b45309; }
+        .log-ACCES_DONNEES       { background: #fdf4ff; color: #7e22ce; }
+
+        /* ── Filtres ── */
+        .filter-bar {
+            display: flex; gap: 10px; align-items: center;
+            padding: 12px 20px; border-bottom: 1px solid #f1f5f9;
+            background: #fafbfc; flex-wrap: wrap;
+        }
+        .filter-bar .lbl { font-size: 11px; font-weight: 700; color: #64748b; white-space: nowrap; }
+
+        /* ── Boutons ── */
+        .btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 16px; border-radius: 8px; font-size: 12px;
+            font-weight: 700; cursor: pointer; border: none; font-family: inherit;
+        }
+        .btn-primary   { background: #6d28d9; color: #fff; }
+        .btn-secondary {
+            background: #fff; border: 1px solid #e2e8f0; color: #374151;
+            font-size: 12px; font-weight: 600;
+        }
+        .btn-secondary:hover { background: #f1f5f9; }
+        .btn-danger  { background: #ef4444; color: #fff; }
+        .btn-gold    { background: var(--gold); color: #fff; }
+        .btn-sm      { padding: 5px 11px; font-size: 11px; }
+
+        /* ── Statistiques sécurité ── */
+        .security-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 0; border-bottom: 1px solid #f8fafc; font-size: 13px;
+        }
+        .security-row:last-child { border-bottom: none; }
+        .security-lbl { color: #64748b; font-weight: 500; }
+        .security-val { font-weight: 700; }
+        .ok  { color: #10b981; }
+        .warn{ color: #f59e0b; }
+        .err { color: #ef4444; }
+
+        /* ── Info rows ── */
+        .info-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 9px 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 6px;
+        }
+        .info-row:last-child { margin-bottom: 0; }
+        .info-label { font-size: 12px; font-weight: 600; color: #64748b; }
+        .info-val   { font-size: 12px; font-weight: 700; color: #0f172a; }
+
+        /* ── Alerte suspicion ── */
+        .alert-card {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 14px 16px; border-radius: 10px; margin-bottom: 10px;
+            border: 1px solid;
+        }
+        .alert-card.warn  { background: #fffbeb; border-color: #fcd34d; }
+        .alert-card.err   { background: #fef2f2; border-color: #fca5a5; }
+        .alert-card.ok    { background: #f0fdf4; border-color: #86efac; }
+        .alert-card i     { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+        .alert-card.warn i{ color: #f59e0b; }
+        .alert-card.err i { color: #ef4444; }
+        .alert-card.ok i  { color: #10b981; }
+        .alert-title { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+        .alert-desc  { font-size: 12px; color: #64748b; }
+
+        /* ── RGPD rows ── */
+        .rgpd-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 14px; border-radius: 8px; margin-bottom: 8px;
+            background: #f8fafc; border: 1px solid #f1f5f9;
+        }
+        .rgpd-item:last-child { margin-bottom: 0; }
+        .rgpd-check { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+        .rgpd-check.ok  { background: #dcfce7; color: #15803d; }
+        .rgpd-check.warn{ background: #fef3c7; color: #b45309; }
+        .rgpd-check.err { background: #fee2e2; color: #b91c1c; }
+        .rgpd-lbl { font-size: 13px; font-weight: 600; flex: 1; }
+        .rgpd-status { font-size: 11px; font-weight: 700; }
+        .rgpd-status.ok  { color: #15803d; }
+        .rgpd-status.warn{ color: #b45309; }
+        .rgpd-status.err { color: #b91c1c; }
+
+        /* ── Top users chart ── */
+        .top-user-row {
+            display: flex; align-items: center; gap: 12px;
+            padding: 8px 0; border-bottom: 1px solid #f8fafc;
+        }
+        .top-user-row:last-child { border-bottom: none; }
+        .top-user-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: linear-gradient(135deg, #6d28d9, #a78bfa);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0;
+        }
+        .top-user-name { font-size: 13px; font-weight: 600; flex: 1; }
+        .top-user-bar-wrap { width: 120px; height: 6px; background: #f1f5f9; border-radius: 3px; }
+        .top-user-bar { height: 100%; border-radius: 3px; background: #6d28d9; }
+        .top-user-count { font-size: 12px; font-weight: 700; color: #6d28d9; width: 40px; text-align: right; }
+
+        /* ── Legend ── */
+        .legend-row {
+            display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+            padding: 12px 20px; border-bottom: 1px solid #f1f5f9; background: #fafbfc;
+        }
+        .legend-lbl { font-size: 11px; font-weight: 700; color: #64748b; }
+
+        /* ── Layout grids ── */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .col-span-2 { grid-column: span 2; }
+    </style>
+</h:head>
+
+<h:body>
+
+<ui:include src="sidebar-admin.xhtml"/>
+
+<div class="main">
+
+    <!-- ══ En-tête ══ -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">
+                <i class="fas fa-shield-alt" style="color:#6d28d9;margin-right:8px;"></i>
+                Sécurité &amp; Audit
+            </h1>
+            <p class="page-subtitle">Administration › Sécurité, journaux &amp; conformité RGPD</p>
+        </div>
+        <h:form id="formActions">
+            <p:commandButton value="Exporter les logs"
+                             action="#{auditBean.exporterExcel}"
+                             icon="fas fa-file-excel"
+                             styleClass="btn btn-gold"
+                             ajax="false"/>
+        </h:form>
+    </div>
+
+    <p:growl id="growl" showDetail="true" life="4000"/>
+
+    <!-- ══ KPIs ══ -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-icon purple"><i class="fas fa-list-alt"></i></div>
+            <div>
+                <div class="kpi-val">
+                    <h:outputText value="#{auditBean.totalActions}"/>
+                </div>
+                <div class="kpi-lbl">Actions totales</div>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon green"><i class="fas fa-sign-in-alt"></i></div>
+            <div>
+                <div class="kpi-val">
+                    <h:outputText value="#{auditBean.connexionsReussies}"/>
+                </div>
+                <div class="kpi-lbl">Connexions réussies</div>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon red"><i class="fas fa-times-circle"></i></div>
+            <div>
+                <div class="kpi-val">
+                    <h:outputText value="#{auditBean.connexionsEchouees}"/>
+                </div>
+                <div class="kpi-lbl">Échecs d'auth</div>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon gold"><i class="fas fa-user-clock"></i></div>
+            <div>
+                <div class="kpi-val">
+                    <h:outputText value="#{auditBean.actionsAujourdHui}"/>
+                </div>
+                <div class="kpi-lbl">Actions aujourd'hui</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ Alertes & Surveillance ══ -->
+    <div class="grid-3">
+        <!-- Alertes sécurité -->
+        <div class="section-card">
+            <div class="section-head">
+                <div class="section-title">
+                    <i class="fas fa-exclamation-triangle" style="color:#f59e0b;"></i>
+                    Alertes sécurité
+                </div>
+            </div>
+            <div class="section-body" style="padding:16px;">
+                <!-- Alerte : échecs multiples -->
+                <p:outputPanel rendered="#{auditBean.connexionsEchouees gt 5}">
+                    <div class="alert-card err">
+                        <i class="fas fa-ban"></i>
+                        <div>
+                            <div class="alert-title">Tentatives d'auth anormales</div>
+                            <div class="alert-desc">#{auditBean.connexionsEchouees} échecs détectés — vérifier les comptes concernés</div>
+                        </div>
+                    </div>
+                </p:outputPanel>
+                <p:outputPanel rendered="#{auditBean.connexionsEchouees le 5}">
+                    <div class="alert-card ok">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <div class="alert-title">Authentification normale</div>
+                            <div class="alert-desc">Aucune activité suspecte détectée</div>
+                        </div>
+                    </div>
+                </p:outputPanel>
+                <!-- Alerte : activité admin -->
+                <div class="alert-card ok">
+                    <i class="fas fa-user-shield"></i>
+                    <div>
+                        <div class="alert-title">Actions administrateurs</div>
+                        <div class="alert-desc">#{auditBean.actionsAdmin} actions tracées · #{auditBean.actionsRH} actions RH</div>
+                    </div>
+                </div>
+                <!-- Utilisateurs distincts -->
+                <div class="alert-card warn">
+                    <i class="fas fa-users"></i>
+                    <div>
+                        <div class="alert-title">Utilisateurs actifs (7 j)</div>
+                        <div class="alert-desc">#{auditBean.utilisateursDistincts} comptes distincts connectés</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top utilisateurs actifs -->
+        <div class="section-card">
+            <div class="section-head">
+                <div class="section-title">
+                    <i class="fas fa-star" style="color:#6d28d9;"></i>
+                    Top utilisateurs actifs
+                </div>
+            </div>
+            <div class="section-body">
+                <p:dataList value="#{auditBean.topUtilisateurs}" var="entry"
+                            emptyMessage="Aucune donnée.">
+                    <div class="top-user-row">
+                        <div class="top-user-avatar">
+                            #{entry.key != null and entry.key.length() > 0
+                              ? entry.key.substring(0,1).toUpperCase() : '?'}
+                        </div>
+                        <span class="top-user-name">#{entry.key}</span>
+                        <div class="top-user-bar-wrap">
+                            <div class="top-user-bar"
+                                 style="width:#{entry.value gt 100 ? 100 : entry.value}%;"></div>
+                        </div>
+                        <span class="top-user-count">#{entry.value}</span>
+                    </div>
+                </p:dataList>
+            </div>
+        </div>
+
+        <!-- Politique de sécurité -->
+        <div class="section-card">
+            <div class="section-head">
+                <div class="section-title">
+                    <i class="fas fa-lock" style="color:#6d28d9;"></i>
+                    Politique de sécurité
+                </div>
+            </div>
+            <div class="section-body" style="padding:16px;">
+                <div class="security-row">
+                    <span class="security-lbl">Chiffrement MDP</span>
+                    <span class="security-val ok"><i class="fas fa-check-circle"></i> BCrypt actif</span>
+                </div>
+                <div class="security-row">
+                    <span class="security-lbl">Longueur min.</span>
+                    <span class="security-val">6 caractères</span>
+                </div>
+                <div class="security-row">
+                    <span class="security-lbl">Session HTTP</span>
+                    <span class="security-val ok">httpOnly · 60 min</span>
+                </div>
+                <div class="security-row">
+                    <span class="security-lbl">Contrôle d'accès</span>
+                    <span class="security-val ok">Filtre servlet</span>
+                </div>
+                <div class="security-row">
+                    <span class="security-lbl">Journal d'audit</span>
+                    <span class="security-val ok">Activé</span>
+                </div>
+                <div class="security-row">
+                    <span class="security-lbl">Multi-institution</span>
+                    <span class="security-val ok">Activé</span>
+                </div>
+                <div class="security-row">
+                    <span class="security-lbl">2FA</span>
+                    <span class="security-val warn"><i class="fas fa-clock"></i> Non configuré</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ Onglets principaux ══ -->
+    <div class="section-card">
+
+        <!-- Barre d'onglets -->
+        <div class="tabs-bar">
+            <button class="tab-btn active" onclick="switchTab(this,'tabJournal')">
+                <i class="fas fa-list-alt"></i> Journal d'audit
+            </button>
+            <button class="tab-btn" onclick="switchTab(this,'tabRGPD')">
+                <i class="fas fa-user-shield"></i> Conformité RGPD
+            </button>
+            <button class="tab-btn" onclick="switchTab(this,'tabSauvegardes')">
+                <i class="fas fa-database"></i> Sauvegardes
+            </button>
+            <button class="tab-btn" onclick="switchTab(this,'tabAcces')">
+                <i class="fas fa-key"></i> Contrôle des accès
+            </button>
+        </div>
+
+        <!-- ── Tab 1 : Journal ── -->
+        <div id="tabJournal" class="tab-pane active" style="padding:0;">
+
+            <!-- Légende -->
+            <div class="legend-row">
+                <span class="legend-lbl">Légende :</span>
+                <span class="log-badge log-CONNEXION">CONNEXION</span>
+                <span class="log-badge log-DECONNEXION">DÉCONNEXION</span>
+                <span class="log-badge log-CREATION_USER">CRÉATION</span>
+                <span class="log-badge log-MODIFICATION_USER">MODIFICATION</span>
+                <span class="log-badge log-SUPPRESSION_USER">SUPPRESSION</span>
+                <span class="log-badge log-RESET_MDP">RESET MDP</span>
+                <span class="log-badge log-EXPORT">EXPORT</span>
+                <span class="log-badge log-ACCES_DONNEES">ACCÈS DONNÉES</span>
+            </div>
+
+            <!-- Filtres -->
+            <div class="filter-bar">
+                <h:form id="formFiltres" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;width:100%;">
+                    <span class="lbl">Filtres :</span>
+                    <p:inputText value="#{auditBean.filtreUsername}"
+                                 placeholder="Utilisateur..."
+                                 style="width:150px;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;"/>
+                    <p:selectOneMenu value="#{auditBean.filtreAction}"
+                                     style="width:180px;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;">
+                        <f:selectItem itemLabel="— Toutes les actions —" itemValue=""/>
+                        <f:selectItem itemLabel="CONNEXION" itemValue="CONNEXION"/>
+                        <f:selectItem itemLabel="DECONNEXION" itemValue="DECONNEXION"/>
+                        <f:selectItem itemLabel="CREATION_USER" itemValue="CREATION_USER"/>
+                        <f:selectItem itemLabel="MODIFICATION_USER" itemValue="MODIFICATION_USER"/>
+                        <f:selectItem itemLabel="SUPPRESSION_USER" itemValue="SUPPRESSION_USER"/>
+                        <f:selectItem itemLabel="RESET_MDP" itemValue="RESET_MDP"/>
+                        <f:selectItem itemLabel="EXPORT" itemValue="EXPORT"/>
+                        <f:selectItem itemLabel="ACCES_DONNEES" itemValue="ACCES_DONNEES"/>
+                        <f:selectItem itemLabel="CREATION_EMPLOYE" itemValue="CREATION_EMPLOYE"/>
+                        <f:selectItem itemLabel="MODIFICATION_EMPLOYE" itemValue="MODIFICATION_EMPLOYE"/>
+                    </p:selectOneMenu>
+                    <p:selectOneMenu value="#{auditBean.filtrePeriode}"
+                                     style="width:130px;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;">
+                        <f:selectItem itemLabel="7 derniers jours" itemValue="7J"/>
+                        <f:selectItem itemLabel="30 derniers jours" itemValue="30J"/>
+                        <f:selectItem itemLabel="90 derniers jours" itemValue="90J"/>
+                        <f:selectItem itemLabel="Tout l'historique" itemValue="TOUT"/>
+                    </p:selectOneMenu>
+                    <p:commandButton value="Filtrer"
+                                     action="#{auditBean.appliquerFiltres}"
+                                     update="formTableAudit"
+                                     styleClass="btn btn-primary btn-sm"
+                                     icon="fas fa-search"/>
+                    <p:commandButton value="Réinitialiser"
+                                     action="#{auditBean.reinitialiserFiltres}"
+                                     update="formTableAudit formFiltres"
+                                     styleClass="btn btn-secondary btn-sm"
+                                     icon="fas fa-undo"/>
+                </h:form>
+            </div>
+
+            <!-- Table -->
+            <h:form id="formTableAudit">
+                <p:dataTable value="#{auditBean.logsFiltres}" var="log"
+                             rows="30" paginator="true"
+                             paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowsPerPageTemplate="30,50,100"
+                             emptyMessage="Aucun journal disponible."
+                             style="border:none;"
+                             sortBy="#{log.dateAction}" sortOrder="descending">
+
+                    <p:column headerText="Date / Heure" style="width:150px;"
+                              sortBy="#{log.dateAction}">
+                        <div style="font-size:12px;font-weight:600;color:#0f172a;">
+                            <h:outputText value="#{log.dateAction}">
+                                <f:convertDateTime pattern="dd/MM/yyyy" type="localDateTime"/>
+                            </h:outputText>
+                        </div>
+                        <div style="font-size:11px;color:#94a3b8;">
+                            <h:outputText value="#{log.dateAction}">
+                                <f:convertDateTime pattern="HH:mm:ss" type="localDateTime"/>
+                            </h:outputText>
+                        </div>
+                    </p:column>
+
+                    <p:column headerText="Utilisateur" style="width:160px;"
+                              filterBy="#{log.username}" filterMatchMode="contains">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6d28d9,#a78bfa);
+                                        display:flex;align-items:center;justify-content:center;
+                                        font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">
+                                #{log.username != null and log.username.length() > 0
+                                  ? log.username.substring(0,1).toUpperCase() : '?'}
+                            </div>
+                            <span style="font-size:13px;font-weight:600;">#{log.username}</span>
+                        </div>
+                    </p:column>
+
+                    <p:column headerText="Action" style="width:210px;"
+                              filterBy="#{log.action}" filterMatchMode="contains">
+                        <span class="log-badge log-#{log.action}">#{log.action}</span>
+                    </p:column>
+
+                    <p:column headerText="Détail">
+                        <span style="font-size:13px;color:#374151;">
+                            #{log.detail != null ? log.detail : '—'}
+                        </span>
+                    </p:column>
+
+                    <p:column headerText="IP" style="width:130px;">
+                        <span style="font-family:monospace;font-size:11px;color:#94a3b8;">
+                            #{log.adresseIp != null ? log.adresseIp : '—'}
+                        </span>
+                    </p:column>
+
+                    <p:column style="width:60px;text-align:center;">
+                        <p:commandButton icon="fas fa-eye"
+                                         styleClass="btn btn-sm btn-secondary"
+                                         title="Voir le détail"
+                                         action="#{auditBean.selectionnerLog(log)}"
+                                         update="dlgDetailLog"
+                                         oncomplete="PF('dlgDetailLog').show()"/>
+                    </p:column>
+
+                </p:dataTable>
+            </h:form>
+        </div>
+
+        <!-- ── Tab 2 : RGPD ── -->
+        <div id="tabRGPD" class="tab-pane">
+            <h3 style="font-size:15px;font-weight:800;margin-bottom:16px;">Conformité RGPD — État du système</h3>
+            <div class="rgpd-item">
+                <div class="rgpd-check ok"><i class="fas fa-check"></i></div>
+                <span class="rgpd-lbl">Chiffrement des mots de passe (BCrypt)</span>
+                <span class="rgpd-status ok">Conforme</span>
+            </div>
+            <div class="rgpd-item">
+                <div class="rgpd-check ok"><i class="fas fa-check"></i></div>
+                <span class="rgpd-lbl">Journal d'audit des accès aux données personnelles</span>
+                <span class="rgpd-status ok">Actif</span>
+            </div>
+            <div class="rgpd-item">
+                <div class="rgpd-check ok"><i class="fas fa-check"></i></div>
+                <span class="rgpd-lbl">Contrôle d'accès basé sur les rôles (RBAC)</span>
+                <span class="rgpd-status ok">Actif</span>
+            </div>
+            <div class="rgpd-item">
+                <div class="rgpd-check ok"><i class="fas fa-check"></i></div>
+                <span class="rgpd-lbl">Isolation des données par institution</span>
+                <span class="rgpd-status ok">Conforme</span>
+            </div>
+            <div class="rgpd-item">
+                <div class="rgpd-check ok"><i class="fas fa-check"></i></div>
+                <span class="rgpd-lbl">Session HTTP sécurisée (httpOnly, timeout)</span>
+                <span class="rgpd-status ok">Conforme</span>
+            </div>
+            <div class="rgpd-item">
+                <div class="rgpd-check ok"><i class="fas fa-check"></i></div>
+                <span class="rgpd-lbl">Authentification à deux facteurs (2FA TOTP)</span>
+                <span class="rgpd-status ok">Disponible</span>
+            </div>
+            <div class="rgpd-item">
+                <div class="rgpd-check ok"><i class="fas fa-check"></i></div>
+                <span class="rgpd-lbl">Politique de rétention des logs (purge manuelle)</span>
+                <span class="rgpd-status ok">Active</span>
+            </div>
+            <div class="rgpd-item">
+                <div class="rgpd-check ok"><i class="fas fa-check"></i></div>
+                <span class="rgpd-lbl">Procédure de droit à l'effacement (droit à l'oubli)</span>
+                <span class="rgpd-status ok">Implémentée</span>
+            </div>
+            <div class="rgpd-item">
+                <div class="rgpd-check ok"><i class="fas fa-check"></i></div>
+                <span class="rgpd-lbl">Droit d'accès aux données personnelles (export JSON)</span>
+                <span class="rgpd-status ok">Implémenté</span>
+            </div>
+            <div class="rgpd-item">
+                <div class="rgpd-check ok"><i class="fas fa-check"></i></div>
+                <span class="rgpd-lbl">Accès aux données limité aux utilisateurs autorisés</span>
+                <span class="rgpd-status ok">Conforme</span>
+            </div>
+            <div style="margin-top:20px;padding:14px 16px;background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;font-size:13px;color:#78350f;">
+                <i class="fas fa-info-circle" style="margin-right:6px;"></i>
+                <strong>Recommandation :</strong> Activer la 2FA et définir une politique de purge automatique des logs après 12 mois
+                pour renforcer la conformité RGPD.
+            </div>
+
+            <!-- ═══ DROIT D'ACCÈS & DROIT À L'OUBLI ═══ -->
+            <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:18px;">
+                    <h3 style="font-size:14px;font-weight:800;margin-bottom:10px;color:#0f172a;">
+                        <i class="fas fa-file-export" style="color:#0891b2;margin-right:6px;"/>
+                        Droit d'accès — Export des données personnelles
+                    </h3>
+                    <p style="font-size:12px;color:#64748b;margin-bottom:14px;">
+                        Génère un fichier JSON contenant l'intégralité des données nominatives
+                        d'un utilisateur (profil, employé lié, historique d'actions).
+                    </p>
+                    <h:form id="formRgpdExport">
+                        <p:selectOneMenu value="#{rgpdBean.userCibleId}" style="width:100%;margin-bottom:10px;">
+                            <f:selectItem itemLabel="— Choisir un utilisateur —" itemValue="#{null}"/>
+                            <f:selectItems value="#{rgpdBean.utilisateursDisponibles}" var="u"
+                                           itemValue="#{u.id}"
+                                           itemLabel="#{u.prenom} #{u.nom} (#{u.username})"/>
+                        </p:selectOneMenu>
+                        <p:commandButton value="Télécharger le JSON RGPD"
+                                         action="#{rgpdBean.exporterDonnees}"
+                                         ajax="false"
+                                         icon="fas fa-download"
+                                         styleClass="btn btn-primary"
+                                         style="width:100%;justify-content:center;"/>
+                    </h:form>
+                </div>
+
+                <div style="background:#fff;border:1px solid #fecaca;border-radius:10px;padding:18px;">
+                    <h3 style="font-size:14px;font-weight:800;margin-bottom:10px;color:#991b1b;">
+                        <i class="fas fa-user-slash" style="color:#dc2626;margin-right:6px;"/>
+                        Droit à l'oubli — Anonymisation
+                    </h3>
+                    <p style="font-size:12px;color:#64748b;margin-bottom:14px;">
+                        Remplace les champs nominatifs (nom, prénom, email, téléphone, CIN&#8230;)
+                        par un identifiant anonyme. Les logs et identifiants techniques
+                        sont conservés pour la traçabilité comptable.
+                    </p>
+                    <h:form id="formRgpdAnon">
+                        <p:selectOneMenu value="#{rgpdBean.userCibleId}" style="width:100%;margin-bottom:10px;">
+                            <f:selectItem itemLabel="— Choisir un utilisateur —" itemValue="#{null}"/>
+                            <f:selectItems value="#{rgpdBean.utilisateursDisponibles}" var="u"
+                                           itemValue="#{u.id}"
+                                           itemLabel="#{u.prenom} #{u.nom} (#{u.username})"/>
+                        </p:selectOneMenu>
+                        <p:commandButton value="Anonymiser ce compte"
+                                         action="#{rgpdBean.anonymiser}"
+                                         ajax="false"
+                                         icon="fas fa-user-slash"
+                                         styleClass="btn btn-danger"
+                                         style="width:100%;justify-content:center;"
+                                         onclick="return confirm('Anonymiser définitivement ce compte ? Action irréversible.');"/>
+                    </h:form>
+                </div>
+            </div>
+
+            <!-- ═══ JOURNAL DES ACCÈS AUX DONNÉES SENSIBLES ═══ -->
+            <div style="margin-top:24px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:18px;">
+                <h3 style="font-size:14px;font-weight:800;margin-bottom:10px;">
+                    <i class="fas fa-eye" style="color:#6d28d9;margin-right:6px;"/>
+                    Journal des accès aux données sensibles
+                </h3>
+                <h:form id="formRgpdAcces">
+                    <p:dataTable value="#{rgpdBean.accesSensibles}" var="acc"
+                                 rows="10" paginator="true"
+                                 paginatorTemplate="{PreviousPageLink} {PageLinks} {NextPageLink}"
+                                 emptyMessage="Aucun accès enregistré."
+                                 style="border:none;font-size:12px;">
+                        <p:column headerText="Date" style="width:150px;">
+                            <h:outputText value="#{acc.dateAction}">
+                                <f:convertDateTime pattern="dd/MM/yyyy HH:mm:ss" type="localDateTime"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Opérateur" style="width:140px;">
+                            <span style="font-weight:600;">#{acc.username}</span>
+                        </p:column>
+                        <p:column headerText="Action" style="width:200px;">
+                            <span style="background:#ede9fe;color:#5b21b6;padding:2px 8px;border-radius:6px;font-weight:600;">
+                                #{acc.action}
+                            </span>
+                        </p:column>
+                        <p:column headerText="Détail">
+                            <span style="color:#475569;">#{acc.detail}</span>
+                        </p:column>
+                        <p:column headerText="IP" style="width:120px;">
+                            <span style="font-family:monospace;font-size:11px;color:#94a3b8;">
+                                #{acc.adresseIp}
+                            </span>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </div>
+        </div>
+
+        <!-- ── Tab 3 : Sauvegardes ── -->
+        <div id="tabSauvegardes" class="tab-pane">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                <div>
+                    <h3 style="font-size:14px;font-weight:800;margin-bottom:14px;">
+                        <i class="fas fa-history" style="color:#6d28d9;margin-right:6px;"></i>
+                        Historique des sauvegardes
+                    </h3>
+                    <h:form id="formSauvegardes">
+                        <p:dataTable value="#{auditBean.logsRecents}" var="sv"
+                                     rows="10" paginator="true"
+                                     paginatorTemplate="{PreviousPageLink} {PageLinks} {NextPageLink}"
+                                     emptyMessage="Aucune sauvegarde enregistrée."
+                                     style="border:none;">
+                            <p:column headerText="Date" style="width:140px;">
+                                <h:outputText value="#{sv.dateCreation}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy HH:mm" type="localDateTime"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Type">
+                                <span style="font-size:12px;font-weight:600;">#{sv.type}</span>
+                            </p:column>
+                            <p:column headerText="Taille" style="width:90px;">
+                                <span style="font-size:12px;color:#64748b;">#{sv.taille}</span>
+                            </p:column>
+                            <p:column headerText="Statut" style="width:90px;">
+                                <span class="log-badge #{sv.succes ? 'log-CONNEXION' : 'log-SUPPRESSION_USER'}">
+                                    #{sv.succes ? 'OK' : 'ECHEC'}
+                                </span>
+                            </p:column>
+                        </p:dataTable>
+                    </h:form>
+                </div>
+                <div>
+                    <h3 style="font-size:14px;font-weight:800;margin-bottom:14px;">
+                        <i class="fas fa-play-circle" style="color:#6d28d9;margin-right:6px;"></i>
+                        Déclencher une sauvegarde
+                    </h3>
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                        <div class="info-row">
+                            <span class="info-label">Dernière sauvegarde complète</span>
+                            <span class="info-val">#{auditBean.dateDerniereSauvegarde}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Fréquence automatique</span>
+                            <span class="info-val">Quotidienne · 02h00</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Rétention</span>
+                            <span class="info-val">30 jours</span>
+                        </div>
+                    </div>
+                    <h:form id="formDeclencherSvg" style="margin-top:16px;">
+                        <p:commandButton value="Déclencher une sauvegarde manuelle (pg_dump)"
+                                         action="#{auditBean.declencherSauvegarde}"
+                                         update="formSauvegardes formSvgFichiers growl"
+                                         styleClass="btn btn-primary"
+                                         style="width:100%;justify-content:center;margin-bottom:14px;"
+                                         icon="fas fa-save"
+                                         onclick="return confirm('Déclencher une sauvegarde complète maintenant ?')"/>
+
+                        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+                            <span style="font-size:12px;color:#475569;flex:1;">Rétention (jours)</span>
+                            <p:inputNumber value="#{auditBean.retentionJours}"
+                                           minValue="1" maxValue="3650"
+                                           decimalPlaces="0" thousandSeparator=""
+                                           style="width:90px;"/>
+                        </div>
+                        <p:commandButton value="Purger les logs antérieurs"
+                                         action="#{auditBean.purgerLogsAnciens}"
+                                         ajax="false"
+                                         styleClass="btn btn-danger"
+                                         style="width:100%;justify-content:center;"
+                                         icon="fas fa-trash"
+                                         onclick="return confirm('Supprimer définitivement les logs antérieurs au seuil ?')"/>
+                    </h:form>
+
+                    <!-- Liste des fichiers de sauvegarde existants -->
+                    <h:form id="formSvgFichiers" style="margin-top:18px;">
+                        <h4 style="font-size:13px;font-weight:700;margin-bottom:8px;color:#334155;">
+                            <i class="fas fa-folder-open" style="color:#6d28d9;margin-right:6px;"></i>
+                            Fichiers de sauvegarde disponibles
+                        </h4>
+                        <p:dataTable value="#{auditBean.sauvegardesDisponibles}" var="svf"
+                                     rows="5" paginator="true"
+                                     paginatorTemplate="{PreviousPageLink} {PageLinks} {NextPageLink}"
+                                     emptyMessage="Aucun fichier de sauvegarde."
+                                     style="border:none;font-size:12px;">
+                            <p:column headerText="Fichier">
+                                <span style="font-family:monospace;font-size:11px;">#{svf.nom}</span>
+                            </p:column>
+                            <p:column headerText="Taille" style="width:90px;">#{svf.taille}</p:column>
+                            <p:column headerText="Date" style="width:140px;">#{svf.date}</p:column>
+                        </p:dataTable>
+                    </h:form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Tab 4 : Contrôle des accès ── -->
+        <div id="tabAcces" class="tab-pane">
+            <h3 style="font-size:14px;font-weight:800;margin-bottom:14px;">
+                <i class="fas fa-key" style="color:#6d28d9;margin-right:6px;"></i>
+                Accès aux données sensibles (30 derniers jours)
+            </h3>
+            <h:form id="formTableAcces">
+                <p:dataTable value="#{auditBean.accesDonneesSensibles}" var="log"
+                             rows="20" paginator="true"
+                             paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink}"
+                             emptyMessage="Aucun accès aux données sensibles enregistré."
+                             style="border:none;">
+
+                    <p:column headerText="Date" style="width:150px;">
+                        <h:outputText value="#{log.dateAction}">
+                            <f:convertDateTime pattern="dd/MM/yyyy HH:mm" type="localDateTime"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Utilisateur" style="width:160px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#6d28d9,#a78bfa);
+                                        display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;">
+                                #{log.username != null ? log.username.substring(0,1).toUpperCase() : '?'}
+                            </div>
+                            <span style="font-size:12px;font-weight:600;">#{log.username}</span>
+                        </div>
+                    </p:column>
+                    <p:column headerText="Données consultées">
+                        <span class="log-badge log-ACCES_DONNEES">#{log.action}</span>
+                        <span style="font-size:12px;color:#374151;margin-left:8px;">#{log.detail}</span>
+                    </p:column>
+                    <p:column headerText="IP" style="width:130px;">
+                        <span style="font-family:monospace;font-size:11px;color:#94a3b8;">
+                            #{log.adresseIp != null ? log.adresseIp : '—'}
+                        </span>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </div>
+
+    </div><!-- /.section-card -->
+
+    <!-- ══ Dialog détail log ══ -->
+    <p:dialog id="dlgDetailLog" header="Détail de l'action"
+              widgetVar="dlgDetailLog" modal="true"
+              width="520" resizable="false">
+        <h:form id="formDetailLog">
+            <p:outputPanel rendered="#{auditBean.logSelectionne != null}">
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    <div class="info-row">
+                        <span class="info-label">Identifiant</span>
+                        <span class="info-val" style="font-family:monospace;">##{auditBean.logSelectionne.id}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Utilisateur</span>
+                        <span class="info-val">#{auditBean.logSelectionne.username}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Action</span>
+                        <span class="log-badge log-#{auditBean.logSelectionne.action}">
+                            #{auditBean.logSelectionne.action}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Date &amp; heure</span>
+                        <span class="info-val">
+                            <h:outputText value="#{auditBean.logSelectionne.dateAction}">
+                                <f:convertDateTime pattern="dd/MM/yyyy à HH:mm:ss" type="localDateTime"/>
+                            </h:outputText>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Adresse IP</span>
+                        <span class="info-val" style="font-family:monospace;">
+                            #{auditBean.logSelectionne.adresseIp != null ? auditBean.logSelectionne.adresseIp : 'N/A'}
+                        </span>
+                    </div>
+                    <div style="padding:10px 12px;background:#f8fafc;border-radius:8px;border:1px solid #f1f5f9;">
+                        <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;">DÉTAIL</div>
+                        <div style="font-size:13px;color:#374151;">
+                            #{auditBean.logSelectionne.detail != null ? auditBean.logSelectionne.detail : 'Aucun détail disponible.'}
+                        </div>
+                    </div>
+                </div>
+            </p:outputPanel>
+            <div style="text-align:right;margin-top:16px;">
+                <p:commandButton value="Fermer"
+                                 onclick="PF('dlgDetailLog').hide()"
+                                 styleClass="btn btn-secondary"
+                                 type="button"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+</div><!-- /.main -->
+
+<script>
+function switchTab(btn, paneId) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(paneId).classList.add('active');
+}
+</script>
+
+</h:body>
+</html>

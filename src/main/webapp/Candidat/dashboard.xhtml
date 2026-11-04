@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+    <title>Tableau de bord — Espace Candidat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <h:outputStylesheet library="css" name="candidat.css"/>
+    <h:outputStylesheet library="css" name="candidat-dashboard.css"/>
+</h:head>
+
+<h:body>
+    <div class="layout-wrapper">
+
+        <!-- Sidebar -->
+        <ui:include src="sidebar-candidat.xhtml"/>
+
+        <!-- Contenu principal -->
+        <div class="layout-main">
+
+            <!-- Topbar -->
+            <div class="layout-topbar">
+                <h2 class="page-title">
+                    Bonjour, #{not empty sessionBean.utilisateurConnecte.prenom ? sessionBean.utilisateurConnecte.prenom : 'Candidat'} 👋
+                </h2>
+                <div class="topbar-badge">
+                    <div class="topbar-avatar">
+                        #{not empty sessionBean.utilisateurConnecte.prenom ? sessionBean.utilisateurConnecte.prenom.substring(0,1).toUpperCase() : 'C'}
+                    </div>
+                    <span>#{not empty sessionBean.utilisateurConnecte.prenom ? sessionBean.utilisateurConnecte.prenom : 'Candidat'} #{sessionBean.utilisateurConnecte.nom}</span>
+                    <span class="role-pill">Candidat</span>
+                </div>
+            </div>
+
+            <div class="layout-content">
+                <p:growl id="growl" showDetail="true" life="4000"/>
+
+                <!-- ── Statistiques (cliquables) ─────────────── -->
+                <div class="stats-grid">
+
+                    <a class="stat-card stat-link stat-blue"
+                       href="#{request.contextPath}/Candidat/offres.xhtml">
+                        <div class="stat-icon"><i class="pi pi-briefcase"></i></div>
+                        <div class="stat-label">Offres disponibles</div>
+                        <div class="stat-value">
+                            #{empty candidatBean.offresDisponibles ? 0 : candidatBean.offresDisponibles.size()}
+                        </div>
+                        <div class="stat-hint"><i class="pi pi-briefcase"></i> postes ouverts</div>
+                    </a>
+
+                    <a class="stat-card stat-link stat-violet"
+                       href="#{request.contextPath}/Candidat/mes-candidatures.xhtml">
+                        <div class="stat-icon"><i class="pi pi-file"></i></div>
+                        <div class="stat-label">Mes candidatures</div>
+                        <div class="stat-value">
+                            #{empty candidatBean.mesCandidatures ? 0 : candidatBean.mesCandidatures.size()}
+                        </div>
+                        <div class="stat-hint"><i class="pi pi-file"></i> dossiers soumis</div>
+                    </a>
+
+                    <a class="stat-card stat-link stat-amber"
+                       href="#{request.contextPath}/Candidat/mes-candidatures.xhtml">
+                        <div class="stat-icon"><i class="pi pi-clock"></i></div>
+                        <div class="stat-label">En attente</div>
+                        <div class="stat-value">#{candidatBean.nbEnAttente}</div>
+                        <div class="stat-hint"><i class="pi pi-clock"></i> en cours d'examen</div>
+                    </a>
+
+                    <a class="stat-card stat-link stat-green"
+                       href="#{request.contextPath}/Candidat/mes-candidatures.xhtml">
+                        <div class="stat-icon"><i class="pi pi-check-circle"></i></div>
+                        <div class="stat-label">Retenues</div>
+                        <div class="stat-value">#{candidatBean.nbRetenues}</div>
+                        <div class="stat-hint"><i class="pi pi-check-circle"></i> dossiers retenus</div>
+                    </a>
+
+                </div><!-- /stats-grid -->
+
+                <!-- ── Entretiens à venir ─────────────────────── -->
+                <h:panelGroup rendered="#{not empty candidatBean.entretiensAVenir}">
+                    <div class="card entretien-card">
+                        <strong class="entretien-heading">
+                            <span class="section-title-dot"></span>
+                            Entretiens à venir
+                        </strong>
+                        <ui:repeat value="#{candidatBean.entretiensAVenir}" var="e">
+                            <div class="entretien-row">
+                                <div class="entretien-icon"><i class="pi pi-calendar"></i></div>
+                                <div class="entretien-info">
+                                    <div class="entretien-title">#{e.offre != null ? e.offre.titre : '—'}</div>
+                                    <div class="entretien-type">#{e.typeEntretien != null ? e.typeEntretien : 'Entretien'}</div>
+                                </div>
+                                <div class="entretien-date">
+                                    <h:outputText value="#{e.dateEntretien}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                                    </h:outputText>
+                                </div>
+                            </div>
+                        </ui:repeat>
+                    </div>
+                </h:panelGroup>
+
+                <!-- ── Aucun entretien prévu ──────────────────── -->
+                <h:panelGroup rendered="#{empty candidatBean.entretiensAVenir}">
+                    <div class="card dashboard-empty">
+                        <i class="pi pi-calendar"></i>
+                        Aucun entretien prévu pour le moment.<br/>
+                        <a href="#{request.contextPath}/Candidat/offres.xhtml">Parcourir les offres d'emploi</a>
+                    </div>
+                </h:panelGroup>
+
+            </div><!-- /layout-content -->
+        </div><!-- /layout-main -->
+    </div><!-- /layout-wrapper -->
+</h:body>
+</html>

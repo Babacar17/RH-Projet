@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+<ui:composition template="/Principal/template.xhtml">
+<ui:param name="active" value="publications"/>
+<ui:define name="title">Publications</ui:define>
+<ui:define name="content">
+
+<div class="page-banner">
+    <div class="breadcrumb"><a href="#{request.contextPath}/Principal/index.xhtml">Accueil</a><span>/</span>Publications</div>
+    <h1>Publications officielles</h1>
+    <p>Documents de référence, rapports et textes législatifs.</p>
+</div>
+
+<div class="section alt">
+  <div class="container" data-filterable="true">
+    <div class="toolbar">
+        <div class="chips" role="group" aria-label="Filtrer par type">
+            <button type="button" class="chip active" data-filter="all" aria-pressed="true">Tous</button>
+            <button type="button" class="chip" data-filter="rapport" aria-pressed="false">Rapports</button>
+            <button type="button" class="chip" data-filter="strategie" aria-pressed="false">Stratégies et plans</button>
+            <button type="button" class="chip" data-filter="loi" aria-pressed="false">Textes législatifs</button>
+            <button type="button" class="chip" data-filter="analyse" aria-pressed="false">Analyses</button>
+        </div>
+        <div class="search-field">
+            <i class="fas fa-search"></i>
+            <input type="text" data-search="true" placeholder="Rechercher une publication" aria-label="Rechercher une publication"/>
+        </div>
+    </div>
+
+    <div class="pub-grid">
+        <article class="pub-card" data-cat="rapport">
+            <div class="pub-type">📊 Rapport trimestriel</div>
+            <h3>Rapport de suivi budgétaire – T3 2025</h3>
+            <p>Analyse de l'exécution du budget de l'État au troisième trimestre 2025.</p>
+            <a class="pub-link" href="#{request.contextPath}/resources/docs/rapport-suivi-budgetaire-t3-2025.pdf">Télécharger le PDF →</a>
+        </article>
+        <article class="pub-card" data-cat="rapport">
+            <div class="pub-type">📊 Rapport trimestriel</div>
+            <h3>Rapport de suivi budgétaire – T4 2025</h3>
+            <p>Les recettes fiscales dépassent les prévisions de 8% grâce à la modernisation de l'administration fiscale.</p>
+            <a class="pub-link" href="#{request.contextPath}/resources/docs/rapport-suivi-budgetaire-t4-2025.pdf">Télécharger le PDF →</a>
+        </article>
+        <article class="pub-card" data-cat="strategie">
+            <div class="pub-type">📋 Stratégie nationale</div>
+            <h3>Stratégie nationale de financement 2026–2030</h3>
+            <p>Document cadre pour la mobilisation des ressources internes et externes.</p>
+            <a class="pub-link" href="#{request.contextPath}/resources/docs/strategie-financement-2026-2030.pdf">Télécharger le PDF →</a>
+        </article>
+        <article class="pub-card" data-cat="strategie">
+            <div class="pub-type">📈 Plan pluriannuel</div>
+            <h3>Rapport DSNT 2026–2028</h3>
+            <p>Document de stratégie pour les négociations et transactions financières.</p>
+            <a class="pub-link" href="#{request.contextPath}/resources/docs/rapport-dsnt-2026-2028.pdf">Télécharger le PDF →</a>
+        </article>
+        <article class="pub-card" data-cat="loi">
+            <div class="pub-type">⚖️ Texte législatif</div>
+            <h3>Loi de Finances initiale 2026</h3>
+            <p>Texte intégral de la loi de finances pour l'exercice budgétaire 2026.</p>
+            <a class="pub-link" href="#{request.contextPath}/Principal/loi-finances.xhtml">Consulter →</a>
+        </article>
+        <article class="pub-card" data-cat="analyse">
+            <div class="pub-type">🌍 Rapport international</div>
+            <h3>Note de conjoncture économique – Janvier 2026</h3>
+            <p>Analyse mensuelle des indicateurs macroéconomiques nationaux et régionaux.</p>
+            <a class="pub-link" href="#{request.contextPath}/resources/docs/note-conjoncture-janvier-2026.pdf">Lire en ligne →</a>
+        </article>
+        <article class="pub-card" data-cat="analyse">
+            <div class="pub-type">🏦 Secteur financier</div>
+            <h3>Revue du secteur financier 2025</h3>
+            <p>Analyse de la stabilité financière, du crédit bancaire et des marchés de capitaux.</p>
+            <a class="pub-link" href="#{request.contextPath}/resources/docs/revue-secteur-financier-2025.pdf">Télécharger →</a>
+        </article>
+    </div>
+    <p class="empty-state" hidden="hidden">Aucune publication ne correspond à votre recherche.</p>
+  </div>
+</div>
+
+</ui:define>
+</ui:composition>
+</html>

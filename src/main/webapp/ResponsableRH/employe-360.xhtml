@@ -1,0 +1,475 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <f:metadata>
+        <f:viewParam name="id" value="#{employe360Bean.employeId}"/>
+        <f:viewAction action="#{employe360Bean.chargerDonnees}"/>
+    </f:metadata>
+
+    <ui:param name="page" value="employes"/>
+    <ui:define name="title">Vue 360° employé — Espace RH</ui:define>
+    <ui:define name="pageTitle">Vue 360° employé</ui:define>
+    <ui:define name="breadcrumb">
+        <a href="employes.xhtml" style="color:#64748b;text-decoration:none;">Espace RH › Employés</a>
+        › #{employe360Bean.employe.nomComplet}
+    </ui:define>
+
+    <ui:define name="styles">
+        <style>
+            /* En-tête employé */
+            .emp-hero {
+                background:linear-gradient(120deg,#1d4ed8 0%,#2563eb 100%);
+                color:#fff;border-radius:14px;padding:24px 28px;margin-bottom:22px;
+                display:flex;gap:24px;align-items:center;flex-wrap:wrap;
+                box-shadow:0 4px 18px rgba(29,78,216,.22);
+            }
+            .emp-avatar {
+                width:80px;height:80px;border-radius:50%;
+                background:rgba(255,255,255,.18);display:flex;align-items:center;
+                justify-content:center;font-size:30px;font-weight:800;
+                flex-shrink:0;
+            }
+            .emp-info { flex:1;min-width:240px; }
+            .emp-name { font-size:24px;font-weight:800;margin-bottom:4px; }
+            .emp-sub  { font-size:13px;opacity:.85; }
+            .emp-stats { display:flex;gap:22px;flex-wrap:wrap; }
+            .emp-stat { }
+            .emp-stat-val { font-size:22px;font-weight:800; }
+            .emp-stat-lbl { font-size:10px;opacity:.8;text-transform:uppercase;letter-spacing:.5px; }
+
+            /* KPI cards */
+            .kpi-grid { display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px; }
+            .kpi-card { background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px; }
+            .kpi-card.blue   { border-top:3px solid #2563eb; }
+            .kpi-card.green  { border-top:3px solid #16a34a; }
+            .kpi-card.gold   { border-top:3px solid #f59e0b; }
+            .kpi-card.purple { border-top:3px solid #7c3aed; }
+            .kpi-card.red    { border-top:3px solid #dc2626; }
+            .kpi-label { font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;
+                         letter-spacing:.5px;margin-bottom:6px; }
+            .kpi-val   { font-size:22px;font-weight:800;color:#0f172a; }
+            .kpi-sub   { font-size:11px;color:#94a3b8;margin-top:2px; }
+
+            /* Sections */
+            .row-2 { display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px; }
+            .card {
+                background:#fff;border:1px solid #e2e8f0;border-radius:12px;
+                padding:18px;
+            }
+            .card-title {
+                font-size:13px;font-weight:800;color:#0f172a;margin-bottom:14px;
+                display:flex;align-items:center;gap:8px;
+                padding-bottom:10px;border-bottom:1px solid #f1f5f9;
+            }
+
+            .info-row {
+                display:flex;justify-content:space-between;align-items:center;
+                padding:8px 0;border-bottom:1px solid #f8fafc;font-size:13px;
+            }
+            .info-row:last-child { border-bottom:none; }
+            .info-lbl { color:#64748b;font-size:12px; }
+            .info-val { font-weight:600;color:#0f172a; }
+
+            .timeline { padding-left:20px;border-left:2px solid #e2e8f0; }
+            .timeline-item {
+                position:relative;padding:8px 0 12px 16px;
+            }
+            .timeline-item::before {
+                content:'';position:absolute;left:-25px;top:14px;
+                width:10px;height:10px;border-radius:50%;background:#2563eb;
+                border:2px solid #fff;box-shadow:0 0 0 2px #2563eb;
+            }
+            .timeline-date { font-size:11px;color:#94a3b8;font-weight:600; }
+            .timeline-title { font-size:13px;font-weight:700;color:#0f172a;margin:2px 0; }
+            .timeline-desc { font-size:11px;color:#64748b; }
+
+            .empty-section { padding:30px 14px;text-align:center;color:#94a3b8;font-size:12px; }
+        </style>
+    </ui:define>
+
+    <ui:define name="content">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+            <a href="employes.xhtml" style="display:inline-flex;align-items:center;gap:6px;
+                padding:8px 14px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;
+                border-radius:7px;font-size:12px;text-decoration:none;">
+                <i class="pi pi-arrow-left"/> Retour à la liste
+            </a>
+        </div>
+
+        <h:panelGroup rendered="#{employe360Bean.employe == null}">
+            <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;
+                        padding:20px;text-align:center;color:#991b1b;">
+                Employé introuvable. Vérifiez le paramètre <code>?id=</code> de l'URL.
+            </div>
+        </h:panelGroup>
+
+        <h:panelGroup rendered="#{employe360Bean.employe != null}">
+
+            <!-- ═══ Hero employé ═══ -->
+            <div class="emp-hero">
+                <div class="emp-avatar">
+                    #{employe360Bean.employe.prenom != null ? employe360Bean.employe.prenom.substring(0,1) : '?'}#{employe360Bean.employe.nom != null ? employe360Bean.employe.nom.substring(0,1) : '?'}
+                </div>
+                <div class="emp-info">
+                    <div class="emp-name">#{employe360Bean.employe.nomComplet}</div>
+                    <div class="emp-sub">
+                        <i class="pi pi-id-card"/> #{employe360Bean.employe.matricule}
+                        <span style="margin:0 8px;">·</span>
+                        <i class="pi pi-briefcase"/> #{employe360Bean.employe.intiutePoste}
+                        <span style="margin:0 8px;">·</span>
+                        <i class="pi pi-building"/> #{employe360Bean.employe.nomDirection}
+                    </div>
+                </div>
+                <div class="emp-stats">
+                    <div class="emp-stat">
+                        <div class="emp-stat-val">#{employe360Bean.ancienneteAnnees}</div>
+                        <div class="emp-stat-lbl">Année(s) d'ancienneté</div>
+                    </div>
+                    <div class="emp-stat">
+                        <div class="emp-stat-val">#{employe360Bean.employe.statut}</div>
+                        <div class="emp-stat-lbl">Statut</div>
+                    </div>
+                    <div class="emp-stat">
+                        <div class="emp-stat-val">#{employe360Bean.employe.typeContrat}</div>
+                        <div class="emp-stat-lbl">Type contrat</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ KPI rapides ═══ -->
+            <div class="kpi-grid">
+                <div class="kpi-card blue">
+                    <div class="kpi-label">Congés pris</div>
+                    <div class="kpi-val">#{employe360Bean.nombreCongesPris}</div>
+                    <div class="kpi-sub">demandes approuvées</div>
+                </div>
+                <div class="kpi-card green">
+                    <div class="kpi-label">Note moyenne</div>
+                    <div class="kpi-val">
+                        <h:outputText value="#{employe360Bean.moyenneEvaluations}">
+                            <f:convertNumber maxFractionDigits="1"/>
+                        </h:outputText>
+                    </div>
+                    <div class="kpi-sub">#{employe360Bean.nombreEvaluations} évaluation(s)</div>
+                </div>
+                <div class="kpi-card gold">
+                    <div class="kpi-label">Formations</div>
+                    <div class="kpi-val">#{employe360Bean.nombreFormations}</div>
+                    <div class="kpi-sub">suivies / planifiées</div>
+                </div>
+                <div class="kpi-card purple">
+                    <div class="kpi-label">Événements</div>
+                    <div class="kpi-val">#{employe360Bean.nombreEvenements}</div>
+                    <div class="kpi-sub">invitations reçues</div>
+                </div>
+                <div class="kpi-card red">
+                    <div class="kpi-label">Bulletins</div>
+                    <div class="kpi-val">#{employe360Bean.bulletins.size()}</div>
+                    <div class="kpi-sub">paie cumulée</div>
+                </div>
+            </div>
+
+            <!-- ═══ Identité + Contrat ═══ -->
+            <div class="row-2">
+                <div class="card">
+                    <div class="card-title">
+                        <i class="pi pi-user" style="color:#2563eb;"/>
+                        Identité
+                    </div>
+                    <div class="info-row">
+                        <span class="info-lbl">Email</span>
+                        <span class="info-val">#{employe360Bean.employe.email}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-lbl">Téléphone</span>
+                        <span class="info-val">#{employe360Bean.employe.telephone}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-lbl">CIN</span>
+                        <span class="info-val">#{employe360Bean.employe.cin}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-lbl">Date de naissance</span>
+                        <span class="info-val">
+                            <h:outputText value="#{employe360Bean.employe.dateNaissance}">
+                                <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                            </h:outputText>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-lbl">Adresse</span>
+                        <span class="info-val">#{employe360Bean.employe.adresse}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-lbl">Situation familiale</span>
+                        <span class="info-val">#{employe360Bean.employe.situationFamiliale}, #{employe360Bean.employe.nombreEnfants} enfant(s)</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <i class="pi pi-briefcase" style="color:#7c3aed;"/>
+                        Contrat &amp; rémunération
+                    </div>
+                    <div class="info-row">
+                        <span class="info-lbl">Date d'embauche</span>
+                        <span class="info-val">
+                            <h:outputText value="#{employe360Bean.employe.dateEmbauche}">
+                                <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                            </h:outputText>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-lbl">Fin de contrat</span>
+                        <span class="info-val">
+                            <h:outputText value="#{employe360Bean.employe.dateFinContrat}">
+                                <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                            </h:outputText>
+                            <h:panelGroup rendered="#{employe360Bean.employe.dateFinContrat == null}">
+                                <span style="color:#94a3b8;">CDI sans terme</span>
+                            </h:panelGroup>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-lbl">Type contrat</span>
+                        <span class="info-val">#{employe360Bean.employe.typeContrat}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-lbl">Salaire de base</span>
+                        <span class="info-val">
+                            <h:outputText value="#{employe360Bean.employe.salaireBase}">
+                                <f:convertNumber type="number" groupingUsed="true" maxFractionDigits="0"/>
+                            </h:outputText>
+                            FCFA
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-lbl">Grade / Échelon</span>
+                        <span class="info-val">#{employe360Bean.employe.gradeEchelon}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-lbl">Niveau hiérarchique</span>
+                        <span class="info-val">#{employe360Bean.employe.niveauHierarchique}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ Carrière + Soldes congés ═══ -->
+            <div class="row-2">
+                <div class="card">
+                    <div class="card-title">
+                        <i class="pi pi-history" style="color:#f59e0b;"/>
+                        Carrière (#{employe360Bean.mouvements.size()})
+                    </div>
+                    <h:panelGroup rendered="#{employe360Bean.mouvements.isEmpty()}">
+                        <div class="empty-section">Aucun mouvement enregistré.</div>
+                    </h:panelGroup>
+                    <div class="timeline">
+                        <ui:repeat value="#{employe360Bean.mouvements}" var="m">
+                            <div class="timeline-item">
+                                <div class="timeline-date">
+                                    <h:outputText value="#{m.dateMouvement}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                                    </h:outputText>
+                                </div>
+                                <div class="timeline-title">#{m.typeMouvement}</div>
+                                <div class="timeline-desc">
+                                    #{m.ancienPoste} → #{m.nouveauPoste}
+                                    <h:panelGroup rendered="#{m.commentaire != null}">
+                                        <br/>#{m.commentaire}
+                                    </h:panelGroup>
+                                </div>
+                            </div>
+                        </ui:repeat>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <i class="pi pi-calendar-times" style="color:#dc2626;"/>
+                        Soldes congés
+                    </div>
+                    <h:panelGroup rendered="#{employe360Bean.soldes.isEmpty()}">
+                        <div class="empty-section">Aucun solde initialisé pour cet employé.</div>
+                    </h:panelGroup>
+                    <ui:repeat value="#{employe360Bean.soldes}" var="s">
+                        <div class="info-row">
+                            <span class="info-lbl">#{s.typeConge.libelle} (#{s.exercice})</span>
+                            <span class="info-val">
+                                <span style="font-weight:800;color:#15803d;">
+                                    #{s.soldeReel} j
+                                </span>
+                                <span style="color:#94a3b8;font-size:11px;">
+                                    / #{s.joursAcquis} acquis, #{s.joursPris} pris
+                                </span>
+                            </span>
+                        </div>
+                    </ui:repeat>
+                </div>
+            </div>
+
+            <!-- ═══ Congés + Évaluations ═══ -->
+            <div class="row-2">
+                <div class="card">
+                    <div class="card-title">
+                        <i class="pi pi-calendar" style="color:#0891b2;"/>
+                        Historique congés (#{employe360Bean.conges.size()})
+                    </div>
+                    <h:panelGroup rendered="#{employe360Bean.conges.isEmpty()}">
+                        <div class="empty-section">Aucune demande de congé.</div>
+                    </h:panelGroup>
+                    <ui:repeat value="#{employe360Bean.conges}" var="c">
+                        <div class="info-row" style="display:block;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-weight:600;">
+                                    <h:outputText value="#{c.dateDebut}">
+                                        <f:convertDateTime pattern="dd/MM" type="localDate"/>
+                                    </h:outputText>
+                                    →
+                                    <h:outputText value="#{c.dateFin}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                                    </h:outputText>
+                                    <span style="color:#94a3b8;font-size:11px;"> (#{c.nombreJours}j)</span>
+                                </span>
+                                <span class="badge #{employe360Bean.getBadgeStatut(c.statut)}">#{c.statut}</span>
+                            </div>
+                            <div style="font-size:11px;color:#64748b;margin-top:2px;">
+                                #{c.typeConge.libelle}
+                            </div>
+                        </div>
+                    </ui:repeat>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <i class="pi pi-star" style="color:#15803d;"/>
+                        Évaluations (#{employe360Bean.evaluations.size()})
+                    </div>
+                    <h:panelGroup rendered="#{employe360Bean.evaluations.isEmpty()}">
+                        <div class="empty-section">Aucune évaluation.</div>
+                    </h:panelGroup>
+                    <ui:repeat value="#{employe360Bean.evaluations}" var="ev">
+                        <div class="info-row" style="display:block;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-weight:600;">
+                                    #{ev.typeEvaluation} — #{ev.periode}
+                                </span>
+                                <span style="background:#0f172a;color:#fbbf24;padding:2px 10px;
+                                             border-radius:6px;font-weight:800;font-size:12px;"
+                                      rendered="#{ev.noteGlobale != null}">
+                                    <h:outputText value="#{ev.noteGlobale}">
+                                        <f:convertNumber maxFractionDigits="1"/>
+                                    </h:outputText>
+                                    /20
+                                </span>
+                            </div>
+                            <div style="font-size:11px;color:#64748b;margin-top:2px;">
+                                Évaluateur :
+                                <h:panelGroup rendered="#{ev.evaluateur != null}">
+                                    #{ev.evaluateur.nomComplet}
+                                </h:panelGroup>
+                                <span class="badge #{employe360Bean.getBadgeStatut(ev.statut)}" style="margin-left:6px;">
+                                    #{ev.statut}
+                                </span>
+                            </div>
+                        </div>
+                    </ui:repeat>
+                </div>
+            </div>
+
+            <!-- ═══ Formations + Événements ═══ -->
+            <div class="row-2">
+                <div class="card">
+                    <div class="card-title">
+                        <i class="pi pi-book" style="color:#7c3aed;"/>
+                        Formations (#{employe360Bean.formations.size()})
+                    </div>
+                    <h:panelGroup rendered="#{employe360Bean.formations.isEmpty()}">
+                        <div class="empty-section">Aucune formation suivie.</div>
+                    </h:panelGroup>
+                    <ui:repeat value="#{employe360Bean.formations}" var="f">
+                        <div class="info-row" style="display:block;">
+                            <div style="font-weight:600;">#{f.titre}</div>
+                            <div style="font-size:11px;color:#64748b;">
+                                <h:outputText value="#{f.dateDebut}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                                </h:outputText>
+                                — #{f.modalite}
+                                <span class="badge #{employe360Bean.getBadgeStatut(f.statut)}" style="margin-left:6px;">
+                                    #{f.statut}
+                                </span>
+                            </div>
+                        </div>
+                    </ui:repeat>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <i class="pi pi-calendar-plus" style="color:#dc2626;"/>
+                        Événements (#{employe360Bean.evenements.size()})
+                    </div>
+                    <h:panelGroup rendered="#{employe360Bean.evenements.isEmpty()}">
+                        <div class="empty-section">Aucune participation à un événement.</div>
+                    </h:panelGroup>
+                    <ui:repeat value="#{employe360Bean.evenements}" var="ev">
+                        <div class="info-row" style="display:block;">
+                            <div style="font-weight:600;">#{ev.titre}</div>
+                            <div style="font-size:11px;color:#64748b;">
+                                #{ev.type} —
+                                <h:outputText value="#{ev.dateDebut}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy" type="localDateTime"/>
+                                </h:outputText>
+                                <span class="badge #{employe360Bean.getBadgeStatut(ev.statut)}" style="margin-left:6px;">
+                                    #{ev.statut}
+                                </span>
+                            </div>
+                        </div>
+                    </ui:repeat>
+                </div>
+            </div>
+
+            <!-- ═══ Bulletins de paie ═══ -->
+            <div class="card">
+                <div class="card-title">
+                    <i class="pi pi-wallet" style="color:#059669;"/>
+                    Bulletins de paie (#{employe360Bean.bulletins.size()})
+                </div>
+                <h:panelGroup rendered="#{employe360Bean.bulletins.isEmpty()}">
+                    <div class="empty-section">Aucun bulletin émis pour cet employé.</div>
+                </h:panelGroup>
+                <p:dataTable value="#{employe360Bean.bulletins}" var="b" rows="10" paginator="true"
+                             rendered="#{not employe360Bean.bulletins.isEmpty()}"
+                             emptyMessage="Aucun bulletin." style="border:none;">
+                    <p:column headerText="Période">
+                        #{b.cyclePaie.periodeLibelle}
+                    </p:column>
+                    <p:column headerText="Brut" style="text-align:right;">
+                        <h:outputText value="#{b.salaireBrut}">
+                            <f:convertNumber type="number" groupingUsed="true" maxFractionDigits="0"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Retenues" style="text-align:right;color:#dc2626;">
+                        <h:outputText value="#{b.totalRetenues}">
+                            <f:convertNumber type="number" groupingUsed="true" maxFractionDigits="0"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Net" style="text-align:right;font-weight:800;color:#15803d;">
+                        <h:outputText value="#{b.salaireNet}">
+                            <f:convertNumber type="number" groupingUsed="true" maxFractionDigits="0"/>
+                        </h:outputText>
+                        FCFA
+                    </p:column>
+                    <p:column headerText="Statut" style="width:120px;">
+                        <span class="badge #{employe360Bean.getBadgeStatut(b.statut)}">#{b.statut}</span>
+                    </p:column>
+                </p:dataTable>
+            </div>
+
+        </h:panelGroup>
+    </ui:define>
+
+</ui:composition>

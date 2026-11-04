@@ -1,0 +1,563 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <ui:param name="page" value="evenements"/>
+    <ui:define name="title">Événements — Espace RH</ui:define>
+    <ui:define name="pageTitle">Événements</ui:define>
+    <ui:define name="breadcrumb">Espace RH › Séminaires, réunions, voyages</ui:define>
+
+    <ui:define name="styles">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    </ui:define>
+
+    <ui:define name="content">
+        <!-- KPI (cliquables : filtrent et affichent la liste) -->
+        <h:form id="formKpi">
+            <div class="kpi-grid">
+                <p:commandLink action="#{evenementBean.filtrerParKpi('TOTAL')}" update=":zoneEvts :formFiltres growl"
+                    styleClass="kpi-card blue" style="display:block;text-decoration:none;cursor:pointer;">
+                    <div class="kpi-label">Total événements</div>
+                    <div class="kpi-value">#{evenementBean.nombreEvenements}</div>
+                    <div class="kpi-sub">Tous statuts confondus</div>
+                </p:commandLink>
+                <p:commandLink action="#{evenementBean.filtrerParKpi('A_VENIR')}" update=":zoneEvts :formFiltres growl"
+                    styleClass="kpi-card orange" style="display:block;text-decoration:none;cursor:pointer;">
+                    <div class="kpi-label">À venir</div>
+                    <div class="kpi-value">#{evenementBean.nombreAVenir}</div>
+                    <div class="kpi-sub">Planifiés ou confirmés</div>
+                </p:commandLink>
+                <p:commandLink action="#{evenementBean.filtrerParKpi('EN_COURS')}" update=":zoneEvts :formFiltres growl"
+                    styleClass="kpi-card purple" style="display:block;text-decoration:none;cursor:pointer;">
+                    <div class="kpi-label">En cours</div>
+                    <div class="kpi-value">#{evenementBean.nombreEnCours}</div>
+                    <div class="kpi-sub">Actuellement</div>
+                </p:commandLink>
+                <p:commandLink action="#{evenementBean.filtrerParKpi('TERMINES')}" update=":zoneEvts :formFiltres growl"
+                    styleClass="kpi-card green" style="display:block;text-decoration:none;cursor:pointer;">
+                    <div class="kpi-label">Terminés</div>
+                    <div class="kpi-value">#{evenementBean.nombreTermines}</div>
+                    <div class="kpi-sub">Cette année</div>
+                </p:commandLink>
+            </div>
+        </h:form>
+
+        <!-- TOOLBAR -->
+        <div class="section-card">
+            <div class="toolbar">
+                <h:form id="formFiltres" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <p:selectOneMenu value="#{evenementBean.filtreType}" style="min-width:160px;">
+                        <f:selectItem itemLabel="Tous types" itemValue=""/>
+                        <f:selectItem itemLabel="Réunion"    itemValue="REUNION"/>
+                        <f:selectItem itemLabel="Formation"  itemValue="FORMATION"/>
+                        <f:selectItem itemLabel="Séminaire"  itemValue="SEMINAIRE"/>
+                        <f:selectItem itemLabel="Atelier"    itemValue="ATELIER"/>
+                        <f:selectItem itemLabel="Conférence" itemValue="CONFERENCE"/>
+                        <f:selectItem itemLabel="Autre"      itemValue="AUTRE"/>
+                    </p:selectOneMenu>
+                    <p:selectOneMenu value="#{evenementBean.filtreStatut}" style="min-width:140px;">
+                        <f:selectItem itemLabel="Tous statuts" itemValue=""/>
+                        <f:selectItem itemLabel="Programmé"   itemValue="PROGRAMME"/>
+                        <f:selectItem itemLabel="Confirmé"    itemValue="CONFIRME"/>
+                        <f:selectItem itemLabel="En cours"    itemValue="EN_COURS"/>
+                        <f:selectItem itemLabel="Terminé"     itemValue="TERMINE"/>
+                        <f:selectItem itemLabel="Annulé"      itemValue="ANNULE"/>
+                    </p:selectOneMenu>
+                    <p:commandButton value="Filtrer" icon="pi pi-filter"
+                        action="#{evenementBean.appliquerFiltres}"
+                        update=":zoneEvts growl"
+                        styleClass="btn btn-secondary"/>
+                    <p:commandButton value="Réinitialiser" icon="pi pi-refresh"
+                        action="#{evenementBean.reinitialiserFiltres}"
+                        update="formFiltres :zoneEvts growl"
+                        styleClass="btn btn-secondary"/>
+                </h:form>
+                <div style="margin-left:auto;display:flex;gap:8px;">
+                    <a href="evenements-calendrier.xhtml" class="btn btn-secondary">
+                        <i class="pi pi-calendar"></i> Vue calendrier
+                    </a>
+                    <p:commandButton value="+ Nouvel événement" icon="pi pi-plus"
+                        action="#{evenementBean.preparerNouvel}"
+                        oncomplete="PF('dlgEvt').show()"
+                        update="formEvt"
+                        styleClass="btn btn-primary"/>
+                </div>
+            </div>
+
+            <!-- TABLE -->
+            <h:panelGroup id="zoneEvts" layout="block">
+            <h:panelGroup layout="block" rendered="#{!evenementBean.filtresAppliques}"
+                 style="padding:48px 24px;text-align:center;color:#64748b;">
+                <i class="pi pi-filter" style="font-size:28px;display:block;margin-bottom:10px;color:#cbd5e1;"/>
+                Choisissez un filtre (ou laissez "Tous") puis cliquez sur <strong>Filtrer</strong> pour afficher les événements.
+            </h:panelGroup>
+
+            <h:form id="formTableEvts" rendered="#{evenementBean.filtresAppliques}">
+                <p:dataTable id="tableEvts" value="#{evenementBean.evenements}" var="e"
+                             rows="15" paginator="true"
+                             paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink}"
+                             emptyMessage="Aucun événement enregistré."
+                             style="border:none;">
+
+                    <p:column headerText="Type" style="padding:12px 16px;width:60px;text-align:center;">
+                        <i class="pi #{evenementBean.getIconeType(e.type)}" style="font-size:18px;color:#6d28d9;"></i>
+                    </p:column>
+
+                    <p:column headerText="Titre / Lieu" style="padding:12px 16px;">
+                        <div style="font-weight:700;font-size:14px;color:#0f172a;">#{e.titre}</div>
+                        <div style="font-size:11px;color:#64748b;margin-top:3px;">
+                            <i class="pi pi-map-marker" style="font-size:10px;"/>
+                            #{e.modalite}#{e.lieu != null and not empty e.lieu ? ' — ' : ''}#{e.lieu}
+                        </div>
+                    </p:column>
+
+                    <p:column headerText="Dates" style="padding:12px 16px;width:220px;">
+                        <div style="font-size:12px;font-weight:600;">
+                            <h:outputText value="#{e.dateDebut}">
+                                <f:convertDateTime pattern="dd/MM/yyyy HH:mm" type="localDateTime"/>
+                            </h:outputText>
+                        </div>
+                        <div style="font-size:11px;color:#94a3b8;">
+                            au
+                            <h:outputText value="#{e.dateFin}">
+                                <f:convertDateTime pattern="dd/MM/yyyy HH:mm" type="localDateTime"/>
+                            </h:outputText>
+                        </div>
+                    </p:column>
+
+                    <p:column headerText="Participants" style="padding:12px 16px;width:130px;text-align:center;">
+                        <span style="font-weight:700;font-size:16px;color:#2563eb;">#{e.nombreParticipants}</span>
+                        <h:panelGroup rendered="#{e.capaciteMax != null and e.capaciteMax gt 0}">
+                            <span style="font-size:11px;color:#94a3b8;"> / #{e.capaciteMax}</span>
+                        </h:panelGroup>
+                        <div style="font-size:10px;color:#15803d;">
+                            #{e.nombreConfirmes} confirmé(s)
+                        </div>
+                    </p:column>
+
+                    <p:column headerText="Statut" style="padding:12px 16px;width:120px;">
+                        <span class="badge #{evenementBean.getBadgeStatut(e.statut)}">#{e.statut}</span>
+                    </p:column>
+
+                    <p:column headerText="Actions" style="padding:8px 12px;width:240px;text-align:right;">
+                        <div style="display:inline-flex;gap:5px;flex-wrap:nowrap;white-space:nowrap;">
+                            <p:commandButton icon="pi pi-users" title="Gérer les participants"
+                                action="#{evenementBean.preparerParticipants(e)}"
+                                oncomplete="PF('dlgParticipants').show()"
+                                update="formParticipants"
+                                style="width:30px;height:30px;padding:0;background:#2563eb;color:#fff;border:none;border-radius:6px;"/>
+                            <p:commandButton icon="pi pi-pencil" title="Modifier"
+                                action="#{evenementBean.preparerEdition(e)}"
+                                oncomplete="PF('dlgEvt').show()"
+                                update="formEvt"
+                                style="width:30px;height:30px;padding:0;background:#6366f1;color:#fff;border:none;border-radius:6px;"/>
+                            <p:commandButton icon="pi pi-check" title="Confirmer"
+                                rendered="#{e.statut == 'PROGRAMME'}"
+                                action="#{evenementBean.confirmer(e.id)}"
+                                update="tableEvts growl"
+                                style="width:30px;height:30px;padding:0;background:#16a34a;color:#fff;border:none;border-radius:6px;"/>
+                            <p:commandButton icon="pi pi-play" title="Démarrer"
+                                rendered="#{e.statut == 'CONFIRME'}"
+                                action="#{evenementBean.demarrer(e.id)}"
+                                update="tableEvts growl"
+                                style="width:30px;height:30px;padding:0;background:#f59e0b;color:#fff;border:none;border-radius:6px;"/>
+                            <p:commandButton icon="pi pi-flag" title="Terminer"
+                                rendered="#{e.statut == 'EN_COURS'}"
+                                action="#{evenementBean.terminer(e.id)}"
+                                update="tableEvts growl"
+                                style="width:30px;height:30px;padding:0;background:#0891b2;color:#fff;border:none;border-radius:6px;"/>
+                            <p:commandButton icon="pi pi-ban" title="Annuler"
+                                rendered="#{e.statut != 'TERMINE' and e.statut != 'ANNULE'}"
+                                action="#{evenementBean.annuler(e.id)}"
+                                update="tableEvts growl"
+                                onclick="return confirm('Annuler cet événement ?')"
+                                style="width:30px;height:30px;padding:0;background:#94a3b8;color:#fff;border:none;border-radius:6px;"/>
+                            <p:commandButton icon="pi pi-trash" title="Supprimer"
+                                action="#{evenementBean.supprimer(e.id)}"
+                                update="tableEvts growl"
+                                onclick="return confirm('Supprimer définitivement cet événement ?')"
+                                style="width:30px;height:30px;padding:0;background:#ef4444;color:#fff;border:none;border-radius:6px;"/>
+                        </div>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+            </h:panelGroup>
+        </div>
+    </ui:define>
+
+    <ui:define name="dialogs">
+        <!-- ═══════════════ DIALOG ÉVÉNEMENT ═══════════════ -->
+        <h:form id="formEvt">
+            <p:dialog header="#{evenementBean.modeEdition ? 'Modifier événement' : 'Nouvel événement'}"
+                      widgetVar="dlgEvt" modal="true" width="760" resizable="false">
+                <div style="padding:22px;max-height:65vh;overflow-y:auto;">
+                    <div class="form-row col-2">
+                        <div class="form-group">
+                            <label class="form-label">Type d'événement *</label>
+                            <p:selectOneMenu value="#{evenementBean.evenement.type}" style="width:100%;">
+                                <f:selectItem itemLabel="Réunion"    itemValue="REUNION"/>
+                                <f:selectItem itemLabel="Formation"  itemValue="FORMATION"/>
+                                <f:selectItem itemLabel="Séminaire"  itemValue="SEMINAIRE"/>
+                                <f:selectItem itemLabel="Atelier"    itemValue="ATELIER"/>
+                                <f:selectItem itemLabel="Conférence" itemValue="CONFERENCE"/>
+                                <f:selectItem itemLabel="Autre"      itemValue="AUTRE"/>
+                                <p:ajax update="blocType champBudget champCapacite champIndemnite" process="@this"/>
+                            </p:selectOneMenu>
+                            <small style="color:#64748b;">
+                                Suivi de présence : #{evenementBean.getSuiviPresenceLabel(evenementBean.evenement.type)} ·
+                                Budget : #{evenementBean.isBudgetRequis(evenementBean.evenement.type) ? 'requis' : 'facultatif'} ·
+                                Indemnité : #{evenementBean.isIndemniteAutorisee(evenementBean.evenement.type) ? 'autorisée' : 'non prévue pour ce type'}
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Modalité</label>
+                            <p:selectOneMenu value="#{evenementBean.evenement.modalite}" style="width:100%;">
+                                <f:selectItem itemLabel="Présentiel" itemValue="PRESENTIEL"/>
+                                <f:selectItem itemLabel="Distanciel" itemValue="DISTANCIEL"/>
+                                <f:selectItem itemLabel="Hybride"    itemValue="HYBRIDE"/>
+                            </p:selectOneMenu>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Titre *</label>
+                        <p:inputText value="#{evenementBean.evenement.titre}" required="true" style="width:100%;"/>
+                    </div>
+
+                    <div class="form-row col-2">
+                        <div class="form-group">
+                            <label class="form-label">Date de début *</label>
+                            <p:datePicker id="dateDebut" value="#{evenementBean.evenement.dateDebut}"
+                                          showTime="true" pattern="dd/MM/yyyy HH:mm"
+                                          mindate="#{evenementBean.modeEdition ? null : evenementBean.dateAujourdHui}"
+                                          required="true" style="width:100%;">
+                                <p:ajax update="dateFin" process="@this" partialSubmit="true" global="false"/>
+                            </p:datePicker>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Date de fin *</label>
+                            <p:datePicker id="dateFin" value="#{evenementBean.evenement.dateFin}"
+                                          showTime="true" pattern="dd/MM/yyyy HH:mm"
+                                          mindate="#{evenementBean.evenement.dateDebut != null ? evenementBean.evenement.dateDebut : (evenementBean.modeEdition ? null : evenementBean.dateAujourdHui)}"
+                                          required="true" style="width:100%;"/>
+                        </div>
+                    </div>
+
+                    <div class="form-row col-2">
+                        <h:panelGroup layout="block" styleClass="form-group" rendered="#{evenementBean.evenement.modalite != 'DISTANCIEL'}">
+                            <label class="form-label">Lieu #{evenementBean.evenement.modalite != 'DISTANCIEL' ? '*' : ''}</label>
+                            <p:inputText value="#{evenementBean.evenement.lieu}"
+                                         placeholder="Ex : Salle de conférence, Hôtel Radisson…"
+                                         style="width:100%;"/>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" styleClass="form-group" rendered="#{evenementBean.evenement.modalite != 'PRESENTIEL'}">
+                            <label class="form-label">URL visio #{evenementBean.evenement.modalite != 'PRESENTIEL' ? '*' : ''}</label>
+                            <p:inputText value="#{evenementBean.evenement.urlVisio}"
+                                         placeholder="https://meet.google.com/..." style="width:100%;"/>
+                        </h:panelGroup>
+                    </div>
+
+                    <!-- ═══ Bloc spécifique par type ═══ -->
+                    <h:panelGroup id="blocType" layout="block">
+                        <h:panelGroup layout="block" style="border-left:3px solid #d4a017;padding-left:14px;margin-top:14px;"
+                             rendered="#{evenementBean.evenement.type == 'REUNION'}">
+                            <h4 style="margin:0 0 10px;font-size:14px;">Réunion</h4>
+                            <div class="form-group">
+                                <label class="form-label">Ordre du jour</label>
+                                <p:inputTextarea value="#{evenementBean.evenement.ordreDuJour}" rows="3" style="width:100%;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Récurrence</label>
+                                <p:selectOneMenu value="#{evenementBean.evenement.recurrence}" style="width:100%;">
+                                    <f:selectItem itemLabel="Aucune"       itemValue="AUCUNE"/>
+                                    <f:selectItem itemLabel="Hebdomadaire" itemValue="HEBDOMADAIRE"/>
+                                    <f:selectItem itemLabel="Mensuelle"    itemValue="MENSUELLE"/>
+                                </p:selectOneMenu>
+                            </div>
+                        </h:panelGroup>
+
+                        <h:panelGroup layout="block" style="border-left:3px solid #d4a017;padding-left:14px;margin-top:14px;"
+                             rendered="#{evenementBean.evenement.type == 'FORMATION'}">
+                            <h4 style="margin:0 0 10px;font-size:14px;">Formation</h4>
+                            <div class="form-group">
+                                <label class="form-label">Formateur ou organisme *</label>
+                                <p:inputText value="#{evenementBean.evenement.formateur}" style="width:100%;"/>
+                            </div>
+                            <div style="margin-top:8px;">
+                                <p:selectBooleanCheckbox value="#{evenementBean.evenement.attestationDelivree}"
+                                    itemLabel="Une attestation est délivrée"/>
+                            </div>
+                        </h:panelGroup>
+
+                        <h:panelGroup layout="block" style="border-left:3px solid #d4a017;padding-left:14px;margin-top:14px;"
+                             rendered="#{evenementBean.evenement.type == 'SEMINAIRE'}">
+                            <h4 style="margin:0 0 10px;font-size:14px;">Séminaire</h4>
+                            <div class="form-group">
+                                <label class="form-label">Programme par session</label>
+                                <p:inputTextarea value="#{evenementBean.evenement.programmeSessions}" rows="3"
+                                    placeholder="9h00 : ouverture&#10;10h30 : atelier A…" style="width:100%;"/>
+                            </div>
+                            <div style="margin-top:8px;">
+                                <p:selectBooleanCheckbox value="#{evenementBean.evenement.restaurationPrevue}"
+                                    itemLabel="Restauration prévue"/>
+                            </div>
+                            <div style="margin-top:8px;">
+                                <p:selectBooleanCheckbox value="#{evenementBean.evenement.hebergementPrevu}"
+                                    itemLabel="Hébergement prévu">
+                                    <p:ajax update="champNuits" process="@this"/>
+                                </p:selectBooleanCheckbox>
+                            </div>
+                            <h:panelGroup id="champNuits" layout="block" styleClass="form-group"
+                                 rendered="#{evenementBean.evenement.hebergementPrevu}" style="margin-top:8px;">
+                                <label class="form-label">Nombre de nuits</label>
+                                <p:inputNumber value="#{evenementBean.evenement.nombreNuits}" decimalPlaces="0" minValue="1" style="width:160px;"/>
+                            </h:panelGroup>
+                        </h:panelGroup>
+
+                        <h:panelGroup layout="block" style="border-left:3px solid #d4a017;padding-left:14px;margin-top:14px;"
+                             rendered="#{evenementBean.evenement.type == 'ATELIER'}">
+                            <h4 style="margin:0 0 10px;font-size:14px;">Atelier</h4>
+                            <div class="form-group">
+                                <label class="form-label">Prérequis et matériel</label>
+                                <p:inputTextarea value="#{evenementBean.evenement.prerequisMateriel}" rows="3"
+                                    placeholder="Ordinateur portable, Excel installé…" style="width:100%;"/>
+                            </div>
+                        </h:panelGroup>
+
+                        <h:panelGroup layout="block" style="border-left:3px solid #d4a017;padding-left:14px;margin-top:14px;"
+                             rendered="#{evenementBean.evenement.type == 'CONFERENCE'}">
+                            <h4 style="margin:0 0 10px;font-size:14px;">Conférence</h4>
+                            <div class="form-group">
+                                <label class="form-label">Intervenant *</label>
+                                <p:inputText value="#{evenementBean.evenement.intervenant}" style="width:100%;"/>
+                            </div>
+                            <div style="margin-top:8px;">
+                                <p:selectBooleanCheckbox value="#{evenementBean.evenement.ouvertExterne}"
+                                    itemLabel="Ouverte à des invités externes"/>
+                            </div>
+                        </h:panelGroup>
+                    </h:panelGroup>
+
+                    <div class="form-row col-3" style="margin-top:14px;">
+                        <h:panelGroup id="champBudget" layout="block" styleClass="form-group">
+                            <label class="form-label">Budget #{evenementBean.isBudgetRequis(evenementBean.evenement.type) ? '*' : ''}</label>
+                            <p:inputNumber value="#{evenementBean.evenement.budget}"
+                                           decimalPlaces="0" thousandSeparator=" " symbol=""
+                                           style="width:100%;"/>
+                        </h:panelGroup>
+                        <div class="form-group">
+                            <label class="form-label">Devise</label>
+                            <p:selectOneMenu value="#{evenementBean.evenement.devise}" style="width:100%;">
+                                <f:selectItem itemLabel="FCFA" itemValue="FCFA"/>
+                                <f:selectItem itemLabel="EUR"  itemValue="EUR"/>
+                                <f:selectItem itemLabel="USD"  itemValue="USD"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <h:panelGroup id="champCapacite" layout="block" styleClass="form-group">
+                            <label class="form-label">Capacité max #{evenementBean.isCapaciteRequise(evenementBean.evenement.type) ? '*' : ''}</label>
+                            <p:inputNumber value="#{evenementBean.evenement.capaciteMax}"
+                                           decimalPlaces="0" minValue="0" maxValue="9999"
+                                           style="width:100%;"/>
+                        </h:panelGroup>
+                    </div>
+
+                    <h:panelGroup id="champIndemnite" layout="block">
+                        <h:panelGroup layout="block" styleClass="form-group" rendered="#{evenementBean.isIndemniteAutorisee(evenementBean.evenement.type)}">
+                            <label class="form-label">Indemnité par participant présent (FCFA)</label>
+                            <p:inputNumber value="#{evenementBean.evenement.indemniteParticipant}"
+                                           decimalPlaces="0" thousandSeparator=" " symbol=" FCFA"
+                                           style="width:100%;display:block;"/>
+                            <small style="color:#64748b;display:block;width:100%;margin-top:6px;">Laisser vide si l'événement n'est pas rémunéré. Ajoutée au bulletin du mois après validation des présences (verrouillée une fois validée).</small>
+                        </h:panelGroup>
+                    </h:panelGroup>
+
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <p:inputTextarea value="#{evenementBean.evenement.description}" rows="4" style="width:100%;"/>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:10px;padding:14px 22px;border-top:1px solid #e2e8f0;">
+                    <p:commandButton value="Annuler" type="button"
+                        onclick="PF('dlgEvt').hide()" styleClass="btn btn-secondary"/>
+                    <p:commandButton value="Enregistrer" icon="pi pi-check"
+                        action="#{evenementBean.sauvegarder}"
+                        update="formEvt :zoneEvts growl"
+                        oncomplete="if(!args.validationFailed) PF('dlgEvt').hide()"
+                        styleClass="btn btn-primary"/>
+                </div>
+            </p:dialog>
+        </h:form>
+
+        <!-- ═══════════════ DIALOG PARTICIPANTS ═══════════════ -->
+        <h:form id="formParticipants" enctype="multipart/form-data">
+            <p:dialog header="Participants — #{evenementBean.evenementSelectionne.titre}"
+                      widgetVar="dlgParticipants" modal="true" width="780" height="600"
+                      resizable="false">
+                <h:panelGroup rendered="#{evenementBean.evenementSelectionne != null}">
+                    <div style="padding:22px;">
+
+                        <!-- Inviter -->
+                        <div style="background:#f8fafc;border-radius:8px;padding:14px;margin-bottom:18px;
+                                    display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                            <div style="flex:1;min-width:280px;">
+                                <label style="font-size:11px;font-weight:700;color:#64748b;
+                                              text-transform:uppercase;display:block;margin-bottom:4px;">
+                                    Inviter un ou plusieurs employés
+                                </label>
+                                <p:selectCheckboxMenu value="#{evenementBean.employesAInviter}"
+                                                 filter="true" filterMatchMode="contains"
+                                                 label="— Choisir un ou plusieurs employés —"
+                                                 multiple="true" panelStyle="max-height:260px;overflow-y:auto;"
+                                                 style="width:100%;">
+                                    <f:selectItems value="#{evenementBean.employesDisponiblesPourInvitation}" var="emp"
+                                                   itemValue="#{emp.id}"
+                                                   itemLabel="#{emp.matricule} — #{emp.nomComplet}"/>
+                                </p:selectCheckboxMenu>
+                            </div>
+                            <p:commandButton value="Inviter" icon="pi pi-user-plus"
+                                action="#{evenementBean.inviterEmploye}"
+                                update="formParticipants growl"
+                                styleClass="btn btn-primary"/>
+                            <p:commandButton value="Inviter toute l'institution"
+                                icon="pi pi-users"
+                                action="#{evenementBean.inviterTousEmployes}"
+                                update="formParticipants growl"
+                                onclick="return confirm('Inviter tous les employés actifs ?')"
+                                styleClass="btn btn-secondary"/>
+                        </div>
+
+                        <div style="background:#f8fafc;border-radius:8px;padding:14px;margin-bottom:18px;
+                                    display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                            <div style="flex:1;min-width:220px;">
+                                <label style="font-size:11px;font-weight:700;color:#64748b;
+                                              text-transform:uppercase;display:block;margin-bottom:4px;">
+                                    Inviter tout un service
+                                </label>
+                                <p:selectOneMenu value="#{evenementBean.serviceAInviter}" style="width:100%;">
+                                    <f:selectItem itemLabel="— Choisir un service —" itemValue="#{null}"/>
+                                    <f:selectItems value="#{evenementBean.servicesInstitution}"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <p:commandButton value="Inviter le service" icon="pi pi-sitemap"
+                                action="#{evenementBean.inviterService}"
+                                update="formParticipants growl"
+                                styleClass="btn btn-secondary"/>
+                        </div>
+
+                        <div style="background:#f8fafc;border-radius:8px;padding:14px;margin-bottom:18px;">
+                            <label style="font-size:11px;font-weight:700;color:#64748b;
+                                          text-transform:uppercase;display:block;margin-bottom:6px;">
+                                Importer une liste (fichier .csv ou .txt, un matricule ou un email par ligne)
+                            </label>
+                            <p:fileUpload fileUploadListener="#{evenementBean.handleImportParticipants}"
+                                mode="advanced" auto="true" dragDropSupport="false"
+                                allowTypes="/(\.|\/)(csv|txt)$/" sizeLimit="2000000"
+                                label="Choisir un fichier" uploadLabel="Importer" cancelLabel="Annuler"
+                                invalidFileMessage="Seuls les fichiers .csv ou .txt sont acceptés."
+                                update="formParticipants growl" style="width:100%;"/>
+                        </div>
+
+                        <!-- Liste des participants -->
+                        <p:dataTable value="#{evenementBean.participationsSelection}" var="p"
+                                     rows="10" paginator="true"
+                                     emptyMessage="Aucun participant invité."
+                                     style="border:none;">
+                            <p:column headerText="Employé" style="padding:10px 14px;">
+                                <div style="font-weight:600;font-size:13px;">#{p.employe.nomComplet}</div>
+                                <div style="font-size:11px;color:#64748b;">#{p.employe.matricule} — #{p.employe.email}</div>
+                                <h:panelGroup rendered="#{evenementBean.aConflitConge(p.employe.id)}" layout="block" style="margin-top:3px;">
+                                    <span class="badge badge-danger" style="font-size:10px;">
+                                        <i class="pi pi-exclamation-triangle"/> En congé à ces dates
+                                    </span>
+                                </h:panelGroup>
+                            </p:column>
+                            <p:column headerText="Statut" style="padding:10px 14px;width:130px;">
+                                <span class="badge badge-#{p.statut == 'CONFIRME' ? 'success' :
+                                      (p.statut == 'ABSENT' or p.statut == 'DESISTE' ? 'danger' :
+                                      (p.statut == 'PRESENT' ? 'primary' :
+                                      (p.statut == 'LISTE_ATTENTE' ? 'warning' : 'info')))}">
+                                    #{p.statut == 'LISTE_ATTENTE' ? 'Liste d\'attente' :
+                                      (p.statut == 'DESISTE' ? 'Désisté(e)' :
+                                      (p.statut == 'CONFIRME' ? 'Convoqué(e)' : p.statut))}
+                                </span>
+                            </p:column>
+                            <p:column headerText="Convoqué le" style="padding:10px 14px;width:140px;">
+                                <h:outputText value="#{p.dateReponse}" rendered="#{p.dateReponse != null}">
+                                    <f:convertDateTime pattern="dd/MM HH:mm" type="localDateTime"/>
+                                </h:outputText>
+                                <h:panelGroup rendered="#{p.dateReponse == null}">
+                                    <span style="color:#94a3b8;font-size:11px;">
+                                        En attente
+                                    </span>
+                                </h:panelGroup>
+                            </p:column>
+                            <p:column headerText="Email" style="padding:10px 14px;width:80px;text-align:center;">
+                                <h:panelGroup rendered="#{p.emailEnvoye}">
+                                    <i class="pi pi-check-circle" style="color:#15803d;"/>
+                                </h:panelGroup>
+                                <h:panelGroup rendered="#{!p.emailEnvoye}">
+                                    <i class="pi pi-times-circle" style="color:#dc2626;"/>
+                                </h:panelGroup>
+                            </p:column>
+                            <p:column headerText="Actions" style="padding:10px 14px;width:140px;text-align:right;">
+                                <p:commandButton icon="pi pi-check" title="Marquer présent"
+                                    rendered="#{p.statut == 'CONFIRME' and !evenementBean.evenementSelectionne.presenceValidee}"
+                                    action="#{evenementBean.marquerPresent(p.id)}"
+                                    update="formParticipants growl"
+                                    style="width:28px;height:28px;padding:0;background:#16a34a;color:#fff;border:none;border-radius:6px;margin-right:4px;"/>
+                                <p:commandButton icon="pi pi-times" title="Marquer absent"
+                                    rendered="#{p.statut == 'CONFIRME' and !evenementBean.evenementSelectionne.presenceValidee}"
+                                    action="#{evenementBean.marquerAbsent(p.id)}"
+                                    update="formParticipants growl"
+                                    style="width:28px;height:28px;padding:0;background:#f59e0b;color:#fff;border:none;border-radius:6px;margin-right:4px;"/>
+                                <h:panelGroup rendered="#{(p.statut == 'PRESENT' or p.statut == 'ABSENT') and !evenementBean.evenementSelectionne.presenceValidee}">
+                                    <p:commandButton icon="pi pi-check" title="Marquer présent"
+                                        rendered="#{p.statut != 'PRESENT'}"
+                                        action="#{evenementBean.marquerPresent(p.id)}"
+                                        update="formParticipants growl"
+                                        style="width:28px;height:28px;padding:0;background:#16a34a;color:#fff;border:none;border-radius:6px;margin-right:4px;"/>
+                                    <p:commandButton icon="pi pi-times" title="Marquer absent"
+                                        rendered="#{p.statut != 'ABSENT'}"
+                                        action="#{evenementBean.marquerAbsent(p.id)}"
+                                        update="formParticipants growl"
+                                        style="width:28px;height:28px;padding:0;background:#f59e0b;color:#fff;border:none;border-radius:6px;margin-right:4px;"/>
+                                </h:panelGroup>
+                                <p:commandButton icon="pi pi-trash" title="Retirer"
+                                    rendered="#{!evenementBean.evenementSelectionne.presenceValidee}"
+                                    action="#{evenementBean.retirerParticipant(p.id)}"
+                                    update="formParticipants growl"
+                                    onclick="return confirm('Retirer cet employé ?')"
+                                    style="width:28px;height:28px;padding:0;background:#ef4444;color:#fff;border:none;border-radius:6px;"/>
+                            </p:column>
+                        </p:dataTable>
+
+                        <!-- Validation des présences (RG-09) -->
+                        <h:panelGroup layout="block" rendered="#{evenementBean.evenementSelectionne.presenceValidee}"
+                             style="margin-top:14px;padding:10px 14px;background:#e1f5ec;color:#1f9d63;border-radius:8px;font-size:13px;">
+                            <i class="pi pi-lock"/> Présences validées par #{evenementBean.evenementSelectionne.presenceValideePar} le
+                            <h:outputText value="#{evenementBean.evenementSelectionne.datePresenceValidee}">
+                                <f:convertDateTime pattern="dd/MM/yyyy HH:mm" type="localDateTime"/>
+                            </h:outputText> — verrouillé, les indemnités seront incluses au prochain calcul de paie.
+                        </h:panelGroup>
+
+                        <div style="text-align:right;margin-top:14px;">
+                            <p:commandButton value="Valider les présences" icon="pi pi-lock"
+                                rendered="#{!evenementBean.evenementSelectionne.presenceValidee}"
+                                action="#{evenementBean.validerPresences}"
+                                update="formParticipants :zoneEvts growl"
+                                onclick="return confirm('Valider les présences ? Cette opération est définitive : plus aucun marquage ne sera possible ensuite.')"
+                                styleClass="btn btn-primary" style="margin-right:8px;"/>
+                            <p:commandButton value="Fermer" type="button"
+                                onclick="PF('dlgParticipants').hide()"
+                                styleClass="btn btn-secondary"/>
+                        </div>
+                    </div>
+                </h:panelGroup>
+            </p:dialog>
+        </h:form>
+    </ui:define>
+
+</ui:composition>

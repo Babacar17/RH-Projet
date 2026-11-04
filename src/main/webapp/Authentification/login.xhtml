@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:p="http://primefaces.org/ui">
+
+<h:head>
+    <title>Connexion &#8211; Minist&#232;re des Finances et du Budget</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&amp;family=DM+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --navy:   #0a1628;
+            --navy2:  #1a3a5c;
+            --gold:   #b58a3a;
+            --gold-l: #f0c97a;
+            --white:  #ffffff;
+            --gray:   #f4f4f6;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            background: var(--navy);
+            overflow: hidden;
+        }
+
+        /* ── LEFT PANEL ── */
+        .left-panel {
+            width: 55%;
+            position: relative;
+            background: linear-gradient(145deg, var(--navy) 0%, var(--navy2) 55%, #1e4a72 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 48px 56px;
+            overflow: hidden;
+        }
+
+        /* geometric decoration */
+        .left-panel::before {
+            content: "";
+            position: absolute;
+            width: 560px; height: 560px;
+            border-radius: 50%;
+            border: 1px solid rgba(181,138,58,.15);
+            top: -160px; left: -160px;
+        }
+        .left-panel::after {
+            content: "";
+            position: absolute;
+            width: 320px; height: 320px;
+            border-radius: 50%;
+            border: 1px solid rgba(181,138,58,.1);
+            bottom: -80px; right: -80px;
+        }
+        .geo-ring {
+            position: absolute;
+            width: 220px; height: 220px;
+            border-radius: 50%;
+            border: 60px solid rgba(181,138,58,.06);
+            bottom: 160px; left: 60px;
+        }
+
+        /* logo top */
+        .brand { position: relative; z-index: 2; display: flex; align-items: center; gap: 16px; }
+        .brand-icon {
+            width: 50px; height: 50px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-l));
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; color: var(--navy);
+        }
+        .brand-text h1 { font-family: 'Playfair Display', serif; font-size: 14px; color: var(--white); line-height: 1.2; font-weight: 700; }
+        .brand-text span { font-size: 11px; color: rgba(255,255,255,.5); }
+
+        /* hero text */
+        .hero-text { position: relative; z-index: 2; }
+        .hero-text .eyebrow {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(181,138,58,.15);
+            border: 1px solid rgba(181,138,58,.3);
+            color: var(--gold-l); font-size: 11px; font-weight: 700;
+            letter-spacing: 2px; text-transform: uppercase;
+            padding: 6px 14px; border-radius: 20px; margin-bottom: 24px;
+        }
+        .hero-text h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 42px; font-weight: 700;
+            color: var(--white); line-height: 1.18;
+            margin-bottom: 20px;
+        }
+        .hero-text h2 em { color: var(--gold-l); font-style: normal; }
+        .hero-text p { font-size: 15px; color: rgba(255,255,255,.65); max-width: 400px; line-height: 1.7; }
+
+        /* stats row */
+        .stats-row { position: relative; z-index: 2; display: flex; gap: 40px; }
+        .stat { }
+        .stat .val { font-family: 'Playfair Display', serif; font-size: 26px; color: var(--gold-l); font-weight: 700; }
+        .stat .lbl { font-size: 11px; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+        /* ── RIGHT PANEL ── */
+        .right-panel {
+            flex: 1;
+            background: #f7f7f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 32px;
+            position: relative;
+        }
+
+        .login-card {
+            width: 100%; max-width: 420px;
+            animation: slideUp .5s ease both;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-header { margin-bottom: 36px; }
+        .card-header .welcome { font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+        .card-header h3 { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; color: var(--navy); line-height: 1.2; margin-bottom: 8px; }
+        .card-header p { font-size: 14px; color: #888; }
+
+        /* form fields */
+        .field { margin-bottom: 20px; }
+        .field-label {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 13px; font-weight: 600; color: #444;
+            margin-bottom: 8px;
+        }
+        .field-label i { color: var(--gold); font-size: 12px; }
+
+        .input-wrap { position: relative; }
+        .input-wrap i.input-icon {
+            position: absolute; left: 14px; top: 50%;
+            transform: translateY(-50%);
+            color: #bbb; font-size: 14px;
+            transition: color .2s;
+        }
+
+        /* Override PrimeFaces input styles */
+        .input-wrap .ui-inputfield,
+        .input-wrap .ui-password input {
+            width: 100% !important;
+            padding: 13px 16px 13px 42px !important;
+            border: 1.5px solid #e0e0e0 !important;
+            border-radius: 10px !important;
+            font-size: 14px !important;
+            font-family: 'DM Sans', sans-serif !important;
+            color: #222 !important;
+            background: #fff !important;
+            transition: border-color .2s, box-shadow .2s !important;
+            outline: none !important;
+        }
+        .input-wrap .ui-inputfield:focus,
+        .input-wrap .ui-password input:focus {
+            border-color: var(--gold) !important;
+            box-shadow: 0 0 0 3px rgba(181,138,58,.12) !important;
+        }
+        .input-wrap .ui-inputfield::placeholder,
+        .input-wrap .ui-password input::placeholder { color: #bbb !important; }
+
+        /* submit button */
+        .submit-wrap { margin-top: 8px; }
+        .submit-wrap .ui-button {
+            width: 100% !important;
+            padding: 14px !important;
+            background: linear-gradient(135deg, var(--navy2), var(--navy)) !important;
+            border: none !important;
+            border-radius: 10px !important;
+            font-size: 14px !important;
+            font-weight: 700 !important;
+            font-family: 'DM Sans', sans-serif !important;
+            color: #fff !important;
+            cursor: pointer !important;
+            transition: all .3s !important;
+            letter-spacing: .5px !important;
+        }
+        .submit-wrap .ui-button:hover {
+            background: linear-gradient(135deg, var(--gold), #9a7430) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 20px rgba(181,138,58,.35) !important;
+        }
+
+        /* forgot password */
+        .forgot-row {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+        .forgot-link {
+            font-size: 12px; font-weight: 600;
+            color: #999; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 5px;
+            transition: color .2s;
+        }
+        .forgot-link:hover { color: var(--gold); }
+
+        /* modal overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(10,22,40,.65);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: #fff;
+            border-radius: 16px;
+            padding: 40px 36px;
+            width: 100%; max-width: 420px;
+            box-shadow: 0 24px 60px rgba(0,0,0,.25);
+            position: relative;
+            animation: popIn .3s ease both;
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(.94) translateY(10px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-close {
+            position: absolute; top: 16px; right: 18px;
+            background: none; border: none; font-size: 20px;
+            color: #bbb; cursor: pointer; line-height: 1;
+            transition: color .2s;
+        }
+        .modal-close:hover { color: var(--navy); }
+        .modal-icon {
+            width: 56px; height: 56px; border-radius: 14px;
+            background: linear-gradient(135deg, rgba(181,138,58,.15), rgba(181,138,58,.05));
+            border: 1.5px solid rgba(181,138,58,.25);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; color: var(--gold);
+            margin-bottom: 20px;
+        }
+        .modal-box h4 {
+            font-family: 'Playfair Display', serif;
+            font-size: 22px; color: var(--navy); font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .modal-box p { font-size: 13px; color: #888; margin-bottom: 24px; line-height: 1.6; }
+        .modal-field { margin-bottom: 18px; }
+        .modal-field label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 7px; }
+        .modal-input-wrap { position: relative; }
+        .modal-input-wrap i {
+            position: absolute; left: 13px; top: 50%;
+            transform: translateY(-50%); color: #ccc; font-size: 13px;
+        }
+        .modal-input {
+            width: 100%; padding: 12px 14px 12px 38px;
+            border: 1.5px solid #e2e2e6; border-radius: 10px;
+            font-size: 14px; font-family: 'DM Sans', sans-serif;
+            color: #222; outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .modal-input:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(181,138,58,.12);
+        }
+        .modal-submit {
+            width: 100%; padding: 13px;
+            background: linear-gradient(135deg, var(--navy2), var(--navy));
+            border: none; border-radius: 10px;
+            font-size: 14px; font-weight: 700;
+            font-family: 'DM Sans', sans-serif;
+            color: #fff; cursor: pointer;
+            transition: all .3s; letter-spacing: .4px;
+        }
+        .modal-submit:hover {
+            background: linear-gradient(135deg, var(--gold), #9a7430);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(181,138,58,.3);
+        }
+        .modal-cancel {
+            width: 100%; padding: 11px;
+            background: none; border: 1.5px solid #e0e0e0;
+            border-radius: 10px; font-size: 13px; font-weight: 600;
+            color: #888; cursor: pointer; margin-top: 10px;
+            font-family: 'DM Sans', sans-serif;
+            transition: all .2s;
+        }
+        .modal-cancel:hover { border-color: #ccc; color: #555; }
+
+        /* success state inside modal */
+        .modal-success { text-align: center; }
+        .modal-success .success-icon {
+            width: 60px; height: 60px; border-radius: 50%;
+            background: linear-gradient(135deg, #2e7d32, #43a047);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 18px;
+            font-size: 26px; color: #fff;
+        }
+        .modal-success h4 { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--navy); margin-bottom: 8px; }
+        .modal-success p { font-size: 13px; color: #888; margin-bottom: 22px; }
+
+        /* divider */
+        .divider { display: flex; align-items: center; gap: 14px; margin: 24px 0; }
+        .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: #e8e8e8; }
+        .divider span { font-size: 12px; color: #bbb; white-space: nowrap; }
+
+        /* footer links */
+        .card-footer { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+        .card-footer a {
+            font-size: 13px; font-weight: 600;
+            color: var(--navy2);
+            text-decoration: none;
+            transition: color .2s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .card-footer a:hover { color: var(--gold); }
+        .card-footer .register-btn {
+            width: 100%;
+            padding: 13px;
+            border: 1.5px solid var(--navy2);
+            border-radius: 10px;
+            text-align: center;
+            justify-content: center;
+            transition: all .3s;
+        }
+        .card-footer .register-btn:hover {
+            background: var(--navy2);
+            color: #fff;
+        }
+
+        /* growl override */
+        .ui-growl { top: 20px !important; right: 20px !important; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 900px) {
+            body { flex-direction: column; overflow: auto; }
+            .left-panel { width: 100%; padding: 32px 24px 40px; min-height: 280px; }
+            .hero-text h2 { font-size: 28px; }
+            .stats-row { display: none; }
+            .right-panel { padding: 32px 20px 40px; }
+        }
+        @media (max-width: 480px) {
+            .left-panel { padding: 24px 16px 32px; }
+            .hero-text h2 { font-size: 22px; }
+            .right-panel { padding: 24px 16px; }
+            .login-card { max-width: 100%; }
+        }
+    </style>
+</h:head>
+
+<h:body>
+
+<!-- ========== LEFT PANEL ========== -->
+<div class="left-panel">
+    <div class="geo-ring"></div>
+
+    <div class="brand">
+        <div class="brand-icon">
+            <h:graphicImage url="#{loginBean.logoInstitutionPortail}"
+                            rendered="#{loginBean.logoInstitutionPortail != null}"
+                            style="width:100%;height:100%;object-fit:contain;border-radius:8px;"
+                            alt="Logo"/>
+            <i class="fas fa-landmark"
+               style="display:#{loginBean.logoInstitutionPortail == null ? 'inline' : 'none'};"/>
+        </div>
+        <div class="brand-text">
+            <h:panelGroup rendered="#{loginBean.institutionPortail != null}">
+                <h1 style="text-transform:uppercase;">#{loginBean.nomInstitutionPortail}</h1>
+                <span>R&#233;publique du S&#233;n&#233;gal</span>
+            </h:panelGroup>
+            <h:panelGroup rendered="#{loginBean.institutionPortail == null}">
+                <h1>SIRH &#8212; PLATEFORME RH</h1>
+                <span>R&#233;publique du S&#233;n&#233;gal</span>
+            </h:panelGroup>
+        </div>
+    </div>
+
+    <div class="hero-text">
+        <div class="eyebrow">
+            <i class="fas fa-shield-alt"></i>
+            Espace s&#233;curis&#233;
+        </div>
+        <h:panelGroup rendered="#{loginBean.institutionPortail != null}">
+            <h2>Bienvenue sur la<br/>plateforme <em>officielle</em><br/>du #{loginBean.codeInstitutionPortail}</h2>
+            <p>Acc&#233;dez &#224; l&#8217;ensemble des services num&#233;riques de
+               <strong>#{loginBean.nomInstitutionPortail}</strong> &#8212;
+               gestion RH, cong&#233;s, candidatures, paie et bien plus.</p>
+        </h:panelGroup>
+        <h:panelGroup rendered="#{loginBean.institutionPortail == null}">
+            <h2>Bienvenue sur la<br/>plateforme <em>SIRH</em><br/>gouvernementale</h2>
+            <p>Acc&#233;dez &#224; l&#8217;ensemble des services num&#233;riques RH &#8212;
+               gestion des employ&#233;s, cong&#233;s, candidatures, paie et bien plus.</p>
+        </h:panelGroup>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat"><div class="val">6 800</div><div class="lbl">Mds FCFA budget</div></div>
+        <div class="stat"><div class="val">38</div><div class="lbl">Directions</div></div>
+        <div class="stat"><div class="val">4.3%</div><div class="lbl">Croissance PIB</div></div>
+    </div>
+</div>
+
+<!-- ========== RIGHT PANEL ========== -->
+<div class="right-panel">
+    <div class="login-card">
+
+        <!-- ═══ Branding institution (si arrivé via URL portail) ═══ -->
+        <h:panelGroup rendered="#{loginBean.institutionPortail != null}">
+            <div style="text-align:center;padding-bottom:18px;margin-bottom:18px;
+                        border-bottom:1px solid #eee;">
+                <h:graphicImage url="#{loginBean.logoInstitutionPortail}"
+                                rendered="#{loginBean.logoInstitutionPortail != null}"
+                                style="max-height:64px;margin-bottom:10px;"
+                                alt="Logo"/>
+                <div style="font-size:11px;color:#888;text-transform:uppercase;
+                            letter-spacing:1px;margin-bottom:4px;">
+                    Portail
+                </div>
+                <div style="font-size:17px;font-weight:700;color:#1F4E79;">
+                    #{loginBean.nomInstitutionPortail}
+                </div>
+                <span style="display:inline-block;margin-top:6px;background:#fef3c7;
+                             color:#92400e;padding:3px 12px;border-radius:12px;
+                             font-size:11px;font-weight:700;letter-spacing:.5px;">
+                    #{loginBean.codeInstitutionPortail}
+                </span>
+            </div>
+        </h:panelGroup>
+
+        <div class="card-header">
+            <div class="welcome">Authentification</div>
+            <h3>Connexion &#224; votre<br/>espace personnel</h3>
+            <p>Entrez vos identifiants pour acc&#233;der &#224; la plateforme</p>
+        </div>
+
+        <p:growl id="messages" showDetail="true"/>
+
+        <h:form id="loginForm" rendered="#{not loginBean.attendCode2fa}">
+
+            <div class="field">
+                <div class="field-label"><i class="fas fa-user"></i> Nom d&#8217;utilisateur</div>
+                <div class="input-wrap">
+                    <i class="fas fa-user input-icon"></i>
+                    <p:inputText id="username"
+                                 value="#{loginBean.username}"
+                                 placeholder="Votre nom d&#39;utilisateur"
+                                 style="width:100%"
+                                 required="true"
+                                 requiredMessage="Ce champ est requis"/>
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="field-label"><i class="fas fa-lock"></i> Mot de passe</div>
+                <div class="input-wrap">
+                    <i class="fas fa-lock input-icon"></i>
+                    <p:password id="password"
+                                value="#{loginBean.password}"
+                                placeholder="Votre mot de passe"
+                                style="width:100%"
+                                required="true"
+                                requiredMessage="Ce champ est requis"
+                                feedback="false"/>
+                </div>
+            </div>
+
+            <div class="forgot-row">
+                <a href="#" class="forgot-link" onclick="openForgot(); return false;">
+                    <i class="fas fa-key"></i> Mot de passe oubli&#233; ?
+                </a>
+            </div>
+
+            <div class="submit-wrap">
+                <p:commandButton value="Se connecter"
+                                 action="#{loginBean.login}"
+                                 ajax="false"
+                                 style="width:100%; margin-top:6px;"/>
+            </div>
+
+        </h:form>
+
+        <!-- ═══════════ ÉTAPE 2 : Code 2FA ═══════════ -->
+        <h:form id="loginForm2fa" rendered="#{loginBean.attendCode2fa}">
+            <div style="text-align:center;padding:6px 0 14px;">
+                <i class="fas fa-mobile-alt" style="font-size:32px;color:#6d28d9;"></i>
+                <h3 style="margin-top:8px;font-size:16px;">V&#233;rification en deux &#233;tapes</h3>
+                <p style="color:#64748b;font-size:13px;margin:6px 0 0;">
+                    Saisissez le code &#224; 6 chiffres affich&#233; par votre application
+                    (Google Authenticator, Microsoft Authenticator, Authy&#8230;).
+                </p>
+            </div>
+
+            <div class="field">
+                <div class="field-label"><i class="fas fa-key"></i> Code &#224; 6 chiffres</div>
+                <div class="input-wrap">
+                    <i class="fas fa-shield-alt input-icon"></i>
+                    <p:inputText id="code2fa"
+                                 value="#{loginBean.code2fa}"
+                                 placeholder="123 456"
+                                 maxlength="6"
+                                 style="width:100%;letter-spacing:8px;text-align:center;font-size:18px;font-family:monospace;"
+                                 required="true"
+                                 requiredMessage="Code requis"/>
+                </div>
+            </div>
+
+            <div class="submit-wrap" style="display:flex;gap:8px;">
+                <p:commandButton value="Annuler" type="button"
+                                 action="#{loginBean.annulerCode2fa}"
+                                 ajax="false"
+                                 styleClass="ui-button-secondary"
+                                 style="flex:1;"/>
+                <p:commandButton value="Valider"
+                                 action="#{loginBean.validerCode2fa}"
+                                 ajax="false"
+                                 style="flex:2;"/>
+            </div>
+        </h:form>
+
+        <div class="divider"><span>ou</span></div>
+
+        <div class="card-footer">
+            <!-- Lien d'inscription contextualisé : si on est sur un portail
+                 institution, on passe le code dans l'URL pour que la page
+                 d'inscription pré-remplisse l'institution. -->
+            <a href="#{request.contextPath}#{loginBean.institutionPortail != null
+                       ? '/'.concat(loginBean.codeInstitutionPortail).concat('/inscription')
+                       : '/Authentification/inscription.xhtml'}"
+               class="register-btn">
+                <i class="fas fa-user-plus"></i> Cr&#233;er un compte
+                <span style="font-size:11px;opacity:.7;margin-left:6px;"
+                      rendered="#{loginBean.institutionPortail != null}">
+                    (#{loginBean.codeInstitutionPortail})
+                </span>
+            </a>
+            <a href="#{request.contextPath}/Principal/index.xhtml">
+                <i class="fas fa-arrow-left"></i> Retour &#224; l&#8217;accueil
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<!-- ========== MODAL MOT DE PASSE OUBLI&#201; ========== -->
+<div class="modal-overlay" id="forgotModal">
+    <div class="modal-box" id="forgotBox">
+        <button class="modal-close" onclick="closeForgot()" aria-label="Fermer">&#10005;</button>
+
+        <!-- Step 1 : saisie email (branché sur ResetPasswordBean) -->
+        <div id="step1">
+            <div class="modal-icon"><i class="fas fa-key"></i></div>
+            <h4>Mot de passe oubli&#233; ?</h4>
+            <p>Saisissez votre adresse email. Nous vous enverrons un lien pour r&#233;initialiser votre mot de passe.</p>
+            <h:form id="formForgot">
+                <div class="modal-field">
+                    <label><i class="fas fa-envelope" style="color:var(--gold);margin-right:5px;"></i> Adresse email</label>
+                    <div class="modal-input-wrap">
+                        <i class="fas fa-envelope"></i>
+                        <p:inputText id="resetEmail" value="#{resetPasswordBean.email}"
+                                     styleClass="modal-input" placeholder="votre@email.sn"/>
+                    </div>
+                </div>
+                <p:commandButton value="Envoyer le lien de r&#233;initialisation"
+                                 action="#{resetPasswordBean.demanderReset}"
+                                 styleClass="modal-submit"
+                                 ajax="false"
+                                 icon="fas fa-paper-plane"/>
+            </h:form>
+            <button class="modal-cancel" onclick="closeForgot()">Annuler</button>
+        </div>
+
+        <!-- Step 2 : confirmation -->
+        <div id="step2" style="display:none;" class="modal-success">
+            <div class="success-icon"><i class="fas fa-check"></i></div>
+            <h4>Email envoy&#233; !</h4>
+            <p>Un lien de r&#233;initialisation a &#233;t&#233; envoy&#233; &#224; <strong id="sentTo"></strong>.<br/>V&#233;rifiez votre bo&#238;te de r&#233;ception.</p>
+            <button class="modal-submit" onclick="closeForgot()">
+                <i class="fas fa-arrow-left"></i> &#160;Retour &#224; la connexion
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function openForgot() {
+    document.getElementById('forgotModal').classList.add('open');
+    document.getElementById('resetEmail').value = '';
+    document.getElementById('step1').style.display = 'block';
+    document.getElementById('step2').style.display = 'none';
+    document.body.style.overflow = 'hidden';
+}
+function closeForgot() {
+    document.getElementById('forgotModal').classList.remove('open');
+    document.body.style.overflow = '';
+}
+function sendReset() {
+    var email = document.getElementById('resetEmail').value.trim();
+    if (!email || !email.includes('@')) {
+        document.getElementById('resetEmail').style.borderColor = '#c62828';
+        document.getElementById('resetEmail').focus();
+        return;
+    }
+    document.getElementById('sentTo').textContent = email;
+    document.getElementById('step1').style.display = 'none';
+    document.getElementById('step2').style.display = 'block';
+}
+// Close on overlay click
+document.getElementById('forgotModal').addEventListener('click', function(e) {
+    if (e.target === this) closeForgot();
+});
+// Close on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeForgot();
+});
+</script>
+</h:body>
+</html>

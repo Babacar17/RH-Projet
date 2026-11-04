@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<!--
+    Template partagé des pages ResponsableRH/*.xhtml.
+
+    Usage dans une page enfant :
+        <ui:composition template="/WEB-INF/templates/rhTemplate.xhtml">
+            <ui:param name="page" value="documents"/>  <!- pour le lien actif de la sidebar ->
+            <ui:define name="title">Titre — SIRH</ui:define>
+            <ui:define name="pageTitle">Titre affiché</ui:define>
+            <ui:define name="breadcrumb">Section &gt; Sous-section</ui:define>
+            <ui:define name="content">... contenu de la page ...</ui:define>
+            <ui:define name="dialogs">... p:dialog, hors du flux principal (optionnel) ...</ui:define>
+            <ui:define name="styles">... &lt;style&gt; propre à la page (optionnel) ...</ui:define>
+            <ui:define name="scripts">... &lt;script&gt; propre à la page (optionnel) ...</ui:define>
+        </ui:composition>
+-->
+
+<h:head>
+    <title><ui:insert name="title">SIRH — Espace RH</ui:insert></title>
+    <h:outputStylesheet library="css" name="rh-style.css"/>
+    <ui:insert name="styles"/>
+</h:head>
+
+<h:body>
+<div style="display:flex;">
+    <ui:include src="/ResponsableRH/sidebar-rh.xhtml">
+        <ui:param name="page" value="#{page}"/>
+    </ui:include>
+
+    <div class="rh-main">
+        <div class="rh-topbar">
+            <div class="rh-topbar-left">
+                <h1><ui:insert name="pageTitle">Espace RH</ui:insert></h1>
+                <div class="breadcrumb"><ui:insert name="breadcrumb"/></div>
+            </div>
+            <div class="rh-topbar-right">
+                <div class="topbar-badge">
+                    <span>#{sessionBean.nomComplet}</span><span class="role-pill">RH</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="rh-content">
+            <p:growl id="growl" showDetail="true" life="4000"/>
+            <ui:insert name="content"/>
+        </div>
+    </div>
+</div>
+
+<ui:insert name="dialogs"/>
+<ui:insert name="scripts"/>
+
+<script>
+    // Chaque .section-card se replie/déplie en cliquant sur son titre —
+    // s'applique automatiquement à toute page utilisant ce composant partagé.
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.section-card > .section-header > .section-title').forEach(function(title) {
+            title.addEventListener('click', function() {
+                var card = title.closest('.section-card');
+                if (card) card.classList.toggle('collapsed');
+            });
+        });
+    });
+</script>
+
+</h:body>
+</html>

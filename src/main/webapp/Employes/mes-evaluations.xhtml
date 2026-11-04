@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Mes évaluations — Espace Employé</title>
+    <h:outputStylesheet library="css" name="employe-style.css"/>
+</h:head>
+<h:body>
+<div class="emp-layout">
+
+    <ui:include src="sidebar-employe.xhtml"/>
+
+    <main class="emp-main">
+
+        <div class="emp-page-header">
+            <div class="emp-page-title">
+                <h1><i class="pi pi-star" style="color:var(--emp-copper-l);"/> Mes évaluations</h1>
+                <p>Suivi de vos performances et retours de vos managers</p>
+            </div>
+        </div>
+
+        <!-- Évaluations en cartes -->
+        <h:panelGroup rendered="#{not empty employeBean.mesEvaluations}">
+            <ui:repeat value="#{employeBean.mesEvaluations}" var="ev">
+                <div class="emp-card" style="margin-bottom:20px;">
+                    <div class="emp-card-header">
+                        <div class="emp-card-title">
+                            <span class="card-icon"><i class="pi pi-star"/></span>
+                            Évaluation — #{ev.periode}
+                            <span style="margin-left:8px;" class="emp-badge badge-primary">#{ev.typeEvaluation}</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <span class="emp-badge badge-secondary">#{ev.statut}</span>
+                            <span style="font-size:0.8rem;color:var(--emp-muted);">
+                                <h:outputText value="#{ev.dateCreation}"/>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+
+                        <!-- Barres de notes -->
+                        <div>
+                            <div style="font-size:0.78rem;color:var(--emp-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">
+                                Détail des notes
+                            </div>
+
+                            <div class="note-bar">
+                                <div class="note-label">Compétences</div>
+                                <div class="note-track">
+                                    <div class="note-fill" style="width:#{ev.noteCompetences != null ? (ev.noteCompetences * 100 / 5) : 0}%;background:var(--emp-primary);"/>
+                                </div>
+                                <div class="note-val">#{ev.noteCompetences != null ? ev.noteCompetences : '—'}/5</div>
+                            </div>
+                            <div class="note-bar">
+                                <div class="note-label">Objectifs</div>
+                                <div class="note-track">
+                                    <div class="note-fill" style="width:#{ev.noteObjectifs != null ? (ev.noteObjectifs * 100 / 5) : 0}%;background:var(--emp-copper);"/>
+                                </div>
+                                <div class="note-val">#{ev.noteObjectifs != null ? ev.noteObjectifs : '—'}/5</div>
+                            </div>
+                            <div class="note-bar">
+                                <div class="note-label">Comportement</div>
+                                <div class="note-track">
+                                    <div class="note-fill" style="width:#{ev.noteComportement != null ? (ev.noteComportement * 100 / 5) : 0}%;background:var(--emp-info);"/>
+                                </div>
+                                <div class="note-val">#{ev.noteComportement != null ? ev.noteComportement : '—'}/5</div>
+                            </div>
+                            <div class="note-bar">
+                                <div class="note-label">Ponctualité</div>
+                                <div class="note-track">
+                                    <div class="note-fill" style="width:#{ev.notePonctualite != null ? (ev.notePonctualite * 100 / 5) : 0}%;background:var(--emp-success);"/>
+                                </div>
+                                <div class="note-val">#{ev.notePonctualite != null ? ev.notePonctualite : '—'}/5</div>
+                            </div>
+
+                            <!-- Note globale -->
+                            <div style="margin-top:16px;padding:12px 16px;background:rgba(124,58,237,0.08);border-radius:8px;display:flex;align-items:center;justify-content:space-between;">
+                                <span style="font-weight:600;font-size:0.9rem;">Note globale</span>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <span style="font-size:1.6rem;font-weight:800;color:var(--emp-primary);">
+                                        #{ev.noteGlobale != null ? ev.noteGlobale : '—'}
+                                    </span>
+                                    <span style="color:var(--emp-muted);font-size:0.9rem;">/5</span>
+                                    <span class="#{employeBean.getMentionClass(ev.mentionGlobale)}" style="margin-left:4px;">
+                                        #{ev.mentionGlobale}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Commentaires -->
+                        <div>
+                            <h:panelGroup rendered="#{ev.pointsForts != null}">
+                                <div style="margin-bottom:14px;">
+                                    <div style="font-size:0.78rem;color:var(--emp-success);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600;">
+                                        <i class="pi pi-thumbs-up" style="margin-right:4px;"/> Points forts
+                                    </div>
+                                    <div style="font-size:0.85rem;color:var(--emp-text);background:rgba(34,197,94,0.05);border-left:3px solid var(--emp-success);padding:8px 12px;border-radius:0 6px 6px 0;">
+                                        #{ev.pointsForts}
+                                    </div>
+                                </div>
+                            </h:panelGroup>
+
+                            <h:panelGroup rendered="#{ev.pointsAmeliorer != null}">
+                                <div style="margin-bottom:14px;">
+                                    <div style="font-size:0.78rem;color:var(--emp-warning);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600;">
+                                        <i class="pi pi-arrow-up" style="margin-right:4px;"/> Points à améliorer
+                                    </div>
+                                    <div style="font-size:0.85rem;color:var(--emp-text);background:rgba(245,158,11,0.05);border-left:3px solid var(--emp-warning);padding:8px 12px;border-radius:0 6px 6px 0;">
+                                        #{ev.pointsAmeliorer}
+                                    </div>
+                                </div>
+                            </h:panelGroup>
+
+                            <h:panelGroup rendered="#{ev.objectifsPeriodeSuivante != null}">
+                                <div style="margin-bottom:14px;">
+                                    <div style="font-size:0.78rem;color:var(--emp-primary);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600;">
+                                        <i class="pi pi-target" style="margin-right:4px;"/> Objectifs prochaine période
+                                    </div>
+                                    <div style="font-size:0.85rem;color:var(--emp-text);background:rgba(124,58,237,0.05);border-left:3px solid var(--emp-primary);padding:8px 12px;border-radius:0 6px 6px 0;">
+                                        #{ev.objectifsPeriodeSuivante}
+                                    </div>
+                                </div>
+                            </h:panelGroup>
+
+                            <h:panelGroup rendered="#{ev.commentaireRH != null}">
+                                <div>
+                                    <div style="font-size:0.78rem;color:var(--emp-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">
+                                        <i class="pi pi-comment" style="margin-right:4px;"/> Commentaire RH
+                                    </div>
+                                    <div style="font-size:0.85rem;color:var(--emp-muted);font-style:italic;padding:8px 12px;background:var(--emp-bg);border-radius:6px;">
+                                        "#{ev.commentaireRH}"
+                                    </div>
+                                </div>
+                            </h:panelGroup>
+                        </div>
+                    </div>
+                </div>
+            </ui:repeat>
+        </h:panelGroup>
+
+        <h:panelGroup rendered="#{empty employeBean.mesEvaluations}">
+            <div class="emp-card">
+                <div style="text-align:center;padding:48px;color:var(--emp-muted);">
+                    <i class="pi pi-star" style="font-size:2.5rem;display:block;margin-bottom:12px;opacity:0.4;"/>
+                    <p>Aucune évaluation disponible</p>
+                    <p style="font-size:0.82rem;margin-top:4px;">Vos évaluations apparaîtront ici une fois validées par votre manager ou le RH.</p>
+                </div>
+            </div>
+        </h:panelGroup>
+
+    </main>
+</div>
+</h:body>
+</html>

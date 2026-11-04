@@ -1,0 +1,48 @@
+/* Compléments pour la sidebar Espace Candidat — chargé APRÈS candidat.css.
+   candidat.css gère déjà la sidebar et le panneau de notifications ;
+   ce fichier n'ajoute que ce qui manque. À placer dans webapp/resources/css/ */
+
+.sidebar .sidebar-logo-text { flex: 1; min-width: 0; }
+.sidebar .notif-bell .pi { font-size: 15px; }
+
+/* Hamburger -> croix */
+.sidebar-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.sidebar-toggle.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.sidebar-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* Avatar candidat */
+.sidebar .sidebar-avatar.avatar-candidat { background: linear-gradient(135deg, #0ea5e9, #38bdf8); }
+
+/* Notifications */
+.notif-panel-count { color: #94a3b8; font-weight: 500; }
+.notif-actions { display: inline; }
+.notif-poll { display: none; }
+.notif-panel-empty i { font-size: 28px; color: #cbd5e1; display: block; margin-bottom: 8px; }
+.sidebar .notif-mark-all.ui-button {
+    background: none; border: none; box-shadow: none; padding: 4px 6px;
+    color: #0ea5e9; font-size: 11px; font-weight: 600;
+}
+.sidebar .notif-mark-all.ui-button:hover { background: #f0f9ff; }
+
+/* Bouton déconnexion */
+.sidebar .sidebar-logout.ui-button {
+    width: 100%; padding: 9px; border-radius: 7px;
+    background: rgba(239, 68, 68, .1); color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, .2);
+    font-size: 12px; font-weight: 600; cursor: pointer; transition: background .2s;
+}
+.sidebar .sidebar-logout.ui-button:hover { background: rgba(239, 68, 68, .2); }
+
+/* Focus visible au clavier */
+.sidebar .nav-item:focus-visible, .notif-bell:focus-visible,
+.sidebar-toggle:focus-visible, .sidebar .sidebar-logout.ui-button:focus-visible {
+    outline: 2px solid #38bdf8; outline-offset: 2px;
+}
+
+/* Mobile : le panneau s'ouvre DANS la sidebar (sinon il est coupé) */
+@media (max-width: 768px) {
+    .notif-panel { left: 12px; width: calc(100% - 24px); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .sidebar-toggle span { transition: none; }
+}

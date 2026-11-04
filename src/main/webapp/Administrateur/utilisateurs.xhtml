@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+    <title>Utilisateurs — Administration SIRH</title>
+    <h:outputStylesheet library="css" name="admin-style.css"/>
+</h:head>
+
+<h:body>
+    <ui:include src="sidebar-admin.xhtml"/>
+    <!-- ══ GARDE INSTITUTION — super-admin doit sélectionner une institution ══ -->
+    <p:outputPanel rendered="#{sessionBean.isSuperAdmin() and adminBean.institutionFiltreId == null}"
+                   style="display:block;">
+        <div style="min-height:60vh;display:flex;align-items:center;justify-content:center;padding:2rem;">
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:2.5rem 3rem;
+                        max-width:520px;width:100%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.06);">
+                <div style="width:64px;height:64px;background:linear-gradient(135deg,#b58a3a,#f0c97a);
+                             border-radius:16px;display:flex;align-items:center;justify-content:center;
+                             margin:0 auto 1.25rem;font-size:28px;color:#0f172a;">
+                    <i class="fas fa-university"/>
+                </div>
+                <h2 style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:.5rem;">
+                    Sélectionnez une institution
+                </h2>
+                <p style="font-size:13px;color:#64748b;margin-bottom:1.5rem;line-height:1.6;">
+                    En tant que super-administrateur, vous devez choisir une institution
+                    avant d'accéder à cette section.
+                </p>
+                <h:form id="guardForm">
+                    <p:selectOneMenu value="#{adminBean.institutionFiltreId}"
+                                     style="width:100%;font-size:13px;font-weight:600;
+                                            border:1.5px solid #7c3aed;border-radius:8px;
+                                            padding:10px 12px;background:#faf5ff;">
+                        <f:selectItem itemValue="" itemLabel="— Choisir une institution —"/>
+                        <f:selectItems value="#{adminBean.toutesInstitutions}"
+                                       var="inst"
+                                       itemValue="#{inst.id}"
+                                       itemLabel="#{inst.code} — #{inst.nom}"/>
+                        <p:ajax update="@form" listener="#{adminBean.filtrerParInstitution}"/>
+                    </p:selectOneMenu>
+                </h:form>
+                <div style="margin-top:1.5rem;border-top:1px solid #e2e8f0;padding-top:1rem;">
+                    <h:link value="← Retour au tableau de bord global"
+                            outcome="/Administrateur/dashboard"
+                            style="font-size:12px;color:#7c3aed;font-weight:600;"/>
+                </div>
+            </div>
+        </div>
+    </p:outputPanel>
+    <!-- ══ FIN GARDE ══ -->
+
+    <p:outputPanel rendered="#{not sessionBean.isSuperAdmin() or adminBean.institutionFiltreId != null}"
+                   style="display:block;">
+
+
+    <div class="main-content">
+
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Gestion des utilisateurs</h1>
+                <p class="page-subtitle">Administration &gt; Utilisateurs</p>
+            </div>
+            <h:form id="formBtnNewUser">
+                <p:commandButton value="+ Nouvel utilisateur"
+                    action="#{adminBean.preparerNouvelUtilisateur}"
+                    oncomplete="PF('dlgUser').show()"
+                    update="formUser"
+                    styleClass="btn btn-primary"/>
+            </h:form>
+        </div>
+
+        <p:growl id="growl" showDetail="true" life="4000"/>
+
+        <!-- Stats rapides -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
+            <div class="stat-card" style="display:flex;align-items:center;gap:14px;">
+                <div style="width:40px;height:40px;background:#ede9fe;border-radius:9px;display:flex;align-items:center;justify-content:center;">
+                    <i class="pi pi-users" style="color:#6d28d9;font-size:18px;"></i>
+                </div>
+                <div>
+                    <div style="font-size:22px;font-weight:800;">#{adminBean.totalUsers}</div>
+                    <div style="font-size:11px;color:#64748b;">Total utilisateurs</div>
+                </div>
+            </div>
+            <div class="stat-card" style="display:flex;align-items:center;gap:14px;">
+                <div style="width:40px;height:40px;background:#dcfce7;border-radius:9px;display:flex;align-items:center;justify-content:center;">
+                    <i class="pi pi-check-circle" style="color:#10b981;font-size:18px;"></i>
+                </div>
+                <div>
+                    <div style="font-size:22px;font-weight:800;color:#10b981;">#{adminBean.usersActifs}</div>
+                    <div style="font-size:11px;color:#64748b;">Actifs</div>
+                </div>
+            </div>
+            <div class="stat-card" style="display:flex;align-items:center;gap:14px;">
+                <div style="width:40px;height:40px;background:#fee2e2;border-radius:9px;display:flex;align-items:center;justify-content:center;">
+                    <i class="pi pi-ban" style="color:#ef4444;font-size:18px;"></i>
+                </div>
+                <div>
+                    <div style="font-size:22px;font-weight:800;color:#ef4444;">#{adminBean.usersInactifs}</div>
+                    <div style="font-size:11px;color:#64748b;">Inactifs</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau utilisateurs -->
+        <div class="section-card">
+            <h:form id="formTableUsers">
+
+                <!-- Barre de recherche + exports -->
+                <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+                    <p:inputText id="champRecherche"
+                                 value="#{adminBean.motCleRecherche}"
+                                 placeholder="Rechercher par nom, prénom, username..."
+                                 style="flex:1;min-width:200px;">
+                        <p:ajax event="keyup"
+                                listener="#{adminBean.rechercherUtilisateurs}"
+                                update="tableUsers"
+                                delay="300"
+                                ignoreAutoUpdate="true"/>
+                    </p:inputText>
+                    <p:commandButton value="Rechercher"
+                        action="#{adminBean.rechercherUtilisateurs}"
+                        update="formTableUsers"
+                        styleClass="btn btn-primary"/>
+                    <p:commandButton value="Réinitialiser"
+                        action="#{adminBean.reinitialiserRecherche}"
+                        update="formTableUsers"
+                        styleClass="btn btn-secondary"/>
+                    <!-- Export Excel (PDF retiré : incompatibilité OpenPDF/PrimeFaces) -->
+                    <p:commandButton value="⬇ Excel" ajax="false"
+                        title="Exporter en Excel"
+                        style="padding:0 12px;height:34px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">
+                        <p:dataExporter type="xls" target="tableUsers" fileName="utilisateurs"/>
+                    </p:commandButton>
+                </div>
+
+                <p:dataTable id="tableUsers" value="#{adminBean.utilisateurs}" var="u"
+                             rows="10" paginator="true"
+                             paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowsPerPageTemplate="10,25,50"
+                             emptyMessage="Aucun utilisateur trouvé."
+                             style="border:none;">
+
+                    <p:column headerText="Utilisateur" style="min-width:200px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6d28d9,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;">
+                                #{u.prenom != null and u.prenom.length() > 0 ? u.prenom.substring(0,1) : ''}
+                            </div>
+                            <div>
+                                <div style="font-weight:600;font-size:13px;">#{u.prenom} #{u.nom}</div>
+                                <div style="font-size:11px;color:#94a3b8;">#{u.email}</div>
+                            </div>
+                        </div>
+                    </p:column>
+
+                    <p:column headerText="Identifiant" style="width:140px;">
+                        <span style="font-family:monospace;font-size:12px;color:#6d28d9;background:#ede9fe;padding:3px 9px;border-radius:6px;">
+                            #{u.username}
+                        </span>
+                    </p:column>
+
+                    <p:column headerText="Téléphone" style="width:130px;">
+                        <span style="font-size:12px;color:#64748b;">
+                            #{u.telephone != null ? u.telephone : '—'}
+                        </span>
+                    </p:column>
+
+                    <p:column headerText="Rôle" style="width:120px;">
+                        <ui:repeat value="#{u.roles}" var="r">
+                            <span class="badge-#{r.nom}">#{r.nom}</span>
+                        </ui:repeat>
+                    </p:column>
+
+                    <p:column headerText="Statut" style="width:90px;">
+                        <span class="badge-#{u.actif}">#{u.actif ? 'Actif' : 'Inactif'}</span>
+                    </p:column>
+
+                    <p:column headerText="Actions" style="width:190px;">
+                        <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center;">
+
+                            <!-- Modifier -->
+                            <p:commandButton value="✏"
+                                title="Modifier"
+                                action="#{adminBean.preparerEditionUtilisateur(u)}"
+                                oncomplete="PF('dlgUser').show()"
+                                update="formUser"
+                                style="width:32px;height:32px;padding:0;background:#eff6ff;color:#3b82f6;border:1px solid #bfdbfe;border-radius:8px;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;"/>
+
+                            <!-- MDP -->
+                            <p:commandButton value="🔑"
+                                title="Réinitialiser mot de passe"
+                                action="#{adminBean.preparerResetMotDePasse(u)}"
+                                oncomplete="PF('dlgResetMdp').show()"
+                                update="formResetMdp"
+                                style="width:32px;height:32px;padding:0;background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;"/>
+
+                            <!-- Activer / Désactiver -->
+                            <p:commandButton
+                                value="#{u.actif ? '⏸' : '▶'}"
+                                title="#{u.actif ? 'Désactiver' : 'Activer'}"
+                                action="#{adminBean.basculerStatutUtilisateur(u.id)}"
+                                update="formTableUsers growl"
+                                style="width:32px;height:32px;padding:0;border-radius:8px;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center; #{u.actif ? 'background:#fffbeb;color:#d97706;border:1px solid #fde68a;' : 'background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;'}"/>
+
+                            <!-- Débloquer compte (uniquement si bloqué) -->
+                            <p:commandButton value="🔓"
+                                title="Débloquer le compte (#{u.tentativesConnexion}/5 tentatives)"
+                                rendered="#{u.compteBloque or u.tentativesConnexion gt 0}"
+                                action="#{adminBean.debloquerCompte(u.id)}"
+                                update="formTableUsers growl"
+                                onclick="return confirm('Débloquer le compte de #{u.username} ? Les compteurs d échecs seront remis à zéro.');"
+                                style="width:32px;height:32px;padding:0;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:8px;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;"/>
+
+                            <!-- Activer / Désactiver 2FA -->
+                            <p:commandButton value="🛡️"
+                                title="#{u.twoFactorEnabled ? 'Désactiver 2FA' : 'Activer 2FA (TOTP)'}"
+                                rendered="#{not u.twoFactorEnabled}"
+                                action="#{adminBean.preparer2fa(u)}"
+                                update=":formDlg2fa"
+                                oncomplete="PF('dlg2fa').show()"
+                                style="width:32px;height:32px;padding:0;background:#ecfeff;color:#0891b2;border:1px solid #a5f3fc;border-radius:8px;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;"/>
+                            <p:commandButton value="🛡️"
+                                title="Désactiver la 2FA"
+                                rendered="#{u.twoFactorEnabled}"
+                                action="#{adminBean.desactiver2fa(u.id)}"
+                                update="formTableUsers growl"
+                                onclick="return confirm('Désactiver la 2FA pour #{u.username} ?');"
+                                style="width:32px;height:32px;padding:0;background:#dcfce7;color:#15803d;border:1px solid #86efac;border-radius:8px;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;"/>
+
+                            <!--
+                                FIX BUG #3 : La suppression utilisait onclick="return confirm(...)"
+                                qui est incompatible avec les requêtes AJAX PrimeFaces.
+                                Le confirm() bloque le thread JS mais l'AJAX partait quand même.
+
+                                CORRECTION : Utilisation de p:confirm + p:confirmDialog global,
+                                identique au pattern déjà utilisé dans institutions.xhtml.
+                                Le bouton stocke l'utilisateur sélectionné via
+                                f:setPropertyActionListener avant d'afficher la confirmation.
+                            -->
+                            <p:commandButton value="🗑"
+                                title="Supprimer"
+                                update="formConfirmDeleteUser"
+                                oncomplete="PF('dlgConfirmDeleteUser').show()"
+                                style="width:32px;height:32px;padding:0;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:8px;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;">
+                                <f:setPropertyActionListener
+                                    target="#{adminBean.utilisateur}"
+                                    value="#{u}"/>
+                            </p:commandButton>
+
+                        </div>
+                    </p:column>
+
+                </p:dataTable>
+            </h:form>
+        </div>
+
+        <!-- ── DIALOG CRÉER / MODIFIER UTILISATEUR ── -->
+        <h:form id="formUser">
+            <p:dialog header="#{adminBean.modeEdition ? 'Modifier un utilisateur' : 'Nouvel utilisateur'}"
+                      widgetVar="dlgUser" modal="true" width="620" height="520" scrollable="true"
+                      resizable="false" closeOnEscape="true">
+                <div style="padding:24px;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+                        <div class="form-group">
+                            <label class="form-label">Prénom *</label>
+                            <p:inputText value="#{adminBean.utilisateur.prenom}" style="width:100%;"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Nom *</label>
+                            <p:inputText value="#{adminBean.utilisateur.nom}" style="width:100%;"/>
+                        </div>
+                        <div class="form-group" style="grid-column:1/-1;">
+                            <label class="form-label">Email *</label>
+                            <p:inputText value="#{adminBean.utilisateur.email}" style="width:100%;"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Nom d'utilisateur *</label>
+                            <p:inputText value="#{adminBean.utilisateur.username}" style="width:100%;"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Téléphone</label>
+                            <p:inputText value="#{adminBean.utilisateur.telephone}" style="width:100%;"/>
+                        </div>
+
+                        <!-- Mot de passe seulement à la création -->
+                        <h:panelGroup layout="block" styleClass="form-group" style="grid-column:1/-1;" rendered="#{!adminBean.modeEdition}">
+                            <label class="form-label">Mot de passe *</label>
+                            <p:password value="#{adminBean.nouveauMotDePasse}"
+                                        feedback="false" style="width:100%;"/>
+                        </h:panelGroup>
+
+                        <div class="form-group" style="grid-column:1/-1;">
+                            <label class="form-label">Rôle *</label>
+                            <p:selectOneMenu value="#{adminBean.roleSelectionne}" style="width:100%;">
+                                <f:selectItem itemValue="#{null}" itemLabel="— Sélectionner un rôle —"/>
+                                <f:selectItems value="#{adminBean.roles}"
+                                               var="r" itemValue="#{r.id}" itemLabel="#{r.nom}"/>
+                            </p:selectOneMenu>
+                        </div>
+
+                    </div>
+
+                    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid #f1f5f9;">
+                        <p:commandButton value="Annuler"
+                            onclick="PF('dlgUser').hide(); return false;"
+                            styleClass="btn btn-secondary"/>
+                        <p:commandButton value="#{adminBean.modeEdition ? 'Enregistrer' : 'Créer'}"
+                            action="#{adminBean.sauvegarderUtilisateur}"
+                            update="formTableUsers growl"
+                            oncomplete="if(!args.validationFailed) PF('dlgUser').hide();"
+                            styleClass="btn btn-primary"/>
+                    </div>
+                </div>
+            </p:dialog>
+        </h:form>
+
+        <!-- ── DIALOG RESET MDP ── -->
+        <h:form id="formResetMdp">
+            <p:dialog header="Réinitialiser le mot de passe"
+                      widgetVar="dlgResetMdp" modal="true" width="420"
+                      resizable="false" closeOnEscape="true">
+                <div style="padding:24px;">
+                    <p style="font-size:13px;color:#64748b;margin-bottom:16px;">
+                        Saisissez le nouveau mot de passe pour cet utilisateur.
+                    </p>
+                    <div class="form-group">
+                        <label class="form-label">Nouveau mot de passe *</label>
+                        <p:password value="#{adminBean.nouveauMotDePasse}"
+                                    feedback="true" style="width:100%;"/>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+                        <p:commandButton value="Annuler"
+                            onclick="PF('dlgResetMdp').hide(); return false;"
+                            styleClass="btn btn-secondary"/>
+                        <p:commandButton value="Réinitialiser"
+                            action="#{adminBean.reinitialiserMotDePasse(adminBean.utilisateur.id)}"
+                            update="growl"
+                            oncomplete="if(!args.validationFailed) PF('dlgResetMdp').hide();"
+                            styleClass="btn btn-primary"/>
+                    </div>
+                </div>
+            </p:dialog>
+        </h:form>
+
+        <!--
+            FIX BUG #3 : Dialog de confirmation de suppression.
+            Remplace le confirm() JavaScript qui ne fonctionnait pas avec AJAX.
+            Pattern identique à institutions.xhtml.
+        -->
+        <h:form id="formConfirmDeleteUser">
+            <p:dialog header="Confirmer la suppression"
+                      widgetVar="dlgConfirmDeleteUser" modal="true" width="420"
+                      resizable="false" closeOnEscape="true">
+                <div style="padding:24px;text-align:center;">
+                    <div style="width:56px;height:56px;border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 14px;">
+                        🗑
+                    </div>
+                    <p style="font-size:14px;font-weight:700;color:#111;margin-bottom:8px;">
+                        Supprimer cet utilisateur ?
+                    </p>
+                    <p style="font-size:13px;color:#64748b;margin-bottom:20px;">
+                        <strong>#{adminBean.utilisateur != null ? adminBean.utilisateur.prenom : ''} #{adminBean.utilisateur != null ? adminBean.utilisateur.nom : ''}</strong>
+                        sera définitivement supprimé. Cette action est irréversible.
+                    </p>
+                    <div style="display:flex;justify-content:center;gap:10px;">
+                        <p:commandButton value="Annuler"
+                            onclick="PF('dlgConfirmDeleteUser').hide(); return false;"
+                            styleClass="btn btn-secondary"/>
+                        <p:commandButton value="Supprimer définitivement"
+                            action="#{adminBean.supprimerUtilisateur(adminBean.utilisateur.id)}"
+                            update="formTableUsers growl"
+                            oncomplete="PF('dlgConfirmDeleteUser').hide();"
+                            styleClass="btn btn-danger"
+                            style="background:#ef4444;color:#fff;border:none;"/>
+                    </div>
+                </div>
+            </p:dialog>
+        </h:form>
+
+    </div>
+
+    </p:outputPanel>
+    <!-- ══ FIN CONTENU CONDITIONNEL ══ -->
+
+    <!-- ═══════════════════ DIALOG ACTIVATION 2FA ═══════════════════ -->
+    <h:form id="formDlg2fa">
+        <p:dialog header="Activer l'authentification à deux facteurs"
+                  widgetVar="dlg2fa" modal="true" width="520"
+                  resizable="false" closeOnEscape="true">
+            <div style="padding:24px;text-align:center;">
+                <p style="font-size:13px;color:#475569;margin-bottom:14px;">
+                    Scannez ce QR code dans <strong>Google Authenticator</strong>,
+                    <strong>Microsoft Authenticator</strong> ou <strong>Authy</strong>.
+                </p>
+                <div style="background:#f8fafc;border-radius:10px;padding:16px;margin-bottom:14px;">
+                    <h:graphicImage url="#{adminBean.qrCodeUrl}" alt="QR Code 2FA"
+                                    style="width:220px;height:220px;"/>
+                </div>
+                <p style="font-size:11px;color:#64748b;margin-bottom:4px;">
+                    Si le QR ne fonctionne pas, saisissez manuellement le secret :
+                </p>
+                <code style="display:inline-block;background:#0f172a;color:#a5f3fc;
+                             padding:8px 14px;border-radius:6px;font-size:13px;
+                             font-family:monospace;letter-spacing:2px;margin-bottom:18px;">
+                    #{adminBean.secret2fa}
+                </code>
+                <p style="font-size:12px;color:#dc2626;margin-bottom:18px;">
+                    <i class="fas fa-exclamation-triangle"/>
+                    Ce secret ne sera plus affiché après confirmation.
+                </p>
+                <div style="display:flex;justify-content:center;gap:10px;">
+                    <p:commandButton value="Annuler" type="button"
+                                     onclick="PF('dlg2fa').hide()"
+                                     styleClass="btn btn-secondary"/>
+                    <p:commandButton value="Confirmer l'activation"
+                                     action="#{adminBean.confirmer2fa}"
+                                     update=":formTableUsers growl"
+                                     oncomplete="PF('dlg2fa').hide()"
+                                     styleClass="btn btn-primary"/>
+                </div>
+            </div>
+        </p:dialog>
+    </h:form>
+
+</h:body>
+</html>

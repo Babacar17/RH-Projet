@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+
+<ui:composition>
+<style>
+    /* ═══ SIDEBAR FIXE : toujours visible, quelle que soit la taille d'écran ═══ */
+    :root { --rh-sidebar-w: 250px; }
+
+    .rh-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: var(--rh-sidebar-w);
+        height: 100vh;
+        background: #0f172a;
+        z-index: 60;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid rgba(255,255,255,.05);
+        overflow: hidden;
+        box-sizing: border-box;
+    }
+    .rh-sidebar-logo {
+        padding: 20px 16px;
+        border-bottom: 1px solid rgba(255,255,255,.07);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+    }
+    .logo-icon {
+        width: 40px; height: 40px;
+        background: linear-gradient(135deg, #d4a017, #f59e0b);
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 13px; font-weight: 800; color: #0f172a;
+    }
+    .logo-title { font-size: 14px; font-weight: 700; color: #f1f5f9; }
+    .logo-sub   { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* Le menu défile seul ; logo en haut et profil en bas restent visibles */
+    .rh-nav { flex: 1; min-height: 0; padding: 12px 0; overflow-y: auto; overflow-x: hidden; }
+    .rh-nav::-webkit-scrollbar { width: 6px; }
+    .rh-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 3px; }
+    .rh-nav::-webkit-scrollbar-track { background: transparent; }
+
+    .nav-group { margin-top: 2px; }
+    .nav-section-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 10px 16px;
+        cursor: pointer;
+        user-select: none;
+        font-size: 9px;
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        transition: color .15s;
+    }
+    .nav-section-toggle:hover { color: #94a3b8; }
+    .nav-section-toggle .nav-chevron {
+        font-size: 9px;
+        color: #475569;
+        transition: transform .2s;
+        flex-shrink: 0;
+    }
+    .nav-group.open .nav-section-toggle { color: #d4a017; }
+    .nav-group.open .nav-section-toggle .nav-chevron { color: #d4a017; transform: rotate(90deg); }
+    .nav-group-body { display: none; }
+    .nav-group.open .nav-group-body { display: block; }
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        color: #94a3b8;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all .15s;
+        border-left: 3px solid transparent;
+        font-family: 'Segoe UI', sans-serif;
+    }
+    .nav-item:hover {
+        background: rgba(255,255,255,.05);
+        color: #e2e8f0;
+        text-decoration: none;
+    }
+    .nav-item.active {
+        background: rgba(37,99,235,.15);
+        color: #f59e0b;
+        border-left: 3px solid #d4a017;
+        font-weight: 600;
+    }
+    .nav-dot {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: #475569;
+        flex-shrink: 0;
+    }
+    .nav-item.active .nav-dot { background: #d4a017; }
+    .rh-sidebar-footer {
+        padding: 14px 16px;
+        border-top: 1px solid rgba(255,255,255,.07);
+        flex-shrink: 0;
+    }
+    .sidebar-user { display: flex; align-items: center; gap: 10px; }
+    .sidebar-user-avatar {
+        width: 32px; height: 32px;
+        background: linear-gradient(135deg, #2563eb, #1e3a5f);
+        border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 13px; font-weight: 700; color: white;
+        flex-shrink: 0;
+    }
+    .sidebar-user-name  { font-weight: 700; font-size: 12px; color: #e2e8f0; }
+    .sidebar-user-role  { font-size: 10px; color: #64748b; }
+
+    /* Écrans étroits : sidebar plus fine (la zone principale suit via --rh-sidebar-w) */
+    @media (max-width: 768px) {
+        :root { --rh-sidebar-w: 220px; }
+        .notif-panel { left: calc(var(--rh-sidebar-w) + 12px) !important; width: 300px !important; }
+    }
+</style>
+
+<style>
+    /* ── Cloche notifications ── */
+    .notif-wrapper { position: relative; margin-left: auto; }
+    .notif-bell {
+        position: relative;
+        width: 36px; height: 36px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.06);
+        color: #f1f5f9;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: background .15s;
+        border: none;
+    }
+    .notif-bell:hover { background: rgba(255,255,255,.14); }
+    .notif-badge {
+        position: absolute; top: -4px; right: -4px;
+        background: #ef4444; color: #fff;
+        min-width: 18px; height: 18px;
+        border-radius: 9px;
+        font-size: 10px; font-weight: 700;
+        display: flex; align-items: center; justify-content: center;
+        padding: 0 5px; border: 2px solid #0f172a;
+    }
+    .notif-panel {
+        position: fixed; top: 64px; left: 262px;
+        width: 340px; max-height: 480px; overflow-y: auto;
+        background: #fff; border-radius: 10px;
+        box-shadow: 0 12px 32px rgba(0,0,0,.18);
+        display: none; z-index: 9999;
+        color: #0f172a;
+    }
+    .notif-panel.open { display: block; }
+    .notif-panel-header {
+        padding: 12px 14px; border-bottom: 1px solid #e2e8f0;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .notif-panel-title { font-size: 13px; font-weight: 800; color: #0f172a; }
+    .notif-panel-empty {
+        padding: 40px 14px; text-align: center;
+        color: #94a3b8; font-size: 12px;
+    }
+    .notif-item {
+        display: flex; gap: 10px; padding: 12px 14px;
+        border-bottom: 1px solid #f1f5f9;
+        cursor: pointer; transition: background .15s;
+        text-decoration: none; color: #0f172a;
+    }
+    .notif-item:hover { background: #f8fafc; }
+    .notif-item.unread { background: #eff6ff; }
+    .notif-item.unread:hover { background: #dbeafe; }
+    .notif-icon {
+        width: 32px; height: 32px; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 13px; flex-shrink: 0;
+    }
+    .notif-content { flex: 1; min-width: 0; }
+    .notif-title { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+    .notif-msg   { font-size: 11px; color: #64748b; line-height: 1.4;
+                   overflow: hidden; text-overflow: ellipsis; }
+    .notif-time  { font-size: 10px; color: #94a3b8; margin-top: 3px; }
+    .notif-mark-all {
+        background: none; border: none; color: #2563eb;
+        font-size: 11px; font-weight: 600; cursor: pointer;
+    }
+</style>
+
+<div class="rh-sidebar">
+    <div class="rh-sidebar-logo">
+        <div class="logo-icon">RH</div>
+        <div style="flex:1;">
+            <div class="logo-title">Espace RH</div>
+            <div class="logo-sub">Responsable RH</div>
+        </div>
+
+        <!-- ═══ Cloche notifications ═══ -->
+        <div class="notif-wrapper">
+            <button type="button" class="notif-bell"
+                    onclick="document.getElementById('notifPanel').classList.toggle('open');
+                             event.stopPropagation();">
+                <i class="pi pi-bell" style="font-size:16px;"></i>
+                <h:panelGroup rendered="#{notificationBean.compteurNonLues gt 0}">
+                    <span class="notif-badge">#{notificationBean.compteurNonLues}</span>
+                </h:panelGroup>
+            </button>
+
+            <div id="notifPanel" class="notif-panel"
+                 onclick="event.stopPropagation();">
+                <div class="notif-panel-header">
+                    <span class="notif-panel-title">
+                        Notifications
+                        <span style="color:#94a3b8;font-weight:500;">(#{notificationBean.compteurNonLues} non lues)</span>
+                    </span>
+                    <h:form style="display:inline;">
+                        <p:commandButton value="Tout marquer lu"
+                            action="#{notificationBean.marquerToutesLues}"
+                            update="@form :notifPanelList"
+                            styleClass="notif-mark-all"
+                            rendered="#{notificationBean.compteurNonLues gt 0}"/>
+                    </h:form>
+                </div>
+
+                <h:form id="notifPanelList">
+                    <h:panelGroup rendered="#{notificationBean.recentes.isEmpty()}">
+                        <div class="notif-panel-empty">
+                            <i class="pi pi-inbox" style="font-size:28px;color:#cbd5e1;display:block;margin-bottom:8px;"></i>
+                            Aucune notification.
+                        </div>
+                    </h:panelGroup>
+
+                    <ui:repeat value="#{notificationBean.recentes}" var="n">
+                        <p:commandLink action="#{notificationBean.marquerLue(n.id)}"
+                                       update="@form"
+                                       oncomplete="if (#{not empty n.lienAction}) { window.location='#{request.contextPath}#{n.lienAction}#{not empty n.entiteLieeId ? '?entiteId=' : ''}#{n.entiteLieeId}'; }"
+                                       styleClass="notif-item #{n.estLue ? '' : 'unread'}">
+                            <div class="notif-icon"
+                                 style="background:#{notificationBean.getCouleur(n.priorite)}22;
+                                        color:#{notificationBean.getCouleur(n.priorite)};">
+                                <i class="pi #{notificationBean.getIcone(n.type)}"></i>
+                            </div>
+                            <div class="notif-content">
+                                <div class="notif-title">#{n.titre}</div>
+                                <div class="notif-msg">#{n.message}</div>
+                                <div class="notif-time">#{notificationBean.getDateRelative(n.dateCreation)}</div>
+                            </div>
+                        </p:commandLink>
+                    </ui:repeat>
+                </h:form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fermer le panneau si on clique ailleurs -->
+    <script>
+        document.addEventListener('click', function() {
+            var p = document.getElementById('notifPanel');
+            if (p) p.classList.remove('open');
+        });
+    </script>
+
+    <nav class="rh-nav">
+
+        <div class="nav-group #{page == 'dashboard' ? 'open' : ''}">
+            <div class="nav-section-toggle" onclick="toggleNavGroup(this)">
+                <span>TABLEAU DE BORD</span><span class="nav-chevron">&#9656;</span>
+            </div>
+            <div class="nav-group-body">
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/dashboard.xhtml" styleClass="nav-item #{page == 'dashboard' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Dashboard
+                </h:outputLink>
+            </div>
+        </div>
+
+        <div class="nav-group #{page == 'structures' or page == 'postes' ? 'open' : ''}">
+            <div class="nav-section-toggle" onclick="toggleNavGroup(this)">
+                <span>ORGANISATION</span><span class="nav-chevron">&#9656;</span>
+            </div>
+            <div class="nav-group-body">
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/structures.xhtml" styleClass="nav-item #{page == 'structures' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Structures
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/postes.xhtml" styleClass="nav-item #{page == 'postes' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Postes &amp; Fiches de poste
+                </h:outputLink>
+            </div>
+        </div>
+
+        <div class="nav-group #{page == 'employes' or page == 'conges' or page == 'horaires' or page == 'evaluations' or page == 'carrieres' or page == 'paie' ? 'open' : ''}">
+            <div class="nav-section-toggle" onclick="toggleNavGroup(this)">
+                <span>RESSOURCES HUMAINES</span><span class="nav-chevron">&#9656;</span>
+            </div>
+            <div class="nav-group-body">
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/employes.xhtml" styleClass="nav-item #{page == 'employes' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Fiches Employes
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/conges.xhtml" styleClass="nav-item #{page == 'conges' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Conges et Absences
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/horaires.xhtml" styleClass="nav-item #{page == 'horaires' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Horaires &amp; Plannings
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/evaluations.xhtml" styleClass="nav-item #{page == 'evaluations' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Evaluations
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/carrieres.xhtml" styleClass="nav-item #{page == 'carrieres' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Carrieres
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/paie.xhtml" styleClass="nav-item #{page == 'paie' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Paie et Remunerations
+                </h:outputLink>
+            </div>
+        </div>
+
+        <div class="nav-group #{page == 'offres' or page == 'candidatures' or page == 'recrutement' or page == 'notes' or page == 'archives-recrutement' ? 'open' : ''}">
+            <div class="nav-section-toggle" onclick="toggleNavGroup(this)">
+                <span>RECRUTEMENT</span><span class="nav-chevron">&#9656;</span>
+            </div>
+            <div class="nav-group-body">
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/offres.xhtml" styleClass="nav-item #{page == 'offres' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Offres d'emploi
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/candidatures.xhtml" styleClass="nav-item #{page == 'candidatures' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Candidatures
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/recrutement.xhtml" styleClass="nav-item #{page == 'recrutement' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Concours &amp; Jury
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/archives-recrutement.xhtml" styleClass="nav-item #{page == 'archives-recrutement' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Archives rapports &amp; PV
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/notes.xhtml" styleClass="nav-item #{page == 'notes' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Notes
+                </h:outputLink>
+            </div>
+        </div>
+
+        <div class="nav-group #{page == 'formations' or page == 'onboarding' or page == 'competences' ? 'open' : ''}">
+            <div class="nav-section-toggle" onclick="toggleNavGroup(this)">
+                <span>DEVELOPPEMENT</span><span class="nav-chevron">&#9656;</span>
+            </div>
+            <div class="nav-group-body">
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/formations.xhtml" styleClass="nav-item #{page == 'formations' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Formations
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/onboarding.xhtml" styleClass="nav-item #{page == 'onboarding' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Onboarding
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/competences.xhtml" styleClass="nav-item #{page == 'competences' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Compétences
+                </h:outputLink>
+            </div>
+        </div>
+
+        <div class="nav-group #{page == 'utilisateurs' or page == 'roles' ? 'open' : ''}">
+            <div class="nav-section-toggle" onclick="toggleNavGroup(this)">
+                <span>ACCES ET SECURITE</span><span class="nav-chevron">&#9656;</span>
+            </div>
+            <div class="nav-group-body">
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/utilisateurs.xhtml" styleClass="nav-item #{page == 'utilisateurs' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Utilisateurs
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/roles.xhtml" styleClass="nav-item #{page == 'roles' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Rôles &amp; Permissions
+                </h:outputLink>
+            </div>
+        </div>
+
+        <div class="nav-group #{page == 'reporting' ? 'open' : ''}">
+            <div class="nav-section-toggle" onclick="toggleNavGroup(this)">
+                <span>ANALYTIQUE</span><span class="nav-chevron">&#9656;</span>
+            </div>
+            <div class="nav-group-body">
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/reporting.xhtml" styleClass="nav-item #{page == 'reporting' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Reporting et KPI
+                </h:outputLink>
+            </div>
+        </div>
+
+        <div class="nav-group #{page == 'documents' ? 'open' : ''}">
+            <div class="nav-section-toggle" onclick="toggleNavGroup(this)">
+                <span>DOCUMENTS</span><span class="nav-chevron">&#9656;</span>
+            </div>
+            <div class="nav-group-body">
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/documents.xhtml" styleClass="nav-item #{page == 'documents' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Gestion Documentaire
+                </h:outputLink>
+            </div>
+        </div>
+
+        <div class="nav-group #{page == 'evenements' or page == 'annonces' ? 'open' : ''}">
+            <div class="nav-section-toggle" onclick="toggleNavGroup(this)">
+                <span>COMMUNICATION</span><span class="nav-chevron">&#9656;</span>
+            </div>
+            <div class="nav-group-body">
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/evenements.xhtml" styleClass="nav-item #{page == 'evenements' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Événements
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/annonces.xhtml" styleClass="nav-item #{page == 'annonces' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Annonces
+                </h:outputLink>
+            </div>
+        </div>
+
+        <div class="nav-group #{page == 'organigramme' ? 'open' : ''}">
+            <div class="nav-section-toggle" onclick="toggleNavGroup(this)">
+                <span>NAVIGATION</span><span class="nav-chevron">&#9656;</span>
+            </div>
+            <div class="nav-group-body">
+                <h:outputLink value="#{request.contextPath}/ResponsableRH/organigramme.xhtml" styleClass="nav-item #{page == 'organigramme' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Organigramme
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/Principal/index.xhtml" styleClass="nav-item">
+                    <div class="nav-dot"></div> Portail public
+                </h:outputLink>
+            </div>
+        </div>
+
+    </nav>
+
+    <script>
+        function toggleNavGroup(header) {
+            var group = header.parentElement;
+            var wasOpen = group.classList.contains('open');
+            document.querySelectorAll('.rh-nav .nav-group.open').forEach(function(g) {
+                g.classList.remove('open');
+            });
+            if (!wasOpen) group.classList.add('open');
+        }
+    </script>
+
+    <div class="rh-sidebar-footer">
+        <div class="sidebar-user">
+            <div class="sidebar-user-avatar">
+                #{not empty sessionBean.nomComplet ? sessionBean.nomComplet.substring(0,1) : 'R'}
+            </div>
+            <div>
+                <div class="sidebar-user-name">#{sessionBean.nomComplet}</div>
+                <div class="sidebar-user-role">Responsable RH</div>
+            </div>
+        </div>
+        <h:form style="margin-top:12px;">
+            <p:commandButton value="Déconnexion" icon="pi pi-sign-out" action="#{loginBean.logout}"
+                              styleClass="btn-logout" ajax="false" style="width:100%;justify-content:center;"/>
+        </h:form>
+    </div>
+</div>
+</ui:composition>
+</html>

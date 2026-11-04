@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Concours &amp; Jury — Espace Employé</title>
+    <h:outputStylesheet library="css" name="employe-style.css"/>
+    <style>
+        .jr-pill {
+            border:none; padding:6px 16px; font-size:12px; font-weight:700;
+            border-radius:20px; background:#f1f5f9; color:#475569; cursor:pointer;
+        }
+        .jr-row {
+            display:flex; align-items:center; gap:16px; padding:14px 16px;
+            border:1px solid var(--emp-border); border-radius:12px; margin-bottom:10px;
+            text-decoration:none !important; transition:border-color .15s,transform .15s;
+        }
+        .jr-row:hover { border-color:var(--emp-primary); transform:translateY(-1px); }
+        .jr-row.is-termine { opacity:.82; }
+        .jr-icon {
+            width:42px; height:42px; border-radius:10px; flex-shrink:0;
+            display:flex; align-items:center; justify-content:center; font-size:1.1rem;
+            background:rgba(124,58,237,0.1); color:var(--emp-primary);
+        }
+        .jr-row.is-termine .jr-icon { background:var(--emp-bg); color:var(--emp-muted); }
+        .jr-body { flex:1; min-width:0; }
+        .jr-titre { font-weight:700; font-size:0.92rem; color:var(--emp-text) !important; }
+        .jr-meta { font-size:0.78rem; color:var(--emp-muted); margin-top:3px; }
+        .jr-meta span + span::before { content:'•'; margin:0 6px; }
+    </style>
+</h:head>
+<h:body>
+<div class="emp-layout">
+
+    <ui:include src="sidebar-employe.xhtml"/>
+
+    <main class="emp-main">
+
+        <div class="emp-page-header">
+            <div class="emp-page-title">
+                <h1><i class="pi pi-users" style="color:var(--emp-copper-l);"/> Concours &amp; Jury</h1>
+                <p>Vos participations aux comités d'évaluation de recrutement</p>
+            </div>
+        </div>
+
+        <div class="emp-card">
+            <h:form id="formJurys">
+
+                <!-- Filtre par statut : la liste reste masquée tant qu'aucun bouton n'est choisi -->
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:#{employeBean.filtreStatutJury == null ? '0' : '18px'};">
+                    <p:commandButton value="Tous (#{employeBean.mesJurys.size()})"
+                        action="#{employeBean.toggleFiltreStatutJury('TOUS')}" update="@form"
+                        styleClass="jr-pill"
+                        style="background:#{employeBean.filtreStatutJury == 'TOUS' ? '#0f172a' : '#f1f5f9'};color:#{employeBean.filtreStatutJury == 'TOUS' ? '#fff' : '#475569'};"/>
+                    <p:commandButton value="En cours (#{employeBean.mesJurysEnCours.size()})"
+                        action="#{employeBean.toggleFiltreStatutJury('EN_COURS')}" update="@form"
+                        styleClass="jr-pill"
+                        style="background:#{employeBean.filtreStatutJury == 'EN_COURS' ? 'var(--emp-primary)' : '#f1f5f9'};color:#{employeBean.filtreStatutJury == 'EN_COURS' ? '#fff' : '#475569'};"/>
+                    <p:commandButton value="Terminés (#{employeBean.mesJurysTermines.size()})"
+                        action="#{employeBean.toggleFiltreStatutJury('TERMINE')}" update="@form"
+                        styleClass="jr-pill"
+                        style="background:#{employeBean.filtreStatutJury == 'TERMINE' ? '#64748b' : '#f1f5f9'};color:#{employeBean.filtreStatutJury == 'TERMINE' ? '#fff' : '#475569'};"/>
+                </div>
+
+                <h:panelGroup layout="block" style="color:#94a3b8;font-size:13px;" rendered="#{employeBean.filtreStatutJury == null}">
+                    ← Choisissez un filtre ci-dessus pour afficher vos jurys.
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{employeBean.filtreStatutJury != null}">
+                    <h:panelGroup rendered="#{not empty employeBean.jurysFiltres}">
+                        <ui:repeat value="#{employeBean.jurysFiltres}" var="j">
+                            <a href="#{request.contextPath}/Employes/notation-jury.xhtml?id=#{j.comite.offre.id}"
+                               class="jr-row #{j.comite.offre.statut == 'FERMEE' ? 'is-termine' : ''}">
+                                <span class="jr-icon"><i class="pi pi-users"/></span>
+                                <div class="jr-body">
+                                    <div class="jr-titre">#{j.comite.offre.titre}</div>
+                                    <div class="jr-meta">
+                                        <span>Rôle : #{j.role}</span>
+                                        <span>#{j.comite.libelle}</span>
+                                        <h:outputText value="Publiée le #{j.comite.offre.datePublication}" rendered="#{j.comite.offre.datePublication != null}"/>
+                                    </div>
+                                </div>
+                                <span class="emp-badge #{j.comite.offre.statut == 'FERMEE' ? 'badge-secondary' : 'badge-success'}">
+                                    #{j.comite.offre.statut == 'FERMEE' ? 'Clôturé' : j.comite.offre.statut}
+                                </span>
+                            </a>
+                        </ui:repeat>
+                    </h:panelGroup>
+                    <h:panelGroup rendered="#{empty employeBean.jurysFiltres}">
+                        <div style="text-align:center;padding:32px;color:var(--emp-muted);">
+                            <i class="pi pi-inbox" style="font-size:2rem;display:block;margin-bottom:10px;opacity:0.4;"/>
+                            Aucun jury pour ce filtre.
+                        </div>
+                    </h:panelGroup>
+                </h:panelGroup>
+
+            </h:form>
+        </div>
+
+    </main>
+</div>
+</h:body>
+</html>

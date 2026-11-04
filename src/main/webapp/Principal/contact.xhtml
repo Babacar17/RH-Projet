@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+<ui:composition template="/Principal/template.xhtml">
+<ui:param name="active" value="contact"/>
+<ui:define name="title">Contact</ui:define>
+<ui:define name="content">
+
+<div class="page-banner">
+    <div class="breadcrumb"><a href="#{request.contextPath}/Principal/index.xhtml">Accueil</a><span>/</span>Contact</div>
+    <h1>Contactez le Ministère</h1>
+    <p>Une question sur une démarche, une publication ou un dossier ? Écrivez-nous ou appelez-nous.</p>
+</div>
+
+<div class="section alt">
+  <div class="container two-col">
+
+    <div class="info-card" id="adresse">
+        <h3>Nos coordonnées</h3>
+        <div class="contact-item">
+            <div class="service-icon"><i class="fas fa-phone"></i></div>
+            <div><h3>Téléphone</h3><a href="tel:+221338892100">+221 33 889 21 00</a></div>
+        </div>
+        <div class="contact-item">
+            <div class="service-icon"><i class="fas fa-envelope"></i></div>
+            <div><h3>E-mail</h3><a href="mailto:contact@finances.gouv.sn">contact@finances.gouv.sn</a></div>
+        </div>
+        <div class="contact-item">
+            <div class="service-icon"><i class="fas fa-map-marker-alt"></i></div>
+            <div><h3>Adresse</h3><p>Siège du MFB, Rue René Ndiaye, Dakar, Sénégal</p></div>
+        </div>
+    </div>
+
+    <div class="info-card">
+        <h3>Envoyer un message</h3>
+        <form action="mailto:contact@finances.gouv.sn" method="post" enctype="text/plain">
+            <div class="form-row">
+                <label for="nom">Nom complet</label>
+                <input type="text" id="nom" name="nom" required="required"/>
+            </div>
+            <div class="form-row">
+                <label for="email">Adresse e-mail</label>
+                <input type="email" id="email" name="email" required="required"/>
+            </div>
+            <div class="form-row">
+                <label for="objet">Objet</label>
+                <select id="objet" name="objet">
+                    <option>Déclaration et paiement des impôts</option>
+                    <option>Remboursement TVA</option>
+                    <option>Marchés publics</option>
+                    <option>Publications et données</option>
+                    <option>Autre demande</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <label for="message">Message</label>
+                <textarea id="message" name="message" required="required"></textarea>
+            </div>
+            <button type="submit" class="btn">Envoyer le message</button>
+        </form>
+    </div>
+
+  </div>
+</div>
+
+</ui:define>
+</ui:composition>
+</html>

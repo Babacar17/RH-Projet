@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+
+<h:head>
+    <title>Inscription &#8211; Minist&#232;re des Finances et du Budget</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&amp;family=DM+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --navy:   #0a1628;
+            --navy2:  #1a3a5c;
+            --gold:   #b58a3a;
+            --gold-l: #f0c97a;
+            --white:  #ffffff;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+            background: #f7f7f9;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 0;
+        }
+
+        /* ── SPLIT LAYOUT ── */
+        .page-wrap {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: 380px;
+            flex-shrink: 0;
+            background: linear-gradient(165deg, var(--navy) 0%, var(--navy2) 60%, #1e4a72 100%);
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 48px 40px;
+            overflow: hidden;
+        }
+        .sidebar::before {
+            content: "";
+            position: absolute;
+            width: 400px; height: 400px;
+            border-radius: 50%;
+            border: 1px solid rgba(181,138,58,.12);
+            top: -120px; right: -120px;
+        }
+        .sidebar::after {
+            content: "";
+            position: absolute;
+            width: 240px; height: 240px;
+            border-radius: 50%;
+            border: 40px solid rgba(181,138,58,.05);
+            bottom: 100px; left: -60px;
+        }
+
+        .brand { position: relative; z-index: 2; display: flex; align-items: center; gap: 14px; }
+        .brand-icon {
+            width: 46px; height: 46px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-l));
+            border-radius: 11px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: var(--navy);
+            flex-shrink: 0;
+        }
+        .brand-text h1 { font-family: 'Playfair Display', serif; font-size: 13px; color: #fff; font-weight: 700; line-height: 1.3; }
+        .brand-text span { font-size: 10px; color: rgba(255,255,255,.45); }
+
+        .sidebar-content { position: relative; z-index: 2; }
+        .sidebar-content .eyebrow {
+            display: inline-flex; align-items: center; gap: 7px;
+            background: rgba(181,138,58,.15);
+            border: 1px solid rgba(181,138,58,.3);
+            color: var(--gold-l); font-size: 10px; font-weight: 700;
+            letter-spacing: 2px; text-transform: uppercase;
+            padding: 5px 12px; border-radius: 20px; margin-bottom: 20px;
+        }
+        .sidebar-content h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 30px; color: #fff; font-weight: 700;
+            line-height: 1.25; margin-bottom: 16px;
+        }
+        .sidebar-content h2 em { color: var(--gold-l); font-style: normal; }
+        .sidebar-content p { font-size: 13px; color: rgba(255,255,255,.6); line-height: 1.7; }
+
+        .feature-list { position: relative; z-index: 2; display: flex; flex-direction: column; gap: 14px; }
+        .feature-item { display: flex; align-items: center; gap: 12px; }
+        .feature-icon {
+            width: 34px; height: 34px; border-radius: 8px;
+            background: rgba(181,138,58,.15);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--gold-l); font-size: 13px; flex-shrink: 0;
+        }
+        .feature-text { font-size: 13px; color: rgba(255,255,255,.7); }
+
+        /* ── MAIN FORM AREA ── */
+        .form-area {
+            flex: 1;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 48px 40px;
+            overflow-y: auto;
+        }
+
+        .register-card {
+            width: 100%; max-width: 560px;
+            animation: slideUp .5s ease both;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-header { margin-bottom: 32px; }
+        .card-header .step-label {
+            font-size: 11px; font-weight: 700; letter-spacing: 2px;
+            text-transform: uppercase; color: var(--gold); margin-bottom: 10px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .step-label::before { content: ""; display: block; width: 20px; height: 2px; background: var(--gold); }
+        .card-header h3 { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+        .card-header p { font-size: 14px; color: #888; }
+
+        /* 2-column grid */
+        .fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+        .field-full { grid-column: 1 / -1; }
+
+        .field { margin-bottom: 20px; }
+        .field-label {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 13px; font-weight: 600; color: #444;
+            margin-bottom: 7px;
+        }
+        .field-label i { color: var(--gold); font-size: 11px; }
+
+        .input-wrap { position: relative; }
+        .input-wrap i.input-icon {
+            position: absolute; left: 13px; top: 50%;
+            transform: translateY(-50%);
+            color: #c0c0c0; font-size: 13px;
+            pointer-events: none;
+            transition: color .2s;
+        }
+
+        /* PrimeFaces overrides */
+        .input-wrap .ui-inputfield,
+        .input-wrap .ui-password input,
+        .ui-selectonemenu {
+            width: 100% !important;
+            padding: 12px 14px 12px 38px !important;
+            border: 1.5px solid #e2e2e6 !important;
+            border-radius: 10px !important;
+            font-size: 13.5px !important;
+            font-family: 'DM Sans', sans-serif !important;
+            color: #222 !important;
+            background: #fff !important;
+            transition: border-color .2s, box-shadow .2s !important;
+            outline: none !important;
+        }
+        .input-wrap .ui-inputfield:focus,
+        .input-wrap .ui-password input:focus {
+            border-color: var(--gold) !important;
+            box-shadow: 0 0 0 3px rgba(181,138,58,.11) !important;
+        }
+        .input-wrap .ui-inputfield::placeholder,
+        .input-wrap .ui-password input::placeholder { color: #c0bfbf !important; }
+
+        /* selectOneMenu */
+        .select-wrap .ui-selectonemenu {
+            padding: 12px 14px 12px 38px !important;
+            border-radius: 10px !important;
+            border: 1.5px solid #e2e2e6 !important;
+            font-size: 13.5px !important;
+            font-family: 'DM Sans', sans-serif !important;
+            background: #fff !important;
+        }
+        .select-wrap { position: relative; }
+        .select-wrap i.input-icon {
+            position: absolute; left: 13px; top: 50%;
+            transform: translateY(-50%);
+            color: #c0c0c0; font-size: 13px;
+            pointer-events: none; z-index: 1;
+        }
+
+        /* section divider */
+        .section-sep {
+            grid-column: 1 / -1;
+            display: flex; align-items: center; gap: 12px;
+            margin: 4px 0 8px;
+        }
+        .section-sep span { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #bbb; white-space: nowrap; }
+        .section-sep::before, .section-sep::after { content: ""; flex: 1; height: 1px; background: #eee; }
+
+        /* password strength indicator */
+        .pwd-strength { margin-top: 6px; display: flex; gap: 4px; }
+        .pwd-bar { flex: 1; height: 3px; border-radius: 2px; background: #eee; transition: background .3s; }
+
+        /* submit */
+        .submit-area { grid-column: 1 / -1; margin-top: 8px; }
+        .submit-area .ui-button {
+            width: 100% !important;
+            padding: 14px !important;
+            background: linear-gradient(135deg, var(--navy2), var(--navy)) !important;
+            border: none !important;
+            border-radius: 10px !important;
+            font-size: 14px !important;
+            font-weight: 700 !important;
+            font-family: 'DM Sans', sans-serif !important;
+            color: #fff !important;
+            cursor: pointer !important;
+            transition: all .3s !important;
+            letter-spacing: .5px !important;
+        }
+        .submit-area .ui-button:hover {
+            background: linear-gradient(135deg, var(--gold), #9a7430) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 20px rgba(181,138,58,.35) !important;
+        }
+
+        /* terms note */
+        .terms-note {
+            grid-column: 1 / -1;
+            font-size: 12px; color: #aaa; text-align: center; margin-top: 12px;
+        }
+        .terms-note a { color: var(--gold); text-decoration: none; }
+
+        /* login link */
+        .login-link {
+            grid-column: 1 / -1;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            margin-top: 20px;
+            font-size: 13px; color: #888;
+        }
+        .login-link a {
+            color: var(--navy2); font-weight: 700; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 5px;
+        }
+        .login-link a:hover { color: var(--gold); }
+
+        /* back home */
+        .back-home {
+            grid-column: 1 / -1;
+            display: flex; justify-content: center; margin-top: 4px;
+        }
+        .back-home a {
+            font-size: 12px; color: #bbb; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 5px;
+            transition: color .2s;
+        }
+        .back-home a:hover { color: var(--gold); }
+
+        /* growl */
+        .ui-growl { top: 20px !important; right: 20px !important; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 960px) {
+            .page-wrap { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; position: static; padding: 32px 24px 40px; }
+            .sidebar-content h2 { font-size: 24px; }
+            .feature-list { display: none; }
+            .form-area { padding: 32px 20px 40px; }
+            .fields-grid { grid-template-columns: 1fr; }
+            .field-full { grid-column: 1; }
+            .submit-area { grid-column: 1; }
+            .login-link, .back-home, .terms-note { grid-column: 1; }
+            .section-sep { grid-column: 1; }
+        }
+        @media (max-width: 480px) {
+            .sidebar { padding: 24px 16px 32px; }
+            .form-area { padding: 24px 16px 32px; }
+        }
+    </style>
+
+    <script>
+    //<![CDATA[
+        var paysConfig = {
+            "+221": { digits: 9,  label: "Sénégal",       exemple: "77 123 45 67" },
+            "+33" : { digits: 9,  label: "France",          exemple: "6 12 34 56 78" },
+            "+1"  : { digits: 10, label: "USA",             exemple: "212 555 1234" },
+            "+212": { digits: 9,  label: "Maroc",           exemple: "612 345 678" },
+            "+225": { digits: 10, label: "Côte d'Ivoire", exemple: "07 12 34 56 78" },
+            "+223": { digits: 8,  label: "Mali",            exemple: "76 12 34 56" },
+            "+224": { digits: 9,  label: "Guinée",         exemple: "621 234 567" }
+        };
+
+        function changerPays(select) {
+            var indicatif = select.value;
+            var config    = paysConfig[indicatif];
+            var champ     = document.getElementById("inscriptionForm:telephone");
+            var feedback  = document.getElementById("telFeedback");
+            champ.value       = "";
+            champ.maxLength   = config.digits;
+            champ.placeholder = config.exemple;
+            feedback.innerHTML = config.label + " : <strong>" + config.digits
+                + " chiffres</strong> après " + indicatif
+                + " — ex : " + config.exemple;
+            feedback.style.color = "#94a3b8";
+        }
+
+        function bloquerNonChiffre(event) {
+            var key = event.key;
+            if (!/[0-9]/.test(key)
+                && key !== "Backspace" && key !== "Delete"
+                && key !== "ArrowLeft" && key !== "ArrowRight"
+                && key !== "Tab") {
+                event.preventDefault();
+                return false;
+            }
+            return true;
+        }
+
+        function formaterNumero(champ) {
+            var indicatif = document.getElementById("indicatifPays").value;
+            var config    = paysConfig[indicatif];
+            var feedback  = document.getElementById("telFeedback");
+            var digits    = champ.value.replace(/\D/g, "");
+            if (digits.length > config.digits) digits = digits.substring(0, config.digits);
+            champ.value = digits;
+
+            if (digits.length === 0) {
+                feedback.innerHTML = config.label + " : <strong>" + config.digits
+                    + " chiffres</strong> après " + indicatif
+                    + " — ex : " + config.exemple;
+                feedback.style.color = "#94a3b8";
+            } else if (digits.length === config.digits) {
+                feedback.innerHTML = "✅ Numéro complet — " + indicatif + digits;
+                feedback.style.color = "#10b981";
+            } else {
+                feedback.innerHTML = digits.length + " / " + config.digits
+                    + " chiffres — encore " + (config.digits - digits.length) + " à saisir";
+                feedback.style.color = "#f59e0b";
+            }
+        }
+
+        function assemblerTelephone() {
+            var indicatif = document.getElementById("indicatifPays").value;
+            var champ     = document.getElementById("inscriptionForm:telephone");
+            var digits    = champ.value.replace(/\D/g, "");
+            if (digits.length > 0) {
+                champ.value = indicatif + digits;
+            }
+        }
+
+        // Init au chargement : maxlength = 9 (Sénégal par défaut)
+        window.addEventListener("load", function() {
+            var champ = document.getElementById("inscriptionForm:telephone");
+            if (champ) champ.maxLength = 9;
+        });
+    //]]>
+    </script>
+</h:head>
+
+<h:body>
+<div class="page-wrap">
+
+    <!-- ========== SIDEBAR ========== -->
+    <div class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">
+                <h:graphicImage url="#{inscriptionBean.logoInstitutionPortail}"
+                                rendered="#{inscriptionBean.logoInstitutionPortail != null}"
+                                style="width:100%;height:100%;object-fit:contain;border-radius:8px;"
+                                alt="Logo"/>
+                <i class="fas fa-landmark"
+                   style="display:#{inscriptionBean.logoInstitutionPortail == null ? 'inline' : 'none'};"/>
+            </div>
+            <div class="brand-text">
+                <h:panelGroup rendered="#{inscriptionBean.institutionPortail != null}">
+                    <h1 style="text-transform:uppercase;">#{inscriptionBean.nomInstitutionPortail}</h1>
+                    <span>R&#233;publique du S&#233;n&#233;gal</span>
+                </h:panelGroup>
+                <h:panelGroup rendered="#{inscriptionBean.institutionPortail == null}">
+                    <h1>SIRH &#8212; PLATEFORME RH</h1>
+                    <span>R&#233;publique du S&#233;n&#233;gal</span>
+                </h:panelGroup>
+            </div>
+        </div>
+
+        <div class="sidebar-content">
+            <div class="eyebrow"><i class="fas fa-user-plus"></i> Cr&#233;ation de compte</div>
+            <h:panelGroup rendered="#{inscriptionBean.institutionPortail != null}">
+                <h2>Rejoignez la<br/>plateforme <em>officielle</em><br/>de #{inscriptionBean.codeInstitutionPortail}</h2>
+                <p>Cr&#233;ez votre compte pour acc&#233;der aux services num&#233;riques de
+                   <strong>#{inscriptionBean.nomInstitutionPortail}</strong> &#8212;
+                   d&#233;p&#244;t de candidature, suivi RH, et plus.</p>
+            </h:panelGroup>
+            <h:panelGroup rendered="#{inscriptionBean.institutionPortail == null}">
+                <h2>Rejoignez la<br/>plateforme <em>SIRH</em><br/>gouvernementale</h2>
+                <p>Cr&#233;ez votre compte pour acc&#233;der aux services num&#233;riques RH &#8212;
+                   d&#233;p&#244;t de candidature, suivi des cong&#233;s et plus.</p>
+            </h:panelGroup>
+        </div>
+
+        <div class="feature-list">
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-file-alt"></i></div>
+                <div class="feature-text">D&#233;posez votre candidature en ligne</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-calendar-check"></i></div>
+                <div class="feature-text">G&#233;rez vos demandes de cong&#233;</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+                <div class="feature-text">Acc&#232;s s&#233;curis&#233; et confidentiel</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-bell"></i></div>
+                <div class="feature-text">Notifications en temps r&#233;el</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== FORM AREA ========== -->
+    <div class="form-area">
+        <div class="register-card">
+
+            <!-- Bandeau institution portail (rendered si on est sur /CODE/inscription) -->
+            <h:panelGroup rendered="#{inscriptionBean.institutionPortail != null}">
+                <div style="text-align:center;padding-bottom:18px;margin-bottom:18px;
+                            border-bottom:1px solid #eee;">
+                    <div style="font-size:11px;color:#888;text-transform:uppercase;
+                                letter-spacing:1px;margin-bottom:4px;">Portail</div>
+                    <div style="font-size:16px;font-weight:700;color:#1F4E79;">
+                        #{inscriptionBean.nomInstitutionPortail}
+                    </div>
+                    <span style="display:inline-block;margin-top:6px;background:#fef3c7;
+                                 color:#92400e;padding:3px 12px;border-radius:12px;
+                                 font-size:11px;font-weight:700;letter-spacing:.5px;">
+                        #{inscriptionBean.codeInstitutionPortail}
+                    </span>
+                    <div style="margin-top:10px;font-size:11px;color:#64748b;">
+                        Votre compte sera rattach&#233; &#224; cette institution.
+                    </div>
+                </div>
+            </h:panelGroup>
+
+            <div class="card-header">
+                <div class="step-label">Nouveau compte</div>
+                <h3>Cr&#233;er votre compte</h3>
+                <p>Remplissez le formulaire pour commencer</p>
+            </div>
+
+            <p:growl id="messages" showDetail="true"/>
+
+            <h:form id="inscriptionForm">
+                <div class="fields-grid">
+
+                    <!-- Identifiants -->
+                    <div class="section-sep"><span>Identifiants</span></div>
+
+                    <div class="field">
+                        <div class="field-label"><i class="fas fa-user"></i> Nom d&#8217;utilisateur</div>
+                        <div class="input-wrap">
+                            <i class="fas fa-user input-icon"></i>
+                            <p:inputText id="username"
+                                         value="#{inscriptionBean.user.username}"
+                                         placeholder="Choisissez un identifiant"
+                                         style="width:100%"
+                                         required="true"
+                                         requiredMessage="Ce champ est requis"/>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="field-label"><i class="fas fa-envelope"></i> Adresse email</div>
+                        <div class="input-wrap">
+                            <i class="fas fa-envelope input-icon"></i>
+                            <p:inputText id="email"
+                                         value="#{inscriptionBean.user.email}"
+                                         placeholder="votre@email.sn"
+                                         style="width:100%"
+                                         required="true"
+                                         requiredMessage="Ce champ est requis"/>
+                        </div>
+                    </div>
+
+                    <!-- Informations personnelles -->
+                    <div class="section-sep"><span>Informations personnelles</span></div>
+
+                    <div class="field">
+                        <div class="field-label"><i class="fas fa-id-card"></i> Pr&#233;nom</div>
+                        <div class="input-wrap">
+                            <i class="fas fa-id-card input-icon"></i>
+                            <p:inputText id="prenom"
+                                         value="#{inscriptionBean.user.prenom}"
+                                         placeholder="Votre pr&#233;nom"
+                                         style="width:100%"/>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="field-label"><i class="fas fa-id-badge"></i> Nom</div>
+                        <div class="input-wrap">
+                            <i class="fas fa-id-badge input-icon"></i>
+                            <p:inputText id="nom"
+                                         value="#{inscriptionBean.user.nom}"
+                                         placeholder="Votre nom de famille"
+                                         style="width:100%"/>
+                        </div>
+                    </div>
+
+                    <div class="field field-full">
+                        <div class="field-label"><i class="fas fa-phone"></i> T&#233;l&#233;phone</div>
+                        <div style="display:flex; gap:8px; align-items:stretch;">
+                            <!-- Sélecteur pays -->
+                            <select id="indicatifPays" onchange="changerPays(this)"
+                                    style="padding:10px 12px; border:1.5px solid #e2e2e6;
+                                           border-radius:10px; font-size:13px; background:#fff;
+                                           cursor:pointer; font-family:'DM Sans',sans-serif;
+                                           color:#222; min-width:175px; flex-shrink:0;">
+                                <option value="+221" data-digits="9"  selected="selected">&#127480;&#127475; S&#233;n&#233;gal (+221)</option>
+                                <option value="+33"  data-digits="9"         >&#127467;&#127479; France (+33)</option>
+                                <option value="+1"   data-digits="10"        >&#127482;&#127480; USA (+1)</option>
+                                <option value="+212" data-digits="9"         >&#127474;&#127462; Maroc (+212)</option>
+                                <option value="+225" data-digits="10"        >&#127464;&#127470; C&#244;te d&#8217;Ivoire (+225)</option>
+                                <option value="+223" data-digits="8"         >&#127474;&#127473; Mali (+223)</option>
+                                <option value="+224" data-digits="9"         >&#127468;&#127475; Guin&#233;e (+224)</option>
+                            </select>
+                            <!-- Numéro -->
+                            <div class="input-wrap" style="flex:1;">
+                                <i class="fas fa-phone input-icon"></i>
+                                <p:inputText id="telephone"
+                                             value="#{inscriptionBean.user.telephone}"
+                                             placeholder="7X XXX XX XX"
+                                             style="width:100%"
+                                             onkeypress="return bloquerNonChiffre(event)"
+                                             onkeyup="formaterNumero(this)"
+                                             onblur="assemblerTelephone()"/>
+                            </div>
+                        </div>
+                        <!-- Feedback -->
+                        <div id="telFeedback"
+                             style="font-size:11px; margin-top:5px; color:#94a3b8; padding-left:2px;">
+                            S&#233;n&#233;gal : 9 chiffres apr&#232;s +221 &#8212; ex&#160;: 77 123 45 67
+                        </div>
+                    </div>
+
+                    <!-- S&#233;curit&#233; -->
+                    <div class="section-sep"><span>S&#233;curit&#233;</span></div>
+
+                    <div class="field">
+                        <div class="field-label"><i class="fas fa-lock"></i> Mot de passe</div>
+                        <div class="input-wrap">
+                            <i class="fas fa-lock input-icon"></i>
+                            <p:password id="password"
+                                        value="#{inscriptionBean.password}"
+                                        placeholder="Minimum 8 caract&#232;res"
+                                        style="width:100%"
+                                        required="true"
+                                        requiredMessage="Ce champ est requis"
+                                        feedback="false"/>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="field-label"><i class="fas fa-check-circle"></i> Confirmer</div>
+                        <div class="input-wrap">
+                            <i class="fas fa-check-circle input-icon"></i>
+                            <p:password id="confirmPassword"
+                                        value="#{inscriptionBean.confirmPassword}"
+                                        placeholder="R&#233;p&#233;tez le mot de passe"
+                                        style="width:100%"
+                                        required="true"
+                                        requiredMessage="Ce champ est requis"
+                                        feedback="false"/>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="submit-area">
+                        <p:commandButton value="Cr&#233;er mon compte"
+                                         action="#{inscriptionBean.inscrire}"
+                                         update="messages"
+                                         style="width:100%; margin-top:4px;"/>
+                    </div>
+
+                    <div class="terms-note">
+                        En vous inscrivant, vous acceptez les
+                        <a href="#">conditions d&#8217;utilisation</a> et la
+                        <a href="#">politique de confidentialit&#233;</a> du MFB.
+                    </div>
+
+                    <div class="login-link">
+                        D&#233;j&#224; un compte ?
+                        <a href="#{request.contextPath}/Authentification/login.xhtml">
+                            <i class="fas fa-sign-in-alt"></i> Se connecter
+                        </a>
+                    </div>
+
+                    <div class="back-home">
+                        <a href="#{request.contextPath}/Principal/index.xhtml">
+                            <i class="fas fa-arrow-left"></i> Retour &#224; l&#8217;accueil
+                        </a>
+                    </div>
+
+                </div>
+            </h:form>
+
+        </div>
+    </div>
+
+</div>
+</h:body>
+</html>

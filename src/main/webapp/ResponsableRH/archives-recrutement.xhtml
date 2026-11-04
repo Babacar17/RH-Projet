@@ -1,0 +1,173 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <ui:param name="page" value="archives-recrutement"/>
+    <ui:define name="title">Archives recrutement — SIRH</ui:define>
+    <ui:define name="pageTitle">Archives — Rapports &amp; PV</ui:define>
+    <ui:define name="breadcrumb">Recrutement &gt; Archives des rapports et PV, toutes offres</ui:define>
+
+    <ui:define name="styles">
+        <style>
+            .arch-titre { font-weight:700; font-size:13.5px; color:#0f172a; }
+            .arch-sous { font-size:12px; color:#64748b; margin-top:2px; }
+            .arch-notes { font-size:12px; color:#94a3b8; margin-top:4px; white-space:normal; }
+        </style>
+    </ui:define>
+
+    <ui:define name="content">
+    <h:form id="formArchives">
+
+        <div class="section-card" style="margin-bottom:20px;">
+            <div class="section-header">
+                <div class="section-title">
+                    <div class="section-title-dot" style="background:#2563eb;"></div>
+                    Filtrer par offre
+                </div>
+            </div>
+            <div style="padding:16px 20px;">
+                <p:selectOneMenu value="#{archiveRecrutementBean.filtreOffreId}" converter="jakarta.faces.Long"
+                                 style="width:100%;max-width:420px;" filter="true" filterMatchMode="contains">
+                    <f:selectItem itemLabel="Toutes les offres" itemValue="#{null}" noSelectionOption="true"/>
+                    <f:selectItems value="#{archiveRecrutementBean.offresDisponibles}" var="o"
+                                   itemValue="#{o.id}" itemLabel="#{o.titre}"/>
+                    <p:ajax listener="#{archiveRecrutementBean.appliquerFiltre}" update="zoneArchives"/>
+                </p:selectOneMenu>
+            </div>
+        </div>
+
+        <h:panelGroup id="zoneArchives" layout="block">
+
+        <h:panelGroup rendered="#{not archiveRecrutementBean.filtresAppliques}">
+            <div class="section-card" style="padding:28px 20px;text-align:center;color:#94a3b8;font-size:13px;">
+                ← Choisissez une offre ci-dessus pour afficher les rapports et PV archivés.
+            </div>
+        </h:panelGroup>
+
+        <h:panelGroup rendered="#{archiveRecrutementBean.filtresAppliques}">
+
+        <!-- ══════════════ Rapports de phase ══════════════ -->
+        <div class="section-card collapsed" style="margin-bottom:20px;">
+            <div class="section-header">
+                <div class="section-title" onclick="this.closest('.section-card').classList.toggle('collapsed');">
+                    <div class="section-title-dot" style="background:#16a34a;"></div>
+                    Rapports de phase (#{archiveRecrutementBean.rapportsFiltres.size()})
+                </div>
+            </div>
+            <p:dataTable value="#{archiveRecrutementBean.rapportsFiltres}" var="r" rowKey="#{r.id}"
+                         rows="15" paginator="true" paginatorPosition="bottom"
+                         style="border:none;table-layout:fixed;width:100%;" emptyMessage="Aucun rapport archivé.">
+                <p:column headerText="Rapport" style="padding:12px 16px;">
+                    <div class="arch-titre">#{r.phaseOffre.offre.titre}</div>
+                    <div class="arch-sous">#{r.phaseOffre.phase.libelle} — #{r.libelle}</div>
+                    <div class="arch-notes" rendered="#{not empty r.notesAutorite}">#{r.notesAutorite}</div>
+                </p:column>
+                <p:column headerText="Candidats retenus" style="padding:12px 16px;width:12%;text-align:center;">
+                    #{r.candidatsRetenus}
+                </p:column>
+                <p:column headerText="Créé le" style="padding:12px 16px;width:14%;">
+                    <h:outputText value="#{r.dateCreation}">
+                        <f:convertDateTime pattern="dd/MM/yyyy HH:mm" type="localDateTime"/>
+                    </h:outputText>
+                </p:column>
+                <p:column headerText="" style="padding:12px 16px;width:190px;">
+                    <div style="display:flex;gap:10px;align-items:center;white-space:nowrap;">
+                        <p:commandButton icon="pi pi-download" title="Télécharger en PDF"
+                            action="#{archiveRecrutementBean.telechargerRapport(r.id)}"
+                            ajax="false" styleClass="ui-button-flat" style="width:30px;height:30px;"/>
+                        <p:commandButton icon="pi pi-bell" title="Notifier le jury"
+                            action="#{archiveRecrutementBean.notifierJuryRapport(r.id)}"
+                            update=":growl" styleClass="ui-button-flat" style="width:30px;height:30px;"/>
+                        <p:commandButton value="Ouvrir →" title="Ouvrir le PDF du rapport"
+                            action="#{archiveRecrutementBean.ouvrirRapport(r.id)}"
+                            ajax="false" target="_blank" styleClass="ui-button-flat"
+                            style="font-size:12px;color:#2563eb;font-weight:600;border:none;background:none;padding:0;"/>
+                    </div>
+                </p:column>
+            </p:dataTable>
+        </div>
+
+        <!-- ══════════════ PV de délibération ══════════════ -->
+        <div class="section-card collapsed">
+            <div class="section-header">
+                <div class="section-title" onclick="this.closest('.section-card').classList.toggle('collapsed');">
+                    <div class="section-title-dot" style="background:#d97706;"></div>
+                    PV de délibération (#{archiveRecrutementBean.pvsFiltres.size()})
+                </div>
+            </div>
+            <p:dataTable value="#{archiveRecrutementBean.pvsFiltres}" var="pv" rowKey="#{pv.id}"
+                         rows="15" paginator="true" paginatorPosition="bottom"
+                         style="border:none;table-layout:fixed;width:100%;" emptyMessage="Aucun PV archivé.">
+                <p:column style="width:30px;"><p:rowToggler/></p:column>
+                <p:column headerText="PV" style="padding:12px 16px;">
+                    <div class="arch-titre">#{pv.offre.titre}</div>
+                    <div class="arch-sous">#{pv.libelle}</div>
+                </p:column>
+                <p:column headerText="Membres présents" style="padding:12px 16px;width:12%;text-align:center;">
+                    #{pv.nombreMembres}
+                </p:column>
+                <p:column headerText="Date" style="padding:12px 16px;width:14%;">
+                    <h:outputText value="#{pv.dateCreation}">
+                        <f:convertDateTime pattern="dd/MM/yyyy HH:mm" type="localDateTime"/>
+                    </h:outputText>
+                </p:column>
+                <p:column headerText="" style="padding:12px 16px;width:190px;">
+                    <div style="display:flex;gap:10px;align-items:center;white-space:nowrap;">
+                        <p:commandButton icon="pi pi-download" title="Télécharger en PDF"
+                            action="#{archiveRecrutementBean.telechargerPv(pv.id)}"
+                            ajax="false" styleClass="ui-button-flat" style="width:30px;height:30px;"/>
+                        <p:commandButton icon="pi pi-bell" title="Notifier le jury"
+                            action="#{archiveRecrutementBean.notifierJuryPv(pv.id)}"
+                            update=":growl" styleClass="ui-button-flat" style="width:30px;height:30px;"/>
+                        <p:commandButton value="Ouvrir →" title="Ouvrir le PDF du PV"
+                            action="#{archiveRecrutementBean.ouvrirPv(pv.id)}"
+                            ajax="false" target="_blank" styleClass="ui-button-flat"
+                            style="font-size:12px;color:#2563eb;font-weight:600;border:none;background:none;padding:0;"/>
+                    </div>
+                </p:column>
+                <p:rowExpansion>
+                    <h:panelGroup rendered="#{empty archiveRecrutementBean.getCandidatsFinaux(pv.offre.id)}">
+                        <p style="color:#94a3b8;font-size:12.5px;padding:8px 0;">Aucun candidat finaliste pour cette offre.</p>
+                    </h:panelGroup>
+                    <p:dataTable value="#{archiveRecrutementBean.getCandidatsFinaux(pv.offre.id)}" var="cf" rowKey="#{cf.id}"
+                                 style="border:none;" rendered="#{not empty archiveRecrutementBean.getCandidatsFinaux(pv.offre.id)}">
+                        <p:column style="width:28px;"><p:rowToggler/></p:column>
+                        <p:column headerText="Rang" style="width:60px;">#{cf.rang}</p:column>
+                        <p:column headerText="Candidat">#{cf.candidature.prenomCandidat} #{cf.candidature.nomCandidat}</p:column>
+                        <p:column headerText="Points" style="width:100px;">
+                            #{archiveRecrutementBean.getPointsCumules(cf.candidature)}/#{archiveRecrutementBean.getPointsMaxCumules(cf.candidature)}
+                        </p:column>
+                        <p:column headerText="Décision" style="width:110px;">
+                            <span class="badge badge-#{cf.statut}">#{cf.statut}</span>
+                        </p:column>
+                        <p:rowExpansion>
+                            <h:panelGroup rendered="#{empty archiveRecrutementBean.getNotesParCandidature(cf.candidature.id)}">
+                                <p style="color:#94a3b8;font-size:12px;padding:6px 0;">Aucune note enregistrée pour ce candidat.</p>
+                            </h:panelGroup>
+                            <p:dataTable value="#{archiveRecrutementBean.getNotesParCandidature(cf.candidature.id)}" var="n" rowKey="#{n.id}"
+                                         style="border:none;" rendered="#{not empty archiveRecrutementBean.getNotesParCandidature(cf.candidature.id)}">
+                                <p:column headerText="Phase" style="width:140px;">#{n.phaseOffre.phase.libelle}</p:column>
+                                <p:column headerText="Membre du jury">#{n.evaluateur.nomComplet}</p:column>
+                                <p:column headerText="Élément noté">#{n.element.libelle}</p:column>
+                                <p:column headerText="Points" style="width:80px;text-align:center;">#{n.points}</p:column>
+                                <p:column headerText="Commentaire">
+                                    <h:outputText value="#{n.commentaire}" rendered="#{not empty n.commentaire}"/>
+                                    <span style="color:#94a3b8;" rendered="#{empty n.commentaire}">—</span>
+                                </p:column>
+                            </p:dataTable>
+                        </p:rowExpansion>
+                    </p:dataTable>
+                </p:rowExpansion>
+            </p:dataTable>
+        </div>
+
+        </h:panelGroup>
+        </h:panelGroup>
+
+    </h:form>
+    </ui:define>
+
+</ui:composition>

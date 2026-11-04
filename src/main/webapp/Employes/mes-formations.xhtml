@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Mes formations — Espace Employé</title>
+    <h:outputStylesheet library="css" name="employe-style.css"/>
+</h:head>
+<h:body>
+<div class="emp-layout">
+
+    <ui:include src="sidebar-employe.xhtml"/>
+
+    <main class="emp-main">
+
+        <div class="emp-page-header">
+            <div class="emp-page-title">
+                <h1><i class="pi pi-book" style="color:var(--emp-primary);"/> Mes formations</h1>
+                <p>Parcours de formation et développement des compétences</p>
+            </div>
+        </div>
+
+        <!-- Stats rapides -->
+        <div class="emp-kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:24px;">
+            <div class="emp-kpi">
+                <div class="kpi-icon"><i class="pi pi-book"/></div>
+                <div class="kpi-value">#{employeBean.mesFormations.size()}</div>
+                <div class="kpi-label">Formations suivies</div>
+            </div>
+            <div class="emp-kpi kpi-success">
+                <div class="kpi-icon"><i class="pi pi-check-circle"/></div>
+                <div class="kpi-value">
+                    <!-- Compte les formations terminées -->
+                    0
+                </div>
+                <div class="kpi-label">Terminées</div>
+            </div>
+            <div class="emp-kpi kpi-warning">
+                <div class="kpi-icon"><i class="pi pi-clock"/></div>
+                <div class="kpi-value">0</div>
+                <div class="kpi-label">En cours</div>
+            </div>
+        </div>
+
+        <!-- Liste formations en timeline -->
+        <div class="emp-card">
+            <div class="emp-card-header">
+                <div class="emp-card-title">
+                    <span class="card-icon"><i class="pi pi-list"/></span>
+                    Historique des formations
+                </div>
+            </div>
+
+            <h:panelGroup rendered="#{not empty employeBean.mesFormations}">
+                <div class="formation-timeline">
+                    <ui:repeat value="#{employeBean.mesFormations}" var="f">
+                        <div class="formation-item">
+                            <div style="background:var(--emp-card-hover);border:1px solid var(--emp-border);border-radius:10px;padding:14px 18px;">
+                                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                                    <div class="f-titre" style="font-size:1rem;">#{f.intitule}</div>
+                                    <span class="emp-badge badge-primary">#{f.statut}</span>
+                                </div>
+                                <div class="f-meta" style="display:flex;flex-wrap:wrap;gap:16px;">
+                                    <span><i class="pi pi-calendar" style="color:var(--emp-primary);margin-right:4px;"/>
+                                        Du <h:outputText value="#{f.dateDebut}"/> au <h:outputText value="#{f.dateFin}"/>
+                                    </span>
+                                    <h:panelGroup rendered="#{f.organisme != null}">
+                                        <span><i class="pi pi-building" style="color:var(--emp-primary);margin-right:4px;"/>#{f.organisme}</span>
+                                    </h:panelGroup>
+                                    <h:panelGroup rendered="#{f.lieu != null}">
+                                        <span><i class="pi pi-map-marker" style="color:var(--emp-primary);margin-right:4px;"/>#{f.lieu}</span>
+                                    </h:panelGroup>
+                                    <h:panelGroup rendered="#{f.dureeJours != null}">
+                                        <span><i class="pi pi-clock" style="color:var(--emp-primary);margin-right:4px;"/>#{f.dureeJours} jours</span>
+                                    </h:panelGroup>
+                                </div>
+                                <h:panelGroup rendered="#{f.objectifs != null}">
+                                    <div style="margin-top:8px;font-size:0.82rem;color:var(--emp-muted);">
+                                        <i class="pi pi-target" style="margin-right:4px;"/>Objectifs : #{f.objectifs}
+                                    </div>
+                                </h:panelGroup>
+                            </div>
+                        </div>
+                    </ui:repeat>
+                </div>
+            </h:panelGroup>
+
+            <h:panelGroup rendered="#{empty employeBean.mesFormations}">
+                <div style="text-align:center;padding:48px;color:var(--emp-muted);">
+                    <i class="pi pi-book" style="font-size:2.5rem;display:block;margin-bottom:12px;opacity:0.4;"/>
+                    <p>Aucune formation enregistrée à votre actif</p>
+                    <p style="font-size:0.82rem;margin-top:4px;">Les formations planifiées ou suivies apparaîtront ici.</p>
+                </div>
+            </h:panelGroup>
+        </div>
+
+    </main>
+</div>
+</h:body>
+</html>

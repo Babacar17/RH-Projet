@@ -1,0 +1,143 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <ui:param name="page" value="notes"/>
+    <ui:define name="title">Notes — SIRH</ui:define>
+    <ui:define name="pageTitle">Notes</ui:define>
+    <ui:define name="breadcrumb">Recrutement &gt; Notes</ui:define>
+
+    <ui:define name="styles">
+        <style>
+            /* ── Relevé de notes façon PV d'examen : table dense, petite écriture, colonnes étroites,
+                 et surtout jamais de scroll horizontal quel que soit le nombre d'éléments notés :
+                 largeur forcée à 100%, colonnes non dimensionnées réparties équitablement. ── */
+            .releve-table.ui-datatable .ui-datatable-tablewrapper { overflow-x:hidden !important; }
+            .releve-table.ui-datatable table { table-layout:fixed; width:100%; }
+            .releve-table thead th, .releve-table tbody td { overflow:hidden; word-break:break-word; }
+            .releve-table thead th {
+                font-size:10.5px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.2px;
+                padding:6px 5px; line-height:1.25; white-space:normal; vertical-align:bottom;
+            }
+            .releve-table tbody td { padding:5px; font-size:11.5px; color:#334155; vertical-align:middle; }
+            .releve-table .rv-candidat-nom { font-weight:700; font-size:11.5px; }
+            .releve-table .rv-candidat-mail { font-size:10px; color:#94a3b8; }
+            .releve-table .badge { font-size:9.5px; padding:2px 7px; }
+        </style>
+    </ui:define>
+
+    <ui:define name="content">
+        <h:form id="formSelectOffreNotes" style="max-width:420px;margin-bottom:14px;">
+            <label class="form-label" style="font-size:11px;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Aller directement à une offre</label>
+            <p:selectOneMenu value="#{recrutementBean.offreSelectionneeId}" converter="jakarta.faces.Long"
+                             style="width:100%;" filter="true" filterMatchMode="contains">
+                <f:selectItem itemLabel="— Choisir une offre —" itemValue="#{null}"/>
+                <f:selectItems value="#{recrutementBean.offres}" var="o" itemValue="#{o.id}" itemLabel="#{o.titre} (#{o.statut})"/>
+                <p:ajax update="@form :formNotes"/>
+            </p:selectOneMenu>
+        </h:form>
+
+        <h:form id="formNotes">
+        <h:panelGroup rendered="#{recrutementBean.offreSelectionnee == null}">
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-title">
+                        <div class="section-title-dot" style="background:#d4a017;"></div>
+                        Notes
+                    </div>
+                </div>
+                <p style="color:#94a3b8;font-size:13px;padding:16px;">← Choisissez une offre ci-dessus pour afficher son relevé de notes.</p>
+            </div>
+        </h:panelGroup>
+
+        <h:panelGroup rendered="#{recrutementBean.offreSelectionnee != null}">
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-title">
+                        <div class="section-title-dot" style="background:#2563eb;"></div>
+                        #{recrutementBean.offreSelectionnee.titre} — relevé de notes
+                    </div>
+                    <a href="recrutement.xhtml?tab=2&amp;offreId=#{recrutementBean.offreSelectionnee.id}" class="btn btn-secondary" style="text-decoration:none;">Modifier les notes</a>
+                </div>
+
+                <h:panelGroup rendered="#{empty recrutementBean.phasesOffre}">
+                    <p style="color:#94a3b8;padding:16px 20px;">Aucune phase lancée pour cette offre.</p>
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{not empty recrutementBean.phasesOffre}">
+                    <!-- Filtre par phase : le relevé reste masqué tant qu'aucune phase n'est choisie -->
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;padding:16px 16px 0;">
+                        <ui:repeat value="#{recrutementBean.phasesOffre}" var="po">
+                            <p:commandButton value="#{po.phase.libelle} (#{po.statut})"
+                                action="#{recrutementBean.togglePhaseNotes(po)}"
+                                update="@form"
+                                style="background:#{recrutementBean.phaseOffreSelectionnee != null and recrutementBean.phaseOffreSelectionnee.id == po.id ? '#2563eb' : '#f1f5f9'};color:#{recrutementBean.phaseOffreSelectionnee != null and recrutementBean.phaseOffreSelectionnee.id == po.id ? '#fff' : '#475569'};border:none;padding:6px 14px;font-size:12px;font-weight:700;border-radius:20px;"/>
+                        </ui:repeat>
+                        <h:panelGroup rendered="#{recrutementBean.toutesPhasesCloturees}">
+                            <p:commandButton value="Total cumulé"
+                                action="#{recrutementBean.toggleVueCumulee}"
+                                update="@form"
+                                style="background:#{recrutementBean.vueCumuleeSelectionnee ? '#15803d' : '#f1f5f9'};color:#{recrutementBean.vueCumuleeSelectionnee ? '#fff' : '#475569'};border:none;padding:6px 14px;font-size:12px;font-weight:700;border-radius:20px;"/>
+                        </h:panelGroup>
+                    </div>
+
+                    <h:panelGroup rendered="#{recrutementBean.phaseOffreSelectionnee == null and not recrutementBean.vueCumuleeSelectionnee}">
+                        <p style="color:#94a3b8;font-size:13px;padding:16px;">← Choisissez une phase ci-dessus pour afficher son relevé de notes.</p>
+                    </h:panelGroup>
+
+                    <h:panelGroup rendered="#{recrutementBean.phaseOffreSelectionnee != null}">
+                        <div style="padding:0 16px 16px;">
+                            <h:panelGroup rendered="#{empty recrutementBean.getReleveNotes(recrutementBean.phaseOffreSelectionnee)}">
+                                <p style="color:#94a3b8;font-size:13px;">Aucune note saisie pour cette phase.</p>
+                            </h:panelGroup>
+                            <p:dataTable value="#{recrutementBean.getReleveNotes(recrutementBean.phaseOffreSelectionnee)}" var="ligne"
+                                         styleClass="releve-table" style="border:none;"
+                                         rendered="#{not empty recrutementBean.getReleveNotes(recrutementBean.phaseOffreSelectionnee)}">
+                                <p:column headerText="Rang" style="width:34px;text-align:center;">#{ligne.rang}</p:column>
+                                <p:column headerText="Candidat" style="width:11%;">
+                                    <div class="rv-candidat-nom">#{ligne.candidature.prenomCandidat} #{ligne.candidature.nomCandidat}</div>
+                                    <div class="rv-candidat-mail">#{ligne.candidature.emailCandidat}</div>
+                                </p:column>
+                                <p:columns value="#{recrutementBean.getElementsPourPhase(recrutementBean.phaseOffreSelectionnee)}" var="el" headerText="#{el.libelle}" style="text-align:center;">
+                                    <h:outputText value="#{ligne.notesParElement[el.id]}">
+                                        <f:convertNumber maxFractionDigits="1"/>
+                                    </h:outputText>
+                                </p:columns>
+                                <p:column headerText="Total" style="width:42px;text-align:center;font-weight:700;">#{ligne.totalPoints}</p:column>
+                                <p:column headerText="Statut" style="width:60px;text-align:center;">
+                                    <span class="badge badge-#{ligne.statut}">#{ligne.statut}</span>
+                                </p:column>
+                            </p:dataTable>
+                        </div>
+                    </h:panelGroup>
+
+                    <h:panelGroup rendered="#{recrutementBean.vueCumuleeSelectionnee}">
+                        <div style="padding:0 16px 16px;">
+                            <h:panelGroup rendered="#{empty recrutementBean.releveCumule}">
+                                <p style="color:#94a3b8;font-size:13px;">Aucun résultat cumulé disponible.</p>
+                            </h:panelGroup>
+                            <p:dataTable value="#{recrutementBean.releveCumule}" var="ligne"
+                                         styleClass="releve-table" style="border:none;"
+                                         rendered="#{not empty recrutementBean.releveCumule}">
+                                <p:column headerText="Rang" style="width:34px;text-align:center;">#{ligne.rang}</p:column>
+                                <p:column headerText="Candidat">
+                                    <div class="rv-candidat-nom">#{ligne.candidature.prenomCandidat} #{ligne.candidature.nomCandidat}</div>
+                                    <div class="rv-candidat-mail">#{ligne.candidature.emailCandidat}</div>
+                                </p:column>
+                                <p:column headerText="Total cumulé" style="width:120px;text-align:center;font-weight:700;">#{ligne.total} / #{ligne.max}</p:column>
+                                <p:column headerText="Statut" style="width:80px;text-align:center;">
+                                    <span class="badge badge-#{ligne.statut}">#{ligne.statut}</span>
+                                </p:column>
+                            </p:dataTable>
+                        </div>
+                    </h:panelGroup>
+                </h:panelGroup>
+            </div>
+        </h:panelGroup>
+        </h:form>
+    </ui:define>
+
+</ui:composition>

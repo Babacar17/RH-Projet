@@ -1,0 +1,50 @@
+package com.soutenance.entity;
+
+import jakarta.persistence.*;
+import java.io.Serializable;
+
+/**
+ * Un fichier joint par le candidat en réponse à un {@link DocumentRequisOffre}
+ * précis. Le libellé est recopié au moment de l'envoi (indépendant si la
+ * liste de documents requis de l'offre change ensuite).
+ */
+@Entity
+@Table(name = "documents_soumis_candidature")
+public class DocumentSoumisCandidature implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "candidature_id", nullable = false)
+    private Candidature candidature;
+
+    @Column(nullable = false, length = 150)
+    private String libelle;
+
+    @Column(nullable = false, length = 255)
+    private String url;
+
+    public DocumentSoumisCandidature() {}
+
+    public DocumentSoumisCandidature(Candidature candidature, String libelle, String url) {
+        this.candidature = candidature;
+        this.libelle = libelle;
+        this.url = url;
+    }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public Candidature getCandidature() { return candidature; }
+    public void setCandidature(Candidature candidature) { this.candidature = candidature; }
+
+    public String getLibelle() { return libelle; }
+    public void setLibelle(String libelle) { this.libelle = libelle; }
+
+    public String getUrl() { return url; }
+    public void setUrl(String url) { this.url = url; }
+}

@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Mes congés — Espace Employé</title>
+    <h:outputStylesheet library="css" name="employe-style.css"/>
+</h:head>
+<h:body>
+<div class="emp-layout">
+
+    <ui:include src="sidebar-employe.xhtml"/>
+
+    <main class="emp-main">
+
+        <div class="emp-page-header">
+            <div class="emp-page-title">
+                <h1><i class="pi pi-calendar" style="color:var(--emp-primary);"/> Mes congés</h1>
+                <p>Suivi de vos demandes et solde de congés</p>
+            </div>
+            <a href="#{request.contextPath}/Employes/nouvelle-demande.xhtml" class="emp-btn emp-btn-copper">
+                <i class="pi pi-plus"/> Nouvelle demande
+            </a>
+        </div>
+
+        <p:messages autoUpdate="true" showDetail="true"/>
+
+        <!-- KPI soldes -->
+        <div class="emp-kpi-grid" style="grid-template-columns:repeat(4,1fr);">
+            <div class="emp-kpi">
+                <div class="kpi-icon"><i class="pi pi-calendar"/></div>
+                <div class="kpi-value">#{employeBean.soldeCongesAnnuels}</div>
+                <div class="kpi-label">Solde annuel</div>
+            </div>
+            <div class="emp-kpi kpi-success">
+                <div class="kpi-icon"><i class="pi pi-check-circle"/></div>
+                <div class="kpi-value">#{employeBean.soldeRestant}</div>
+                <div class="kpi-label">Jours restants</div>
+            </div>
+            <div class="emp-kpi kpi-copper">
+                <div class="kpi-icon"><i class="pi pi-sun"/></div>
+                <div class="kpi-value">#{employeBean.congesPris}</div>
+                <div class="kpi-label">Jours pris</div>
+            </div>
+            <div class="emp-kpi kpi-warning">
+                <div class="kpi-icon"><i class="pi pi-clock"/></div>
+                <div class="kpi-value">#{employeBean.congesEnAttente}</div>
+                <div class="kpi-label">En attente</div>
+            </div>
+        </div>
+
+        <!-- Barre progression -->
+        <div class="emp-card">
+            <div class="emp-card-header">
+                <div class="emp-card-title">
+                    <span class="card-icon"><i class="pi pi-chart-bar"/></span>
+                    Progression de consommation des congés
+                </div>
+                <span style="font-size:0.85rem;color:var(--emp-muted);">
+                    #{employeBean.congesPris} / #{employeBean.soldeCongesAnnuels} jours
+                </span>
+            </div>
+            <div class="solde-bar-wrap">
+                <div class="solde-bar-track">
+                    <div class="solde-bar-fill"
+                         style="width:#{employeBean.soldeCongesAnnuels gt 0 ? (employeBean.congesPris * 100) / employeBean.soldeCongesAnnuels : 0}%"/>
+                </div>
+                <div class="solde-bar-labels">
+                    <span>0 jour</span>
+                    <span style="color:var(--emp-success);">#{employeBean.soldeRestant} jours disponibles</span>
+                    <span>#{employeBean.soldeCongesAnnuels} jours</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau historique -->
+        <div class="emp-card">
+            <div class="emp-card-header">
+                <div class="emp-card-title">
+                    <span class="card-icon"><i class="pi pi-list"/></span>
+                    Historique de mes demandes
+                </div>
+            </div>
+            <h:form id="formConges">
+                <div class="emp-table-wrap">
+                    <table class="emp-table">
+                        <thead>
+                            <tr>
+                                <th>Type de congé</th>
+                                <th>Date début</th>
+                                <th>Date fin</th>
+                                <th>Durée</th>
+                                <th>Motif</th>
+                                <th>Date demande</th>
+                                <th>Statut</th>
+                                <th>Commentaire RH</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <ui:repeat value="#{employeBean.mesDemandesConge}" var="dc">
+                                <tr>
+                                    <td>
+                                        <i class="pi pi-calendar" style="color:var(--emp-primary);margin-right:6px;"/>
+                                        #{dc.typeConge.libelle}
+                                    </td>
+                                    <td><h:outputText value="#{dc.dateDebut}"/></td>
+                                    <td><h:outputText value="#{dc.dateFin}"/></td>
+                                    <td><strong>#{dc.nombreJours} j</strong></td>
+                                    <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                        #{dc.motif != null ? dc.motif : '—'}
+                                    </td>
+                                    <td><h:outputText value="#{dc.dateDemande}"/></td>
+                                    <td>
+                                        <span class="emp-badge #{employeBean.getBadgeStatutConge(dc.statut)}">
+                                            #{employeBean.getLabelStatutConge(dc.statut)}
+                                        </span>
+                                    </td>
+                                    <td style="font-size:0.8rem;color:var(--emp-muted);">
+                                        #{dc.commentaireRH != null ? dc.commentaireRH : '—'}
+                                    </td>
+                                    <td>
+                                        <h:panelGroup rendered="#{dc.statut == 'EN_ATTENTE'}">
+                                            <p:commandButton value="Annuler"
+                                                             icon="pi pi-times"
+                                                             styleClass="emp-btn emp-btn-danger emp-btn-sm"
+                                                             action="#{employeBean.annulerDemandeConge(dc)}"
+                                                             ajax="false"
+                                                             onclick="return confirm('Annuler cette demande ?')"/>
+                                        </h:panelGroup>
+                                        <h:panelGroup rendered="#{dc.statut != 'EN_ATTENTE'}">
+                                            <span style="color:var(--emp-muted);font-size:0.8rem;">—</span>
+                                        </h:panelGroup>
+                                    </td>
+                                </tr>
+                            </ui:repeat>
+                            <h:panelGroup rendered="#{empty employeBean.mesDemandesConge}">
+                                <tr>
+                                    <td colspan="9" style="text-align:center;padding:32px;color:var(--emp-muted);">
+                                        <i class="pi pi-calendar" style="font-size:2rem;display:block;margin-bottom:8px;"/>
+                                        Aucune demande de congé pour le moment
+                                    </td>
+                                </tr>
+                            </h:panelGroup>
+                        </tbody>
+                    </table>
+                </div>
+            </h:form>
+        </div>
+
+    </main>
+</div>
+</h:body>
+</html>

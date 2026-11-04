@@ -1,0 +1,159 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <ui:param name="page" value="evaluations"/>
+    <ui:define name="title">Evaluations — SIRH</ui:define>
+    <ui:define name="pageTitle">Evaluations du personnel</ui:define>
+    <ui:define name="breadcrumb">Gestion RH &gt; Evaluations</ui:define>
+
+    <ui:define name="content">
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-title">
+                        <div class="section-title-dot" style="background:#10b981;"></div>
+                        Campagnes d'evaluation
+                    </div>
+                    <p:commandButton value="+ Lancer une evaluation"
+                        action="#{rhBean.preparerNouvelleEvaluation}"
+                        oncomplete="PF('dlgEvaluation').show()"
+                        update="formEvaluation"
+                        styleClass="btn btn-success"/>
+                </div>
+
+                <h:form id="formTableEvals">
+                    <p:dataTable value="#{rhBean.evaluations}" var="ev"
+                                 rows="12" paginator="true"
+                                 paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink}"
+                                 emptyMessage="Aucune evaluation." style="border:none;">
+
+                        <p:column headerText="Employe" style="padding:12px 16px;">
+                            <div style="font-weight:600;font-size:13px;">#{ev.employe.nomComplet}</div>
+                            <div style="font-size:11px;color:#64748b;">#{ev.employe.intiutePoste}</div>
+                        </p:column>
+
+                        <p:column headerText="Type" style="padding:12px 16px;width:130px;">
+                            <span style="font-size:12px;font-weight:600;">#{ev.typeEvaluation}</span>
+                        </p:column>
+
+                        <p:column headerText="Periode" style="padding:12px 16px;width:90px;">
+                            <span>#{ev.periode}</span>
+                        </p:column>
+
+                        <p:column headerText="Note globale" style="padding:12px 16px;width:120px;text-align:center;">
+                            <h:panelGroup rendered="#{ev.noteGlobale != null}">
+                                <span style="font-size:18px;font-weight:800;color:#1e293b;">#{ev.noteGlobale}</span>
+                                <span style="font-size:11px;color:#94a3b8;">/5</span>
+                            </h:panelGroup>
+                            <h:panelGroup rendered="#{ev.noteGlobale == null}">
+                                <span style="color:#94a3b8;font-size:11px;">--</span>
+                            </h:panelGroup>
+                        </p:column>
+
+                        <p:column headerText="Mention" style="padding:12px 16px;width:110px;">
+                            <span class="badge badge-#{ev.mentionGlobale}"
+                                  rendered="#{ev.mentionGlobale != null}">#{ev.mentionGlobale}</span>
+                        </p:column>
+
+                        <p:column headerText="Statut" style="padding:12px 16px;width:100px;">
+                            <span class="badge badge-#{ev.statut}">#{ev.statut}</span>
+                        </p:column>
+
+                        <p:column style="padding:12px 16px;width:200px;text-align:right;">
+                            <p:commandButton value="Renseigner"
+                                action="#{rhBean.preparerEditionEvaluation(ev)}"
+                                oncomplete="PF('dlgEvaluation').show()"
+                                update="formEvaluation"
+                                rendered="#{ev.statut == 'EN_COURS'}"
+                                styleClass="btn btn-sm btn-secondary" style="margin-right:4px;"/>
+                            <p:commandButton value="Valider"
+                                action="#{rhBean.validerEvaluation(ev.id)}"
+                                update="formTableEvals growl"
+                                rendered="#{ev.statut == 'SOUMISE'}"
+                                styleClass="btn btn-sm btn-success"/>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </div>
+
+            <!-- DIALOG Evaluation -->
+            <h:form id="formEvaluation">
+                <p:dialog header="Grille d'evaluation" widgetVar="dlgEvaluation" modal="true" width="680" resizable="false">
+                    <div style="padding:20px;">
+                        <div class="form-row col-2" style="margin-bottom:16px;">
+                            <div class="form-group">
+                                <label class="form-label">Type d'evaluation</label>
+                                <p:selectOneMenu value="#{rhBean.evaluation.typeEvaluation}" style="width:100%;">
+                                    <f:selectItem itemLabel="Evaluation annuelle" itemValue="ANNUELLE"/>
+                                    <f:selectItem itemLabel="Evaluation semestrielle" itemValue="SEMESTRIELLE"/>
+                                    <f:selectItem itemLabel="Periode d'essai" itemValue="PERIODE_ESSAI"/>
+                                    <f:selectItem itemLabel="Evaluation promotion" itemValue="PROMOTION"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Periode (ex: 2024)</label>
+                                <p:inputText value="#{rhBean.evaluation.periode}" style="width:100%;"/>
+                            </div>
+                        </div>
+
+                        <!-- Notes sur 5 -->
+                        <div style="background:#f8fafc;border-radius:8px;padding:16px;margin-bottom:16px;">
+                            <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:12px;">Notes (sur 5)</div>
+                            <div class="form-row col-2" style="margin-bottom:12px;">
+                                <div class="form-group">
+                                    <label class="form-label">Realisation des objectifs</label>
+                                    <p:inputNumber value="#{rhBean.evaluation.noteObjectifs}"
+                                                   min="0" max="5" decimalPlaces="1" style="width:100%;"/>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Competences professionnelles</label>
+                                    <p:inputNumber value="#{rhBean.evaluation.noteCompetences}"
+                                                   min="0" max="5" decimalPlaces="1" style="width:100%;"/>
+                                </div>
+                            </div>
+                            <div class="form-row col-2">
+                                <div class="form-group">
+                                    <label class="form-label">Comportement et attitude</label>
+                                    <p:inputNumber value="#{rhBean.evaluation.noteComportement}"
+                                                   min="0" max="5" decimalPlaces="1" style="width:100%;"/>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Assiduite et ponctualite</label>
+                                    <p:inputNumber value="#{rhBean.evaluation.notePonctualite}"
+                                                   min="0" max="5" decimalPlaces="1" style="width:100%;"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Points forts</label>
+                            <p:inputTextarea value="#{rhBean.evaluation.pointsForts}" rows="2" style="width:100%;"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Points a ameliorer</label>
+                            <p:inputTextarea value="#{rhBean.evaluation.pointsAmeliorer}" rows="2" style="width:100%;"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Objectifs periode suivante</label>
+                            <p:inputTextarea value="#{rhBean.evaluation.objectifsPeriodeSuivante}" rows="2" style="width:100%;"/>
+                        </div>
+
+                        <div style="text-align:right;padding-top:16px;border-top:1px solid #f1f5f9;">
+                            <p:commandButton value="Annuler"
+                                oncomplete="PF('dlgEvaluation').hide()"
+                                styleClass="btn btn-secondary" style="margin-right:8px;" ajax="false"/>
+                            <p:commandButton value="Enregistrer"
+                                action="#{rhBean.sauvegarderEvaluation}"
+                                update="formTableEvals growl"
+                                oncomplete="if(!args.validationFailed) PF('dlgEvaluation').hide();"
+                                styleClass="btn btn-success"/>
+                        </div>
+                    </div>
+                </p:dialog>
+            </h:form>
+    </ui:define>
+
+</ui:composition>

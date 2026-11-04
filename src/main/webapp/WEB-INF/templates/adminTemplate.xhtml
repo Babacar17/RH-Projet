@@ -1,0 +1,538 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title><ui:insert name="title">SIRH — Administration</ui:insert></title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&amp;display=swap"
+          rel="stylesheet"/>
+
+    <!-- Styles de base du layout -->
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'DM Sans', 'Segoe UI', sans-serif;
+            background: #f1f5f9;
+            color: #0f172a;
+            display: flex;
+            min-height: 100vh;
+            font-size: 14px;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        :root {
+            --sidebar-w:       256px;
+            --sidebar-w-mini:  68px;
+            --navy:      #0f172a;
+            --navy2:     #1e293b;
+            --gold:      #b58a3a;
+            --gold-l:    #f0c97a;
+            --purple:    #7c3aed;
+            --purple-l:  #a78bfa;
+            --green:     #10b981;
+            --red:       #ef4444;
+            --yellow:    #f59e0b;
+            --blue:      #3b82f6;
+            --border:    #e2e8f0;
+            --card:      #ffffff;
+            --bg:        #f1f5f9;
+            --text2:     #64748b;
+            --text3:     #94a3b8;
+            --radius:    12px;
+            --text-sb:   #94a3b8;
+            --text-sb-h: #e2e8f0;
+            --active-bg: rgba(181,138,58,.18);
+            --hover-bg:  rgba(181,138,58,.10);
+            --transition: .28s cubic-bezier(.4,0,.2,1);
+        }
+
+        /* ════════ SIDEBAR ════════ */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: var(--navy);
+            min-height: 100vh;
+            position: fixed;
+            top: 0; left: 0;
+            display: flex; flex-direction: column;
+            z-index: 200;
+            box-shadow: 4px 0 28px rgba(0,0,0,.28);
+            transition: width var(--transition);
+            overflow: hidden;
+        }
+        .sidebar.mini { width: var(--sidebar-w-mini); }
+        .sidebar::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--gold), var(--gold-l), var(--gold));
+            z-index: 1;
+        }
+        .sb-toggle {
+            position: absolute; top: 22px; right: -14px;
+            width: 28px; height: 28px;
+            background: var(--gold); border: 2px solid var(--navy); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--navy); font-size: 11px; font-weight: 900;
+            cursor: pointer;
+            transition: transform var(--transition), background .18s;
+            z-index: 300;
+            box-shadow: 0 2px 10px rgba(181,138,58,.45);
+        }
+        .sidebar.mini .sb-toggle { transform: rotate(180deg); }
+        .sb-toggle:hover { background: var(--gold-l); }
+
+        .sb-logo {
+            padding: 26px 14px 18px;
+            border-bottom: 1px solid rgba(255,255,255,.06);
+            display: flex; align-items: center; gap: 12px;
+            min-height: 80px; white-space: nowrap; overflow: hidden;
+        }
+        .sb-logo-icon {
+            width: 40px; height: 40px; min-width: 40px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-l));
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; color: var(--navy); flex-shrink: 0;
+            box-shadow: 0 2px 12px rgba(181,138,58,.35);
+        }
+        .sb-logo-text { overflow: hidden; transition: opacity var(--transition), width var(--transition); }
+        .sb-logo-text .t1 { font-size: 13px; font-weight: 800; color: #f8fafc; letter-spacing: -.2px; }
+        .sb-logo-text .t2 { font-size: 9px; color: var(--gold-l); text-transform: uppercase; letter-spacing: 1.8px; margin-top: 2px; }
+        .sidebar.mini .sb-logo-text { opacity: 0; width: 0; pointer-events: none; }
+
+        .sb-user {
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255,255,255,.06);
+            display: flex; align-items: center; gap: 10px;
+            min-height: 62px; overflow: hidden; white-space: nowrap;
+            background: rgba(255,255,255,.02);
+        }
+        .sb-avatar {
+            width: 36px; height: 36px; min-width: 36px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold), var(--gold-l));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 800; color: var(--navy); flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(181,138,58,.3);
+        }
+        .sb-superadmin-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--gold), var(--gold-l));
+            color: var(--navy);
+            font-size: 8px; font-weight: 800;
+            padding: 2px 7px; border-radius: 10px;
+            text-transform: uppercase; letter-spacing: .6px;
+            margin-top: 3px;
+        }
+        .sb-user-info { overflow: hidden; transition: opacity var(--transition), width var(--transition); }
+        .sb-user-name { font-size: 12px; font-weight: 700; color: #f1f5f9; }
+        .sb-user-role { font-size: 9px; color: var(--gold-l); text-transform: uppercase; letter-spacing: .8px; margin-top: 1px; }
+        .sidebar.mini .sb-user-info { opacity: 0; width: 0; pointer-events: none; }
+
+        .sb-nav { flex: 1; padding: 10px 0; overflow-y: auto; overflow-x: hidden; }
+        .sb-nav::-webkit-scrollbar { width: 3px; }
+        .sb-nav::-webkit-scrollbar-thumb { background: rgba(181,138,58,.25); border-radius: 2px; }
+
+        .sb-section-label {
+            font-size: 9px; text-transform: uppercase; letter-spacing: 1.8px;
+            color: rgba(181,138,58,.4); padding: 14px 20px 4px; font-weight: 700;
+            white-space: nowrap; overflow: hidden;
+            transition: opacity var(--transition), height var(--transition), padding var(--transition);
+        }
+        .sidebar.mini .sb-section-label { opacity: 0; height: 0; padding: 0; pointer-events: none; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 12px 9px 14px;
+            color: var(--text-sb); font-size: 12.5px; font-weight: 500;
+            transition: background .18s, color .18s, border-color .18s, padding var(--transition);
+            margin: 1px 6px; border-radius: 8px;
+            border-left: 3px solid transparent;
+            white-space: nowrap; overflow: hidden; position: relative;
+        }
+        .sidebar.mini .nav-item { padding: 9px 0; justify-content: center; }
+        .nav-item:hover { background: var(--hover-bg); color: var(--text-sb-h); border-left-color: rgba(181,138,58,.4); }
+        .nav-item.active { background: var(--active-bg); color: #f1f5f9; font-weight: 700; border-left-color: var(--gold); }
+        .nav-item.inst-link { background: rgba(181,138,58,.08); color: var(--gold-l); border-left-color: rgba(181,138,58,.4); }
+        .nav-item.inst-link:hover { background: rgba(181,138,58,.18); border-left-color: var(--gold); }
+        .nav-item.inst-link.active { background: rgba(181,138,58,.22); border-left-color: var(--gold); color: #fff; }
+        .sidebar.mini .nav-item.active { border-left-color: transparent; }
+
+        .nav-item i { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+        .nav-item.active i { color: var(--gold-l); }
+        .nav-item.inst-link i { color: var(--gold-l); }
+
+        .nav-item-text { transition: opacity var(--transition), width var(--transition); overflow: hidden; }
+        .sidebar.mini .nav-item-text { opacity: 0; width: 0; pointer-events: none; }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--gold); color: var(--navy);
+            font-size: 9px; font-weight: 800;
+            padding: 2px 6px; border-radius: 10px; flex-shrink: 0;
+            transition: opacity var(--transition);
+        }
+        .sidebar.mini .nav-badge { opacity: 0; pointer-events: none; }
+
+        /* Tooltip mode mini */
+        .sidebar.mini .nav-item[data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: calc(var(--sidebar-w-mini) - 10px);
+            top: 50%; transform: translateY(-50%);
+            background: var(--navy2); color: #f1f5f9;
+            font-size: 12px; font-weight: 600;
+            padding: 6px 12px; border-radius: 7px;
+            white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+            border: 1px solid rgba(181,138,58,.2); z-index: 9999; pointer-events: none;
+        }
+        .sidebar.mini .nav-item[data-tooltip]:hover::before {
+            content: '';
+            position: absolute; left: calc(var(--sidebar-w-mini) - 18px);
+            top: 50%; transform: translateY(-50%);
+            border: 6px solid transparent; border-right-color: var(--navy2);
+            z-index: 9999; pointer-events: none;
+        }
+
+        .sb-footer { padding: 12px 10px; border-top: 1px solid rgba(255,255,255,.06); overflow: hidden; }
+        .sb-footer form { margin: 0; }
+        .btn-logout {
+            width: 100%; padding: 9px 10px;
+            background: rgba(239,68,68,.1); color: #ef4444;
+            border: 1px solid rgba(239,68,68,.2); border-radius: 8px;
+            font-size: 12px; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 7px;
+            transition: all .18s; font-family: 'DM Sans', 'Segoe UI', sans-serif;
+            white-space: nowrap;
+        }
+        .btn-logout:hover { background: rgba(239,68,68,.22); border-color: rgba(239,68,68,.4); }
+        .btn-logout-text { transition: opacity var(--transition), width var(--transition); overflow: hidden; }
+        .sidebar.mini .btn-logout-text { opacity: 0; width: 0; }
+
+        /* Overlay + Hamburger mobile */
+        .sb-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,.45); z-index: 199;
+        }
+        .sb-overlay.active { display: block; }
+        .sb-hamburger {
+            display: none; position: fixed; top: 14px; left: 14px;
+            width: 38px; height: 38px; background: var(--gold);
+            border: none; border-radius: 8px;
+            align-items: center; justify-content: center;
+            color: var(--navy); font-size: 16px;
+            cursor: pointer; z-index: 201;
+            box-shadow: 0 2px 10px rgba(181,138,58,.4);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); transition: transform .3s, width var(--transition); }
+            .sidebar.open { transform: translateX(0); }
+            .sb-toggle { display: none; }
+            .sb-hamburger { display: flex; }
+        }
+
+        /* ════════ MAIN CONTENT ════════ */
+        .main-layout {
+            margin-left: var(--sidebar-w);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            transition: margin-left var(--transition);
+        }
+
+        /* TOPBAR */
+        .topbar {
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            padding: 0 28px; height: 64px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 1px 4px rgba(0,0,0,.05);
+        }
+        .topbar-left { display: flex; align-items: center; gap: 14px; }
+        .topbar-title { font-size: 18px; font-weight: 800; color: var(--navy); }
+        .topbar-sub { font-size: 12px; color: var(--text3); margin-top: 1px; }
+        .topbar-right { display: flex; align-items: center; gap: 10px; }
+        .topbar-badge {
+            background: rgba(124,58,237,.1); color: var(--purple);
+            padding: 4px 12px; border-radius: 20px;
+            font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .6px;
+        }
+        .topbar-badge.superadmin {
+            background: linear-gradient(135deg, rgba(181,138,58,.15), rgba(240,201,122,.2));
+            color: var(--gold);
+            border: 1px solid rgba(181,138,58,.3);
+        }
+        .topbar-user {
+            display: flex; align-items: center; gap: 8px;
+            padding: 5px 10px; border-radius: 8px; cursor: pointer;
+            transition: background .18s;
+        }
+        .topbar-user:hover { background: var(--bg); }
+        .topbar-user-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold), var(--gold-l));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 800; color: var(--navy);
+        }
+        .topbar-user-name { font-size: 12px; font-weight: 700; color: var(--navy); }
+
+        /* PAGE BODY */
+        .page-body { padding: 24px 28px; flex: 1; }
+
+        @media (max-width: 768px) {
+            .main-layout { margin-left: 0; }
+            .page-body { padding: 16px; }
+        }
+    </style>
+
+    <!-- Styles supplémentaires définis par la page enfant -->
+    <ui:insert name="styles"/>
+</h:head>
+
+<h:body>
+
+<!-- Overlay mobile -->
+<div class="sb-overlay" id="sbOverlay" onclick="closeMobileSidebar()"></div>
+
+<!-- Hamburger mobile -->
+<button class="sb-hamburger" id="sbHamburger" onclick="openMobileSidebar()" aria-label="Menu">
+    <i class="fas fa-bars"></i>
+</button>
+
+<!-- ════════ SIDEBAR ════════ -->
+<div class="sidebar" id="sidebar">
+
+    <div class="sb-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="Réduire / Agrandir">
+        <i class="fas fa-chevron-left"></i>
+    </div>
+
+    <!-- Logo -->
+    <div class="sb-logo">
+        <div class="sb-logo-icon"><i class="fas fa-landmark"></i></div>
+        <div class="sb-logo-text">
+            <div class="t1">SIRH &#8212; Admin</div>
+            <div class="t2">Administration</div>
+        </div>
+    </div>
+
+    <!-- Utilisateur connecté -->
+    <div class="sb-user">
+        <div class="sb-avatar">
+            #{sessionBean.utilisateurConnecte.prenom != null ?
+              sessionBean.utilisateurConnecte.prenom.substring(0,1) : 'A'}
+        </div>
+        <div class="sb-user-info">
+            <div class="sb-user-name">#{sessionBean.nomComplet}</div>
+            <p:outputPanel rendered="#{sessionBean.isSuperAdmin()}">
+                <span class="sb-superadmin-badge">&#9733; Super-Admin</span>
+            </p:outputPanel>
+            <p:outputPanel rendered="#{not sessionBean.isSuperAdmin()}">
+                <div class="sb-user-role">Admin · #{sessionBean.codeInstitution}</div>
+            </p:outputPanel>
+        </div>
+    </div>
+
+    <nav class="sb-nav">
+
+        <div class="sb-section-label">Principal</div>
+
+        <a href="#{request.contextPath}/Administrateur/dashboard.xhtml"
+           class="nav-item" data-tooltip="Tableau de bord">
+            <i class="fas fa-tachometer-alt"></i>
+            <span class="nav-item-text">Tableau de bord</span>
+        </a>
+
+        <!-- Institutions — super-admin uniquement -->
+        <p:outputPanel rendered="#{sessionBean.isSuperAdmin()}">
+            <a href="#{request.contextPath}/Administrateur/institutions.xhtml"
+               class="nav-item inst-link" data-tooltip="Institutions">
+                <i class="fas fa-university"></i>
+                <span class="nav-item-text">Institutions</span>
+                <span class="nav-badge">#{adminBean.totalInstitutions}</span>
+            </a>
+        </p:outputPanel>
+
+        <a href="#{request.contextPath}/Administrateur/utilisateurs.xhtml"
+           class="nav-item" data-tooltip="Utilisateurs">
+            <i class="fas fa-users"></i>
+            <span class="nav-item-text">Utilisateurs</span>
+            <span class="nav-badge">#{adminBean.totalUsers}</span>
+        </a>
+
+        <a href="#{request.contextPath}/Administrateur/roles.xhtml"
+           class="nav-item" data-tooltip="Rôles et permissions">
+            <i class="fas fa-shield-alt"></i>
+            <span class="nav-item-text">R&#244;les &amp; Permissions</span>
+        </a>
+
+        <div class="sb-section-label">Organisation</div>
+
+        <a href="#{request.contextPath}/Administrateur/structures.xhtml"
+           class="nav-item" data-tooltip="Structures">
+            <i class="fas fa-sitemap"></i>
+            <span class="nav-item-text">Structures</span>
+        </a>
+
+        <a href="#{request.contextPath}/Administrateur/directions.xhtml"
+           class="nav-item" data-tooltip="Directions">
+            <i class="fas fa-building"></i>
+            <span class="nav-item-text">Directions</span>
+        </a>
+
+        <a href="#{request.contextPath}/Administrateur/employes.xhtml"
+           class="nav-item" data-tooltip="Employés">
+            <i class="fas fa-id-badge"></i>
+            <span class="nav-item-text">Employ&#233;s</span>
+        </a>
+
+        <div class="sb-section-label">Syst&#232;me</div>
+
+        <a href="#{request.contextPath}/Administrateur/logs.xhtml"
+           class="nav-item" data-tooltip="Journaux d'activité">
+            <i class="fas fa-list-alt"></i>
+            <span class="nav-item-text">Journaux d&#8217;activit&#233;</span>
+        </a>
+
+        <a href="#{request.contextPath}/Administrateur/parametres.xhtml"
+           class="nav-item" data-tooltip="Paramètres">
+            <i class="fas fa-cog"></i>
+            <span class="nav-item-text">Param&#232;tres</span>
+        </a>
+
+    </nav>
+
+    <div class="sb-footer">
+        <h:form>
+            <p:commandButton value="D&#233;connexion" icon="fas fa-sign-out-alt"
+                             styleClass="btn-logout"
+                             action="#{loginBean.deconnecter()}"
+                             ajax="false"/>
+        </h:form>
+    </div>
+
+</div>
+
+<!-- ════════ MAIN LAYOUT ════════ -->
+<div class="main-layout" id="mainLayout">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <div>
+                <div class="topbar-title">
+                    <ui:insert name="pageTitle">Administration SIRH</ui:insert>
+                </div>
+                <div class="topbar-sub">
+                    <ui:insert name="pageSubtitle">Espace d'administration</ui:insert>
+                </div>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <!-- Actions supplémentaires de la page -->
+            <ui:insert name="topbarActions"/>
+            <!-- Badge rôle -->
+            <p:outputPanel rendered="#{sessionBean.isSuperAdmin()}">
+                <span class="topbar-badge superadmin">
+                    <i class="fas fa-star" style="font-size:9px;"></i> Super-Admin
+                </span>
+            </p:outputPanel>
+            <p:outputPanel rendered="#{not sessionBean.isSuperAdmin()}">
+                <span class="topbar-badge">ADMIN</span>
+            </p:outputPanel>
+            <!-- Utilisateur connecté -->
+            <div class="topbar-user">
+                <div class="topbar-user-avatar">
+                    #{sessionBean.utilisateurConnecte.prenom != null ?
+                      sessionBean.utilisateurConnecte.prenom.substring(0,1) : 'A'}
+                </div>
+                <div class="topbar-user-name">#{sessionBean.utilisateurConnecte.username}</div>
+                <i class="fas fa-chevron-down" style="font-size:10px;color:#94a3b8;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENU DE LA PAGE (injecté par la page enfant) -->
+    <div class="page-body">
+        <ui:insert name="content">
+            <p style="color:#94a3b8;text-align:center;padding:40px;">
+                Aucun contenu défini pour cette page.
+            </p>
+        </ui:insert>
+    </div>
+
+</div>
+
+<!-- Growl global -->
+<p:growl id="growlGlobal" showDetail="true"/>
+
+<script>
+//<![CDATA[
+(function() {
+    var KEY     = 'sirh_sidebar_mini';
+    var sidebar = document.getElementById('sidebar');
+    var mainLayout = document.getElementById('mainLayout');
+    var overlay = document.getElementById('sbOverlay');
+
+    function applyState(mini) {
+        if (mini) {
+            sidebar.classList.add('mini');
+            document.documentElement.style.setProperty('--sidebar-w', '68px');
+        } else {
+            sidebar.classList.remove('mini');
+            document.documentElement.style.setProperty('--sidebar-w', '256px');
+        }
+        try { localStorage.setItem(KEY, mini ? '1' : '0'); } catch(e){}
+    }
+
+    var saved = false;
+    try { saved = localStorage.getItem(KEY) === '1'; } catch(e){}
+    applyState(saved);
+
+    window.toggleSidebar = function() { applyState(!sidebar.classList.contains('mini')); };
+
+    window.openMobileSidebar = function() {
+        sidebar.classList.add('open');
+        if (overlay) overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+    window.closeMobileSidebar = function() {
+        sidebar.classList.remove('open');
+        if (overlay) overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    };
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeMobileSidebar();
+    });
+
+    /* Marquer le lien actif selon l'URL */
+    var path = window.location.pathname;
+    document.querySelectorAll('.nav-item').forEach(function(a) {
+        var href = a.getAttribute('href');
+        if (href &amp;&amp; path.indexOf(href.split('?')[0]) !== -1) {
+            a.classList.add('active');
+        }
+    });
+})();
+//]]>
+</script>
+
+<!-- Scripts supplémentaires de la page enfant -->
+<ui:insert name="scripts"/>
+
+</h:body>
+</html>

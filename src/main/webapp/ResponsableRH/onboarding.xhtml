@@ -1,0 +1,218 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <ui:param name="page" value="onboarding"/>
+    <ui:define name="title">Onboarding — Espace RH</ui:define>
+    <ui:define name="pageTitle">Onboarding</ui:define>
+    <ui:define name="breadcrumb">Espace RH › Intégration des nouveaux employés</ui:define>
+
+    <ui:define name="styles">
+        <style>
+            .row-2 { display:grid;grid-template-columns:380px 1fr;gap:20px; }
+            @media (max-width:1100px) { .row-2 { grid-template-columns:1fr; } }
+            .card { background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px; }
+            .card-title { font-size:13px;font-weight:800;color:#0f172a;margin-bottom:14px;
+                          display:flex;align-items:center;gap:8px;
+                          padding-bottom:10px;border-bottom:1px solid #f1f5f9; }
+
+            .emp-list-item {
+                display:flex;gap:12px;padding:14px;border-radius:10px;
+                cursor:pointer;border:1px solid transparent;margin-bottom:8px;
+                transition:all .15s;
+            }
+            .emp-list-item:hover { background:#f8fafc; }
+            .emp-list-item.selected { background:#eff6ff;border-color:#2563eb; }
+            .emp-list-avatar {
+                width:42px;height:42px;border-radius:50%;background:#1d4ed8;
+                color:#fff;display:flex;align-items:center;justify-content:center;
+                font-weight:800;font-size:13px;flex-shrink:0;
+            }
+            .emp-list-name { font-size:13px;font-weight:700; }
+            .emp-list-meta { font-size:11px;color:#64748b;margin-top:2px; }
+            .emp-progress {
+                height:5px;background:#e2e8f0;border-radius:3px;margin-top:6px;overflow:hidden;
+            }
+            .emp-progress-fill { height:100%;background:linear-gradient(90deg,#2563eb,#7c3aed); }
+
+            .checklist-empty { padding:40px;text-align:center;color:#94a3b8; }
+
+            .tache-card {
+                background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;
+                padding:14px;margin-bottom:10px;
+                display:flex;gap:12px;align-items:flex-start;
+            }
+            .tache-card.fait { background:#f0fdf4;border-color:#bbf7d0; }
+            .tache-card.bloque { background:#fef2f2;border-color:#fecaca; }
+            .tache-icone {
+                width:36px;height:36px;border-radius:8px;background:#fff;
+                display:flex;align-items:center;justify-content:center;flex-shrink:0;
+                font-size:14px;
+            }
+            .tache-info { flex:1;min-width:0; }
+            .tache-titre { font-size:13px;font-weight:700;color:#0f172a; }
+            .tache-titre.fait { text-decoration:line-through;color:#94a3b8; }
+            .tache-meta {
+                font-size:11px;color:#64748b;margin-top:4px;display:flex;gap:10px;flex-wrap:wrap;
+            }
+            .tache-desc { font-size:11px;color:#475569;margin-top:5px; }
+            .tache-actions { display:flex;flex-direction:column;gap:4px;align-items:flex-end; }
+
+            .btn-mini {
+                border:none;border-radius:5px;padding:5px 10px;font-size:11px;
+                font-weight:700;cursor:pointer;color:#fff;
+            }
+            .btn-fait { background:#16a34a; }
+            .btn-bloq { background:#dc2626; }
+
+            .badge-cat {
+                display:inline-block;padding:2px 7px;border-radius:5px;font-size:9px;
+                font-weight:700;text-transform:uppercase;letter-spacing:.3px;
+            }
+            .badge-LOGISTIQUE    { background:#dbeafe;color:#1d4ed8; }
+            .badge-ACCES         { background:#fef3c7;color:#92400e; }
+            .badge-ADMINISTRATIF { background:#fee2e2;color:#b91c1c; }
+            .badge-FORMATION     { background:#ede9fe;color:#6d28d9; }
+            .badge-INTEGRATION   { background:#dcfce7;color:#15803d; }
+            .retard { color:#dc2626;font-weight:700; }
+        </style>
+    </ui:define>
+
+    <ui:define name="content">
+        <div class="row-2">
+
+            <!-- ═══ Liste des employés en cours d'intégration ═══ -->
+            <h:form id="formListe">
+                <div class="card">
+                    <div class="card-title">
+                        <i class="pi pi-users" style="color:#2563eb;"/>
+                        En cours d'intégration (#{onboardingBean.employesEnIntegration.size()})
+                    </div>
+
+                    <h:panelGroup rendered="#{onboardingBean.employesEnIntegration.isEmpty()}">
+                        <div class="checklist-empty">
+                            <i class="pi pi-check-circle" style="font-size:36px;color:#bbf7d0;display:block;margin-bottom:10px;"/>
+                            <strong>Aucune intégration en cours.</strong><br/>
+                            <span style="font-size:11px;">
+                                Les checklists sont créées automatiquement à chaque recrutement.
+                            </span>
+                        </div>
+                    </h:panelGroup>
+
+                    <ui:repeat value="#{onboardingBean.employesEnIntegration}" var="emp">
+                        <p:commandLink action="#{onboardingBean.ouvrirChecklist(emp)}"
+                                       update="formChecklist"
+                                       styleClass="emp-list-item #{onboardingBean.employeSelectionne != null and onboardingBean.employeSelectionne.id == emp.id ? 'selected' : ''}">
+                            <div class="emp-list-avatar">
+                                #{emp.prenom != null ? emp.prenom.substring(0,1) : '?'}#{emp.nom != null ? emp.nom.substring(0,1) : '?'}
+                            </div>
+                            <div style="flex:1;min-width:0;">
+                                <div class="emp-list-name">#{emp.nomComplet}</div>
+                                <div class="emp-list-meta">
+                                    #{emp.matricule} —
+                                    <h:outputText value="#{emp.dateEmbauche}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                                    </h:outputText>
+                                </div>
+                                <div class="emp-progress">
+                                    <div class="emp-progress-fill"
+                                         style="width:#{onboardingBean.getProgression(emp.id)}%;"/>
+                                </div>
+                                <div style="font-size:10px;color:#64748b;margin-top:3px;text-align:right;">
+                                    #{onboardingBean.getProgression(emp.id)}% complété
+                                </div>
+                            </div>
+                        </p:commandLink>
+                    </ui:repeat>
+                </div>
+            </h:form>
+
+            <!-- ═══ Checklist de l'employé sélectionné ═══ -->
+            <h:form id="formChecklist">
+                <div class="card">
+                    <h:panelGroup rendered="#{onboardingBean.employeSelectionne == null}">
+                        <div class="checklist-empty">
+                            <i class="pi pi-arrow-left" style="font-size:24px;color:#cbd5e1;margin-bottom:10px;display:block;"/>
+                            Sélectionnez un employé à gauche pour voir sa checklist.
+                        </div>
+                    </h:panelGroup>
+
+                    <h:panelGroup rendered="#{onboardingBean.employeSelectionne != null}">
+                        <div class="card-title">
+                            <i class="pi pi-list-check" style="color:#7c3aed;"/>
+                            Checklist d'intégration — #{onboardingBean.employeSelectionne.nomComplet}
+                        </div>
+
+                        <ui:repeat value="#{onboardingBean.tachesSelection}" var="t">
+                            <div class="tache-card #{t.statut == 'FAIT' ? 'fait' : (t.statut == 'BLOQUE' ? 'bloque' : '')}">
+                                <div class="tache-icone"
+                                     style="color:#{onboardingBean.getCouleurStatut(t.statut)};">
+                                    <h:panelGroup rendered="#{t.statut == 'FAIT'}">
+                                        <i class="pi pi-check"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup rendered="#{t.statut != 'FAIT'}">
+                                        <i class="pi #{onboardingBean.getIconeCategorie(t.categorie)}"/>
+                                    </h:panelGroup>
+                                </div>
+                                <div class="tache-info">
+                                    <div class="tache-titre #{t.statut == 'FAIT' ? 'fait' : ''}">#{t.libelle}</div>
+                                    <div class="tache-meta">
+                                        <span class="badge-cat badge-#{t.categorie}">#{t.categorie}</span>
+                                        <span><i class="pi pi-user"/> #{t.responsable}</span>
+                                        <h:panelGroup rendered="#{t.dateLimite != null}">
+                                            <span class="#{t.enRetard ? 'retard' : ''}">
+                                                <i class="pi pi-calendar"/>
+                                                avant
+                                                <h:outputText value="#{t.dateLimite}">
+                                                    <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                                                </h:outputText>
+                                                <h:panelGroup rendered="#{t.enRetard}"> (en retard)</h:panelGroup>
+                                            </span>
+                                        </h:panelGroup>
+                                        <h:panelGroup rendered="#{t.realisePar != null}">
+                                            <span style="color:#15803d;">
+                                                <i class="pi pi-check-circle"/>
+                                                par #{t.realisePar}
+                                            </span>
+                                        </h:panelGroup>
+                                    </div>
+                                    <h:panelGroup rendered="#{t.description != null}">
+                                        <div class="tache-desc">#{t.description}</div>
+                                    </h:panelGroup>
+                                    <h:panelGroup rendered="#{t.commentaire != null and t.statut == 'BLOQUE'}">
+                                        <div class="tache-desc" style="color:#b91c1c;">
+                                            ⚠️ #{t.commentaire}
+                                        </div>
+                                    </h:panelGroup>
+                                </div>
+                                <div class="tache-actions">
+                                    <p:commandButton value="✓ Fait"
+                                        rendered="#{t.statut != 'FAIT'}"
+                                        action="#{onboardingBean.marquerFait(t.id)}"
+                                        update="formChecklist :formListe growl"
+                                        styleClass="btn-mini btn-fait"/>
+                                    <p:commandButton value="⚠ Bloqué"
+                                        rendered="#{t.statut != 'FAIT' and t.statut != 'BLOQUE'}"
+                                        action="#{onboardingBean.marquerBloque(t.id)}"
+                                        update="formChecklist growl"
+                                        styleClass="btn-mini btn-bloq"
+                                        onclick="var c = prompt('Motif du blocage :');
+                                                 if (!c) return false;
+                                                 document.getElementById('formChecklist:commentBloq').value = c;"/>
+                                </div>
+                            </div>
+                        </ui:repeat>
+
+                        <p:inputText id="commentBloq" value="#{onboardingBean.commentaireBloque}"
+                                     style="display:none;"/>
+                    </h:panelGroup>
+                </div>
+            </h:form>
+
+        </div>
+    </ui:define>
+
+</ui:composition>

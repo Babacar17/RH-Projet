@@ -1,0 +1,1353 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+    <title>Directions &#8212; SIRH</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+    <h:outputStylesheet library="css" name="admin-style.css"/>
+    <style>
+        /* ══════════════════════════════════════════════
+           VARIABLES GLOBALES — doit matcher la sidebar
+        ══════════════════════════════════════════════ */
+        :root {
+            --sidebar-w:        256px;
+            --sidebar-w-mini:   68px;
+            --navy:      #0f172a;
+            --navy2:     #1e293b;
+            --purple:    #7c3aed;
+            --purple-l:  #a78bfa;
+            --gold:      #b58a3a;
+            --gold-l:    #f0c97a;
+            --red:       #ef4444;
+            --blue:      #3b82f6;
+            --green:     #10b981;
+            --yellow:    #f59e0b;
+            --bg:        #f8fafc;
+            --card:      #ffffff;
+            --border:    #e2e8f0;
+            --text2:     #64748b;
+            --text3:     #94a3b8;
+            --radius:    12px;
+            --transition: .28s cubic-bezier(.4,0,.2,1);
+        }
+
+        /* ══════════════════════════════════════════════
+           LAYOUT — sidebar fixe + main qui s'adapte
+        ══════════════════════════════════════════════ */
+        body {
+            margin: 0;
+            font-family: 'DM Sans', 'Segoe UI', sans-serif;
+            font-size: 14px;
+            background: var(--bg);
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background: var(--bg);
+        }
+
+        /* ── Topbar ── */
+        .topbar {
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            padding: 0 28px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 4px rgba(0,0,0,.05);
+        }
+        .topbar-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--navy);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .topbar-title i { color: var(--purple); }
+        .topbar-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+        .topbar-right { display: flex; align-items: center; gap: 10px; }
+        .topbar-badge {
+            background: rgba(124,58,237,.1);
+            color: var(--purple);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+        }
+        .topbar-icon-btn {
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text2);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all .18s;
+            position: relative;
+        }
+        .topbar-icon-btn:hover { background: #e2e8f0; color: var(--navy); }
+        .notif-dot {
+            position: absolute; top: 6px; right: 6px;
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--red);
+            border: 1.5px solid #fff;
+        }
+
+        /* ── Page body ── */
+        .page-body { padding: 24px 28px; flex: 1; }
+
+        /* ── Breadcrumb ── */
+        .breadcrumb {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 12px; color: var(--text3);
+            margin-bottom: 20px;
+        }
+        .breadcrumb a { color: var(--purple); font-weight: 600; text-decoration: none; }
+        .breadcrumb a:hover { text-decoration: underline; }
+        .breadcrumb i { font-size: 10px; }
+
+        /* ══════════════════════════════════════════════
+           STATS GRID
+        ══════════════════════════════════════════════ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            padding: 18px;
+            position: relative;
+            overflow: hidden;
+            transition: box-shadow .2s, transform .2s;
+        }
+        .stat-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.08); transform: translateY(-2px); }
+        .stat-card::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+        }
+        .stat-card.purple::before { background: linear-gradient(90deg, var(--purple), var(--purple-l)); }
+        .stat-card.blue::before   { background: linear-gradient(90deg, #2563eb, var(--blue)); }
+        .stat-card.green::before  { background: linear-gradient(90deg, #059669, var(--green)); }
+        .stat-card.yellow::before { background: linear-gradient(90deg, #d97706, var(--yellow)); }
+        .stat-card.gold::before   { background: linear-gradient(90deg, var(--gold), var(--gold-l)); }
+        .stat-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .stat-icon-box {
+            width: 42px; height: 42px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; flex-shrink: 0;
+        }
+        .stat-icon-box.purple { background: #ede9fe; color: var(--purple); }
+        .stat-icon-box.blue   { background: #dbeafe; color: var(--blue); }
+        .stat-icon-box.green  { background: #dcfce7; color: #059669; }
+        .stat-icon-box.yellow { background: #fef3c7; color: var(--yellow); }
+        .stat-icon-box.gold   { background: rgba(181,138,58,.12); color: var(--gold); }
+        .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); font-weight: 700; }
+        .stat-value { font-size: 30px; font-weight: 800; color: var(--navy); line-height: 1; margin-bottom: 6px; }
+        .stat-footer { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 4px; }
+        .stat-footer .up { color: var(--green); }
+
+        /* ══════════════════════════════════════════════
+           TOOLBAR
+        ══════════════════════════════════════════════ */
+        .toolbar {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 20px; gap: 12px; flex-wrap: wrap;
+        }
+        .toolbar-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .search-box {
+            display: flex; align-items: center; gap: 8px;
+            background: #fff; border: 1px solid var(--border);
+            border-radius: 8px; padding: 8px 14px;
+            min-width: 240px;
+            transition: border-color .18s, box-shadow .18s;
+        }
+        .search-box:focus-within {
+            border-color: var(--purple);
+            box-shadow: 0 0 0 3px rgba(124,58,237,.08);
+        }
+        .search-box i { color: var(--text3); font-size: 13px; }
+        .search-box input {
+            border: none; outline: none;
+            font-size: 13px; font-family: 'DM Sans', sans-serif;
+            color: var(--navy); background: transparent; width: 100%;
+        }
+        .filter-select {
+            background: #fff; border: 1px solid var(--border);
+            border-radius: 8px; padding: 8px 14px;
+            font-size: 12px; font-family: 'DM Sans', sans-serif;
+            color: var(--navy); cursor: pointer; outline: none;
+            transition: border-color .18s;
+        }
+        .filter-select:focus { border-color: var(--purple); }
+
+        .view-tabs {
+            display: flex;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 3px;
+        }
+        .view-tab {
+            padding: 6px 14px; border-radius: 6px;
+            font-size: 12px; font-weight: 600;
+            color: var(--text2); cursor: pointer;
+            transition: all .18s;
+            border: none; background: transparent;
+            font-family: 'DM Sans', sans-serif;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .view-tab.active { background: var(--purple); color: #fff; }
+        .view-tab:hover:not(.active) { background: var(--bg); color: var(--navy); }
+
+        /* ══════════════════════════════════════════════
+           CARD
+        ══════════════════════════════════════════════ */
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 4px rgba(0,0,0,.04);
+        }
+        .card-header {
+            padding: 18px 20px 14px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .card-title {
+            font-size: 13px; font-weight: 800; color: var(--navy);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .card-title i { color: var(--purple); }
+        .card-subtitle { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+        /* ══════════════════════════════════════════════
+           ORGANIGRAMME
+        ══════════════════════════════════════════════ */
+        .org-wrapper { padding: 32px 20px; overflow-x: auto; min-height: 320px; }
+        .org-tree { display: flex; flex-direction: column; align-items: center; gap: 0; }
+        .org-level { display: flex; justify-content: center; gap: 0; position: relative; }
+        .org-connector-v { width: 2px; height: 32px; background: linear-gradient(180deg,#e2e8f0,#c7d2fe); margin: 0 auto; }
+        .org-branch { display: flex; flex-direction: column; align-items: center; }
+        .org-branch-top { width: 2px; height: 28px; background: linear-gradient(180deg,#c7d2fe,#e2e8f0); }
+        .org-node {
+            border-radius: 12px; padding: 14px 18px;
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            min-width: 160px; max-width: 200px;
+            position: relative; transition: all .2s; cursor: pointer; border: 2px solid transparent;
+        }
+        .org-node:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+        .org-node.niveau-0 { background: linear-gradient(135deg,var(--navy),#1e293b); border-color: var(--purple); color: #fff; min-width: 220px; }
+        .org-node.niveau-1 { background: linear-gradient(135deg,var(--purple),#6d28d9); border-color: var(--purple-l); color: #fff; min-width: 170px; }
+        .org-node.niveau-2 { background: linear-gradient(135deg,#1d4ed8,var(--blue)); border-color: #93c5fd; color: #fff; min-width: 150px; }
+        .org-node.niveau-3 { background: #fff; border-color: var(--border); color: var(--navy); min-width: 140px; }
+        .org-node.niveau-3:hover { border-color: var(--purple); }
+        .org-node-icon { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; margin-bottom: 8px; }
+        .niveau-0 .org-node-icon { background: rgba(255,255,255,.15); color: var(--gold-l); }
+        .niveau-1 .org-node-icon { background: rgba(255,255,255,.2); color: #fff; }
+        .niveau-2 .org-node-icon { background: rgba(255,255,255,.2); color: #fff; }
+        .niveau-3 .org-node-icon { background: #ede9fe; color: var(--purple); }
+        .org-node-title { font-size: 11px; font-weight: 800; line-height: 1.3; margin-bottom: 4px; }
+        .org-node-sub   { font-size: 9.5px; opacity: .8; line-height: 1.3; }
+        .org-node-badge { margin-top: 8px; padding: 2px 8px; border-radius: 20px; font-size: 9px; font-weight: 800; background: rgba(255,255,255,.2); color: #fff; }
+        .niveau-3 .org-node-badge { background: #ede9fe; color: var(--purple); }
+        .org-node-effectif { position: absolute; top: -8px; right: -8px; background: var(--green); color: #fff; font-size: 9px; font-weight: 800; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; }
+
+        /* ══════════════════════════════════════════════
+           TABLE DIRECTIONS
+        ══════════════════════════════════════════════ */
+        .dir-table { width: 100%; border-collapse: collapse; }
+        .dir-table th {
+            background: #f8fafc; color: var(--text2);
+            font-size: 10px; text-transform: uppercase; letter-spacing: .6px;
+            font-weight: 700; padding: 11px 16px;
+            border-bottom: 2px solid var(--border); text-align: left;
+        }
+        .dir-table th:first-child { padding-left: 20px; }
+        .dir-table td { padding: 13px 16px; border-bottom: 1px solid #f1f5f9; font-size: 13px; vertical-align: middle; }
+        .dir-table td:first-child { padding-left: 20px; }
+        .dir-table tr:last-child td { border-bottom: none; }
+        .dir-table tr:hover td { background: #fafbff; }
+
+        .dir-icon-sm { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+        .dir-name { font-weight: 700; font-size: 13px; color: var(--navy); }
+        .dir-code { font-size: 10px; color: var(--text3); margin-top: 2px; font-family: 'Consolas', monospace; }
+
+        /* Badges */
+        .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; }
+        .badge-active   { background: #dcfce7; color: #15803d; }
+        .badge-inactive { background: #fee2e2; color: #b91c1c; }
+        .badge-type-direction   { background: #ede9fe; color: #7c3aed; }
+        .badge-type-departement { background: #dbeafe; color: #1d4ed8; }
+        .badge-type-service     { background: #fef3c7; color: #b45309; }
+        .badge-type-bureau      { background: #f0fdf4; color: #15803d; }
+
+        .effectif-pill {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: var(--bg); border: 1px solid var(--border);
+            border-radius: 20px; padding: 3px 10px;
+            font-size: 11px; font-weight: 700; color: var(--navy);
+        }
+        .effectif-pill i { color: var(--purple); font-size: 10px; }
+        .budget-pill { font-size: 12px; font-weight: 700; color: var(--green); }
+
+        /* Action buttons */
+        .act-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 30px; height: 30px; border-radius: 7px;
+            font-size: 12px; cursor: pointer; border: none;
+            transition: all .15s; text-decoration: none;
+        }
+        .act-btn.view  { background: #ede9fe; color: var(--purple); }
+        .act-btn.view:hover  { background: var(--purple); color: #fff; }
+        .act-btn.edit  { background: #eff6ff; color: var(--blue); }
+        .act-btn.edit:hover  { background: var(--blue); color: #fff; }
+        .act-btn.org   { background: #f0fdf4; color: var(--green); }
+        .act-btn.org:hover   { background: var(--green); color: #fff; }
+        .act-btn.del   { background: #fef2f2; color: var(--red); }
+        .act-btn.del:hover   { background: var(--red); color: #fff; }
+
+        /* ══════════════════════════════════════════════
+           DETAIL PANEL / MODALS
+        ══════════════════════════════════════════════ */
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .info-block { background: var(--bg); border-radius: 10px; padding: 16px; border: 1px solid var(--border); }
+        .info-block-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+        .info-block-title i { color: var(--purple); }
+        .info-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+        .info-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .info-row-label { color: var(--text2); font-weight: 600; }
+        .info-row-value { color: var(--navy); font-weight: 700; text-align: right; }
+
+        .compo-children { margin-left: 20px; margin-top: 4px; border-left: 2px solid #f1f5f9; padding-left: 12px; }
+        .compo-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: #fff; margin-bottom: 4px; transition: all .15s; cursor: pointer; }
+        .compo-item:hover { border-color: var(--purple); background: #faf5ff; }
+        .compo-item-icon { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+        .compo-item-name  { font-size: 12px; font-weight: 700; color: var(--navy); flex: 1; }
+        .compo-item-count { font-size: 10px; color: var(--text3); }
+
+        .resp-card { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 10px; border: 1px solid var(--border); background: #fff; margin-bottom: 10px; transition: all .15s; }
+        .resp-card:hover { border-color: var(--purple); box-shadow: 0 4px 12px rgba(124,58,237,.08); }
+        .resp-avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg,var(--purple),var(--purple-l)); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: #fff; flex-shrink: 0; }
+        .resp-name  { font-size: 13px; font-weight: 800; color: var(--navy); }
+        .resp-post  { font-size: 11px; color: var(--text2); margin-top: 2px; }
+        .resp-right { margin-left: auto; text-align: right; }
+        .resp-since { font-size: 10px; color: var(--text3); }
+
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center; }
+        .empty-icon { width: 64px; height: 64px; border-radius: 16px; background: #ede9fe; color: var(--purple); display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 16px; }
+        .empty-title { font-size: 16px; font-weight: 800; color: var(--navy); margin-bottom: 6px; }
+        .empty-sub { font-size: 13px; color: var(--text3); }
+
+        /* ══ MODAL — styles améliorés ══ */
+        .modal-section-title {
+            font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px;
+            color: var(--purple); font-weight: 800;
+            margin: 20px 0 14px; display: flex; align-items: center; gap: 8px;
+            padding: 10px 14px; background: #f5f3ff;
+            border-radius: 8px; border-left: 3px solid var(--purple);
+        }
+        .modal-section-title i { font-size: 13px; }
+
+        .modal-grid-2 {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 16px; margin-bottom: 4px;
+        }
+
+        /* Label */
+        .modal-field { display: flex; flex-direction: column; gap: 5px; }
+        .modal-field label {
+            font-size: 10px; text-transform: uppercase; letter-spacing: .7px;
+            color: var(--text2); font-weight: 700; display: flex;
+            align-items: center; gap: 4px;
+        }
+        /* Étoile rouge pour les champs requis */
+        .modal-field label .req { color: var(--red); font-size: 12px; line-height: 1; }
+
+        /* Inputs PrimeFaces — focus ring */
+        .modal-field .ui-inputtext,
+        .modal-field .ui-selectonemenu,
+        .modal-field .ui-inputtextarea,
+        .modal-field .ui-inputnumber-input {
+            width: 100% !important;
+            padding: 9px 12px !important;
+            border-radius: 8px !important;
+            border: 1px solid var(--border) !important;
+            font-size: 13px !important;
+            font-family: 'DM Sans', sans-serif !important;
+            transition: border-color .15s, box-shadow .15s !important;
+            background: #fff !important;
+        }
+        .modal-field .ui-inputtext:focus,
+        .modal-field .ui-inputnumber-input:focus {
+            border-color: var(--purple) !important;
+            box-shadow: 0 0 0 3px rgba(124,58,237,.12) !important;
+            outline: none !important;
+        }
+        .modal-field .ui-state-focus {
+            border-color: var(--purple) !important;
+            box-shadow: 0 0 0 3px rgba(124,58,237,.12) !important;
+        }
+        .modal-field .ui-inputtextarea { resize: vertical !important; min-height: 80px !important; }
+
+        /* Valeur lecture seule */
+        .modal-field-value {
+            font-size: 13px; font-weight: 600; color: var(--navy);
+            background: var(--bg); padding: 9px 12px;
+            border-radius: 8px; border: 1px solid var(--border);
+            min-height: 38px; display: flex; align-items: center;
+        }
+
+        /* Footer boutons */
+        .modal-footer {
+            display: flex; justify-content: flex-end; gap: 10px;
+            padding: 16px 0 4px; border-top: 1px solid var(--border);
+            margin-top: 8px;
+        }
+
+        .legend { display: flex; gap: 14px; flex-wrap: wrap; padding: 12px 20px; border-top: 1px solid var(--border); background: #fafbff; border-radius: 0 0 var(--radius) var(--radius); }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2); font-weight: 600; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+        .btn-primary {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 9px 18px; background: var(--purple); color: #fff;
+            border: none; border-radius: 8px; font-size: 12px; font-weight: 700;
+            cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .18s;
+        }
+        .btn-primary:hover { background: #6d28d9; box-shadow: 0 4px 14px rgba(124,58,237,.35); }
+        .btn-secondary {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 9px 16px; background: #fff; color: var(--text2);
+            border: 1px solid var(--border); border-radius: 8px;
+            font-size: 12px; font-weight: 700; cursor: pointer;
+            font-family: 'DM Sans', sans-serif; transition: all .18s;
+        }
+        .btn-secondary:hover { background: var(--bg); color: var(--navy); }
+
+        /* ══════════════════════════════════════════════
+           RESPONSIVE
+        ══════════════════════════════════════════════ */
+        @media (max-width: 1400px) { .stats-grid { grid-template-columns: repeat(3,1fr); } }
+        @media (max-width: 1024px) {
+            .stats-grid { grid-template-columns: repeat(2,1fr); }
+            .detail-grid { grid-template-columns: 1fr; }
+            .page-body { padding: 16px 20px; }
+        }
+        @media (max-width: 768px) {
+            .main { margin-left: 0; }
+            .topbar { padding: 0 16px; }
+            .page-body { padding: 14px 16px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+            .search-box { min-width: unset; }
+        }
+    </style>
+</h:head>
+
+<h:body>
+
+<!-- ════════════ SIDEBAR ════════════ -->
+<ui:include src="sidebar-admin.xhtml"/>
+    <!-- ══ GARDE INSTITUTION — super-admin doit sélectionner une institution ══ -->
+    <p:outputPanel rendered="#{sessionBean.isSuperAdmin() and adminBean.institutionFiltreId == null}"
+                   style="display:block;">
+        <div style="min-height:60vh;display:flex;align-items:center;justify-content:center;padding:2rem;">
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:2.5rem 3rem;
+                        max-width:520px;width:100%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.06);">
+                <div style="width:64px;height:64px;background:linear-gradient(135deg,#b58a3a,#f0c97a);
+                             border-radius:16px;display:flex;align-items:center;justify-content:center;
+                             margin:0 auto 1.25rem;font-size:28px;color:#0f172a;">
+                    <i class="fas fa-university"/>
+                </div>
+                <h2 style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:.5rem;">
+                    Sélectionnez une institution
+                </h2>
+                <p style="font-size:13px;color:#64748b;margin-bottom:1.5rem;line-height:1.6;">
+                    En tant que super-administrateur, vous devez choisir une institution
+                    avant d'accéder à cette section.
+                </p>
+                <h:form id="guardForm">
+                    <p:selectOneMenu value="#{adminBean.institutionFiltreId}"
+                                     style="width:100%;font-size:13px;font-weight:600;
+                                            border:1.5px solid #7c3aed;border-radius:8px;
+                                            padding:10px 12px;background:#faf5ff;">
+                        <f:selectItem itemValue="" itemLabel="— Choisir une institution —"/>
+                        <f:selectItems value="#{adminBean.toutesInstitutions}"
+                                       var="inst"
+                                       itemValue="#{inst.id}"
+                                       itemLabel="#{inst.code} — #{inst.nom}"/>
+                        <p:ajax update="@form" listener="#{adminBean.filtrerParInstitution}"/>
+                    </p:selectOneMenu>
+                </h:form>
+                <div style="margin-top:1.5rem;border-top:1px solid #e2e8f0;padding-top:1rem;">
+                    <h:link value="← Retour au tableau de bord global"
+                            outcome="/Administrateur/dashboard"
+                            style="font-size:12px;color:#7c3aed;font-weight:600;"/>
+                </div>
+            </div>
+        </div>
+    </p:outputPanel>
+    <!-- ══ FIN GARDE ══ -->
+
+    <p:outputPanel rendered="#{not sessionBean.isSuperAdmin() or adminBean.institutionFiltreId != null}"
+                   style="display:block;">
+
+
+<!-- ════════════ MAIN ════════════ -->
+<div class="main" id="mainContent">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div>
+            <div class="topbar-title">
+                <i class="fas fa-building"></i>
+                Directions
+            </div>
+            <div class="topbar-sub">Gestion compl&#232;te des directions et structures organisationnelles</div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-badge">ADMIN</div>
+            <div class="topbar-icon-btn" title="Notifications">
+                <i class="fas fa-bell"></i>
+                <span class="notif-dot"></span>
+            </div>
+            <div class="topbar-icon-btn" title="Param&#232;tres">
+                <i class="fas fa-cog"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE BODY -->
+    <div class="page-body">
+
+        <!-- BREADCRUMB -->
+        <div class="breadcrumb">
+            <a href="#{request.contextPath}/Administrateur/dashboard.xhtml">
+                <i class="fas fa-home"></i> Accueil
+            </a>
+            <i class="fas fa-chevron-right"></i>
+            <span>Organisation</span>
+            <i class="fas fa-chevron-right"></i>
+            <span style="color:var(--navy);font-weight:700;">Directions</span>
+        </div>
+
+        <!-- ── STATS ── -->
+        <div class="stats-grid">
+            <div class="stat-card purple">
+                <div class="stat-header">
+                    <div class="stat-label">Total directions</div>
+                    <div class="stat-icon-box purple"><i class="fas fa-building"></i></div>
+                </div>
+                <div class="stat-value">#{structureBean.directions.size()}</div>
+                <div class="stat-footer">
+                    <i class="fas fa-layer-group up"></i>
+                    <span>Unit&#233;s organisationnelles</span>
+                </div>
+            </div>
+
+            <div class="stat-card blue">
+                <div class="stat-header">
+                    <div class="stat-label">D&#233;partements</div>
+                    <div class="stat-icon-box blue"><i class="fas fa-sitemap"></i></div>
+                </div>
+                <div class="stat-value">#{structureBean.divisions.size()}</div>
+                <div class="stat-footer">
+                    <i class="fas fa-code-branch"></i>
+                    <span>Sous-unit&#233;s rattach&#233;es</span>
+                </div>
+            </div>
+
+            <div class="stat-card green">
+                <div class="stat-header">
+                    <div class="stat-label">Services</div>
+                    <div class="stat-icon-box green"><i class="fas fa-project-diagram"></i></div>
+                </div>
+                <div class="stat-value">#{structureBean.services.size()}</div>
+                <div class="stat-footer">
+                    <i class="fas fa-check-circle up"></i>
+                    <span class="up">Actifs</span>
+                </div>
+            </div>
+
+            <div class="stat-card yellow">
+                <div class="stat-header">
+                    <div class="stat-label">Employ&#233;s affect&#233;s</div>
+                    <div class="stat-icon-box yellow"><i class="fas fa-users"></i></div>
+                </div>
+                <div class="stat-value">#{adminEmployeBean.totalEmployes}</div>
+                <div class="stat-footer">
+                    <i class="fas fa-user-tie"></i>
+                    <span>Effectif total</span>
+                </div>
+            </div>
+
+            <div class="stat-card gold">
+                <div class="stat-header">
+                    <div class="stat-label">Postes de direction</div>
+                    <div class="stat-icon-box gold"><i class="fas fa-user-tie"></i></div>
+                </div>
+                <div class="stat-value">#{adminEmployeBean.totalDirecteurs}</div>
+                <div class="stat-footer">
+                    <i class="fas fa-briefcase"></i>
+                    <span>Responsables nomm&#233;s</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── TOOLBAR ── -->
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Rechercher une direction, un d&#233;partement..."
+                           id="searchInput" onkeyup="filterTable()"/>
+                </div>
+                <select class="filter-select" onchange="filterByType(this.value)">
+                    <option value="">Tous les types</option>
+                    <option value="DIRECTION">Directions</option>
+                    <option value="DEPARTEMENT">D&#233;partements</option>
+                    <option value="SERVICE">Services</option>
+                    <option value="BUREAU">Bureaux</option>
+                </select>
+                <select class="filter-select" onchange="filterByStatut(this.value)">
+                    <option value="">Tous statuts</option>
+                    <option value="ACTIF">Actif</option>
+                    <option value="INACTIF">Inactif</option>
+                </select>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <div class="view-tabs">
+                    <button class="view-tab active" onclick="showView('table',this)">
+                        <i class="fas fa-table"></i> Tableau
+                    </button>
+                    <button class="view-tab" onclick="showView('org',this)">
+                        <i class="fas fa-sitemap"></i> Organigramme
+                    </button>
+                    <button class="view-tab" onclick="showView('cards',this)">
+                        <i class="fas fa-th-large"></i> Cartes
+                    </button>
+                </div>
+                <button class="btn-secondary">
+                    <i class="fas fa-file-export"></i> Exporter
+                </button>
+                <h:form>
+                    <p:commandButton value="+ Nouvelle direction"
+                                     styleClass="btn-primary"
+                                     onclick="PF('dlgAjout').show(); return false;"
+                                     type="button"/>
+                </h:form>
+            </div>
+        </div>
+
+        <!-- ══════ VUE 1 : TABLEAU ══════ -->
+        <div id="view-table" class="card" style="margin-bottom:20px;">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">
+                        <i class="fas fa-building"></i>
+                        R&#233;pertoire des directions &amp; unit&#233;s
+                    </div>
+                    <div class="card-subtitle">Toutes les unit&#233;s organisationnelles avec leurs compositions et responsables</div>
+                </div>
+                <span style="font-size:11px;color:var(--text3);font-weight:700;">
+                    #{structureBean.directions.size()} unit&#233;(s) au total
+                </span>
+            </div>
+
+            <h:form id="dirForm">
+            <p:dataTable id="dirTable"
+                         value="#{structureBean.directions}"
+                         var="d"
+                         styleClass="dir-table"
+                         emptyMessage=""
+                         rows="15"
+                         paginator="true"
+                         paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink}"
+                         rowsPerPageTemplate="10,15,25,50">
+
+                <p:column headerText="Unit&#233; organisationnelle" sortBy="#{d.nom}" style="min-width:220px;">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div class="dir-icon-sm"
+                             style="background:#{d.type == 'DIRECTION' ? '#ede9fe' : d.type == 'DEPARTEMENT' ? '#dbeafe' : d.type == 'SERVICE' ? '#fef3c7' : '#dcfce7'};
+                                    color:#{d.type == 'DIRECTION' ? '#7c3aed' : d.type == 'DEPARTEMENT' ? '#1d4ed8' : d.type == 'SERVICE' ? '#b45309' : '#15803d'};">
+                            <i class="fas #{d.type == 'DIRECTION' ? 'fa-building' : d.type == 'DEPARTEMENT' ? 'fa-sitemap' : d.type == 'SERVICE' ? 'fa-project-diagram' : 'fa-folder'}"></i>
+                        </div>
+                        <div>
+                            <div class="dir-name">#{d.nom}</div>
+                            <div class="dir-code">#{d.code}</div>
+                        </div>
+                    </div>
+                </p:column>
+
+                <p:column headerText="Type" sortBy="#{d.type}" style="width:120px;">
+                    <span class="badge badge-type-#{d.type.toLowerCase()}">#{d.type}</span>
+                </p:column>
+
+                <p:column headerText="Rattach&#233; &#224;" style="width:160px;">
+                    <h:panelGroup rendered="#{d.parent != null}">
+                        <span style="font-size:12px;color:var(--text2);">
+                            <i class="fas fa-level-up-alt" style="font-size:10px;margin-right:4px;color:var(--purple);"></i>
+                            #{d.parent.nom}
+                        </span>
+                    </h:panelGroup>
+                    <h:panelGroup rendered="#{d.parent == null}">
+                        <span style="font-size:11px;color:var(--text3);">— Niveau racine —</span>
+                    </h:panelGroup>
+                </p:column>
+
+                <p:column headerText="Responsable" style="width:180px;">
+                    <h:panelGroup rendered="#{d.responsable != null}">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:28px;height:28px;border-radius:50%;
+                                        background:linear-gradient(135deg,#7c3aed,#a78bfa);
+                                        display:flex;align-items:center;justify-content:center;
+                                        font-size:10px;font-weight:800;color:#fff;flex-shrink:0;">
+                                #{d.responsable.prenom.substring(0,1)}
+                            </div>
+                            <div>
+                                <div style="font-size:12px;font-weight:700;color:var(--navy);">
+                                    #{d.responsable.prenom} #{d.responsable.nom}
+                                </div>
+                                <div style="font-size:10px;color:var(--text3);">#{d.responsable.intiutePoste}</div>
+                            </div>
+                        </div>
+                    </h:panelGroup>
+                    <h:panelGroup rendered="#{d.responsable == null}">
+                        <span class="badge" style="background:#fee2e2;color:#b91c1c;">
+                            <i class="fas fa-exclamation-triangle" style="margin-right:4px;font-size:9px;"></i>
+                            Non pourvu
+                        </span>
+                    </h:panelGroup>
+                </p:column>
+
+                <p:column headerText="Effectif" sortBy="#{d.nombreEmployes}" style="width:100px;text-align:center;">
+                    <div style="text-align:center;">
+                        <span class="effectif-pill">
+                            <i class="fas fa-users"></i>
+                            #{d.nombreEmployes}
+                        </span>
+                    </div>
+                </p:column>
+
+                <p:column headerText="Sous-unit&#233;s" style="width:110px;text-align:center;">
+                    <div style="text-align:center;">
+                        <h:panelGroup rendered="#{d.enfants != null and not empty d.enfants}">
+                            <span style="background:#ede9fe;color:#7c3aed;font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;">
+                                #{d.enfants.size()} unit&#233;(s)
+                            </span>
+                        </h:panelGroup>
+                        <h:panelGroup rendered="#{d.enfants == null or empty d.enfants}">
+                            <span style="font-size:11px;color:var(--text3);">—</span>
+                        </h:panelGroup>
+                    </div>
+                </p:column>
+
+                <p:column headerText="Budget allou&#233;" sortBy="#{d.budget}" style="width:140px;">
+                    <h:panelGroup rendered="#{d.budget != null and d.budget gt 0}">
+                        <span class="budget-pill">
+                            <i class="fas fa-coins" style="margin-right:4px;font-size:10px;"></i>
+                            <h:outputText value="#{d.budget}">
+                                <f:convertNumber type="currency" currencySymbol="FCFA " groupingUsed="true" maxFractionDigits="0"/>
+                            </h:outputText>
+                        </span>
+                    </h:panelGroup>
+                    <h:panelGroup rendered="#{d.budget == null or d.budget == 0}">
+                        <span style="font-size:11px;color:var(--text3);">Non d&#233;fini</span>
+                    </h:panelGroup>
+                </p:column>
+
+                <p:column headerText="Cr&#233;&#233; le" sortBy="#{d.dateCreation}" style="width:110px;">
+                    <span style="font-size:11px;color:var(--text2);">
+                        <h:outputText value="#{d.dateCreation}">
+                            <f:convertDateTime pattern="dd/MM/yyyy" type="localDateTime"/>
+                        </h:outputText>
+                    </span>
+                </p:column>
+
+                <p:column headerText="Statut" style="width:90px;text-align:center;">
+                    <div style="text-align:center;">
+                        <span class="badge #{d.actif ? 'badge-active' : 'badge-inactive'}">
+                            #{d.actif ? 'Actif' : 'Inactif'}
+                        </span>
+                    </div>
+                </p:column>
+
+                <p:column headerText="Actions" style="width:130px;text-align:right;">
+                    <div style="display:flex;gap:5px;justify-content:flex-end;">
+                        <p:commandButton styleClass="act-btn view" title="D&#233;tails complets" icon="pi pi-eye"
+                                         action="#{structureBean.preparerEditionDirection(d)}" update=":frmDetail:panelDetail"
+                                         oncomplete="PF('dlgDetail').show()"/>
+                        <p:commandButton styleClass="act-btn edit" title="Modifier" icon="pi pi-pencil"
+                                         action="#{structureBean.preparerEditionDirection(d)}" update=":formEdit"
+                                         oncomplete="PF('dlgEdit').show()"/>
+                        <p:commandButton styleClass="act-btn del" title="Supprimer" icon="pi pi-trash"
+                                         action="#{structureBean.supprimerDirection(d.id)}" ajax="false"
+                                         onclick="return confirm('Confirmer la suppression de cette direction ?')"/>
+                    </div>
+                </p:column>
+
+            </p:dataTable>
+
+            <h:panelGroup rendered="#{empty structureBean.directions}">
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fas fa-building"></i></div>
+                    <div class="empty-title">Aucune direction enregistr&#233;e</div>
+                    <div class="empty-sub">Commencez par cr&#233;er la premi&#232;re unit&#233; organisationnelle.</div>
+                </div>
+            </h:panelGroup>
+            </h:form>
+        </div>
+
+        <!-- ══════ VUE 2 : ORGANIGRAMME ══════ -->
+        <div id="view-org" class="card" style="display:none;margin-bottom:20px;">
+            <div class="card-header">
+                <div>
+                    <div class="card-title"><i class="fas fa-sitemap"></i> Organigramme g&#233;n&#233;ral &#8212; #{structureBean.institutionCourante != null ? structureBean.institutionCourante.code : ''}</div>
+                    <div class="card-subtitle">Structure hi&#233;rarchique compl&#232;te de l'institution</div>
+                </div>
+                <button class="btn-secondary" onclick="window.print()">
+                    <i class="fas fa-print"></i> Imprimer
+                </button>
+            </div>
+
+            <div class="org-wrapper">
+                <div class="org-tree">
+                    <div class="org-level">
+                        <div class="org-node niveau-0">
+                            <div class="org-node-icon"><i class="fas fa-landmark"></i></div>
+                            <div class="org-node-title">#{structureBean.institutionCourante != null ? structureBean.institutionCourante.nom : 'Aucune institution s&#233;lectionn&#233;e'}</div>
+                            <div class="org-node-sub">#{structureBean.institutionCourante != null ? structureBean.institutionCourante.code : ''} &#8212; R&#233;publique du S&#233;n&#233;gal</div>
+                            <span class="org-node-badge">
+                                <i class="fas fa-users" style="margin-right:4px;"></i>
+                                #{adminEmployeBean.totalEmployes} agents
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="org-connector-v"></div>
+
+                    <div style="display:flex;position:relative;justify-content:center;width:100%;">
+                        <div style="position:absolute;top:0;left:12%;right:12%;height:2px;background:linear-gradient(90deg,#c7d2fe,#e2e8f0,#c7d2fe);"></div>
+                        <div style="display:flex;gap:32px;flex-wrap:wrap;justify-content:center;">
+                            <ui:repeat value="#{structureBean.directions}" var="dir">
+                                <div class="org-branch">
+                                    <div class="org-branch-top"></div>
+                                    <div class="org-node niveau-1">
+                                        <div class="org-node-effectif">#{dir.nombreEmployes}</div>
+                                        <div class="org-node-icon"><i class="fas fa-building"></i></div>
+                                        <div class="org-node-title">#{dir.nom}</div>
+                                        <div class="org-node-sub">#{dir.code}</div>
+                                        <h:panelGroup rendered="#{dir.responsable != null}">
+                                            <div class="org-node-sub" style="margin-top:4px;">
+                                                <i class="fas fa-user" style="margin-right:3px;"></i>
+                                                #{dir.responsable.prenom} #{dir.responsable.nom}
+                                            </div>
+                                        </h:panelGroup>
+                                        <span class="org-node-badge">
+                                            #{not empty dir.enfants ? dir.enfants.size() : 0} d&#233;pt(s)
+                                        </span>
+                                    </div>
+                                    <h:panelGroup rendered="#{not empty dir.enfants}">
+                                        <div class="org-connector-v" style="height:20px;"></div>
+                                        <div style="display:flex;gap:16px;position:relative;justify-content:center;">
+                                            <div style="position:absolute;top:0;left:30px;right:30px;height:2px;background:#e2e8f0;"></div>
+                                            <ui:repeat value="#{dir.enfants}" var="dept">
+                                                <div class="org-branch">
+                                                    <div class="org-branch-top" style="height:20px;"></div>
+                                                    <div class="org-node niveau-2">
+                                                        <div class="org-node-icon"><i class="fas fa-sitemap"></i></div>
+                                                        <div class="org-node-title">#{dept.nom}</div>
+                                                        <div class="org-node-sub">#{dept.code}</div>
+                                                        <span class="org-node-badge">#{dept.nombreEmployes} agents</span>
+                                                    </div>
+                                                </div>
+                                            </ui:repeat>
+                                        </div>
+                                    </h:panelGroup>
+                                </div>
+                            </ui:repeat>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--navy);"></div>Minist&#232;re</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--purple);"></div>Niveau 1 &#8212; Directions</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--blue);"></div>Niveau 2 &#8212; D&#233;partements</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#059669;"></div>Niveau 3 &#8212; Services / Bureaux</div>
+                <div class="legend-item" style="margin-left:auto;">
+                    <div class="legend-dot" style="background:var(--green);border-radius:50%;"></div>
+                    Nombre d&#8217;agents affect&#233;s
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════ VUE 3 : CARTES ══════ -->
+        <div id="view-cards" style="display:none;margin-bottom:20px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;">
+                <ui:repeat value="#{structureBean.directions}" var="d">
+                    <div class="card" style="transition:all .2s;cursor:pointer;"
+                         onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 12px 32px rgba(0,0,0,.1)';"
+                         onmouseout="this.style.transform='';this.style.boxShadow='';">
+
+                        <div style="padding:18px 18px 14px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:14px;position:relative;">
+                            <div style="position:absolute;top:0;left:0;right:0;height:3px;
+                                        background:#{d.type == 'DIRECTION' ? 'linear-gradient(90deg,#7c3aed,#a78bfa)' : d.type == 'DEPARTEMENT' ? 'linear-gradient(90deg,#1d4ed8,#3b82f6)' : 'linear-gradient(90deg,#059669,#10b981)'};
+                                        border-radius:12px 12px 0 0;"></div>
+                            <div style="width:48px;height:48px;border-radius:12px;flex-shrink:0;
+                                        background:#{d.type == 'DIRECTION' ? '#ede9fe' : d.type == 'DEPARTEMENT' ? '#dbeafe' : '#dcfce7'};
+                                        color:#{d.type == 'DIRECTION' ? '#7c3aed' : d.type == 'DEPARTEMENT' ? '#1d4ed8' : '#15803d'};
+                                        display:flex;align-items:center;justify-content:center;font-size:20px;margin-top:6px;">
+                                <i class="fas #{d.type == 'DIRECTION' ? 'fa-building' : d.type == 'DEPARTEMENT' ? 'fa-sitemap' : 'fa-project-diagram'}"></i>
+                            </div>
+                            <div style="flex:1;">
+                                <div style="font-size:14px;font-weight:800;color:var(--navy);line-height:1.3;">#{d.nom}</div>
+                                <div style="font-size:10px;color:var(--text3);margin-top:3px;font-family:'Consolas',monospace;">#{d.code}</div>
+                                <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+                                    <span class="badge badge-type-#{d.type.toLowerCase()}">#{d.type}</span>
+                                    <span class="badge #{d.actif ? 'badge-active' : 'badge-inactive'}">#{d.actif ? 'Actif' : 'Inactif'}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="padding:14px 18px;">
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                                <h:panelGroup rendered="#{d.responsable != null}">
+                                    <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;">
+                                        #{d.responsable.prenom.substring(0,1)}
+                                    </div>
+                                    <div>
+                                        <div style="font-size:12px;font-weight:700;color:var(--navy);">#{d.responsable.prenom} #{d.responsable.nom}</div>
+                                        <div style="font-size:10px;color:var(--text3);">#{d.responsable.intiutePoste}</div>
+                                    </div>
+                                </h:panelGroup>
+                                <h:panelGroup rendered="#{d.responsable == null}">
+                                    <span style="font-size:11px;color:#ef4444;font-weight:700;">
+                                        <i class="fas fa-exclamation-circle" style="margin-right:4px;"></i>Poste vacant
+                                    </span>
+                                </h:panelGroup>
+                            </div>
+
+                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                                <div style="text-align:center;background:var(--bg);border-radius:8px;padding:8px 4px;">
+                                    <div style="font-size:18px;font-weight:800;color:var(--purple);">#{d.nombreEmployes}</div>
+                                    <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">Agents</div>
+                                </div>
+                                <div style="text-align:center;background:var(--bg);border-radius:8px;padding:8px 4px;">
+                                    <div style="font-size:18px;font-weight:800;color:var(--blue);">#{not empty d.enfants ? d.enfants.size() : 0}</div>
+                                    <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">Sous-unit&#233;s</div>
+                                </div>
+                                <div style="text-align:center;background:var(--bg);border-radius:8px;padding:8px 4px;">
+                                    <div style="font-size:18px;font-weight:800;color:var(--green);">#{d.postes}</div>
+                                    <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">Postes</div>
+                                </div>
+                            </div>
+
+                            <h:panelGroup rendered="#{d.parent != null}">
+                                <div style="margin-top:10px;font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px;">
+                                    <i class="fas fa-level-up-alt" style="color:var(--purple);font-size:10px;"></i>
+                                    Rattach&#233; &#224; : <span style="color:var(--navy);font-weight:700;">#{d.parent.nom}</span>
+                                </div>
+                            </h:panelGroup>
+                        </div>
+
+                        <div style="padding:10px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:6px;background:#fafbff;border-radius:0 0 var(--radius) var(--radius);">
+                            <h:form>
+                                <p:commandButton styleClass="act-btn view" title="D&#233;tails" icon="pi pi-eye"
+                                                 action="#{structureBean.preparerEditionDirection(d)}" update=":frmDetail:panelDetail"
+                                                 oncomplete="PF('dlgDetail').show()"/>
+                                <p:commandButton styleClass="act-btn edit" title="Modifier" icon="pi pi-pencil"
+                                                 action="#{structureBean.preparerEditionDirection(d)}" update=":formEdit"
+                                                 oncomplete="PF('dlgEdit').show()"/>
+                            </h:form>
+                        </div>
+                    </div>
+                </ui:repeat>
+            </div>
+        </div>
+
+    </div><!-- /page-body -->
+</div><!-- /main -->
+
+<!-- ══════ DIALOG : DÉTAILS ══════ -->
+<h:form id="frmDetail">
+<p:dialog header="D&#233;tails complets &#8212; #{structureBean.direction.nom}"
+          widgetVar="dlgDetail" modal="true" width="820" responsive="true">
+    <p:outputPanel id="panelDetail">
+        <h:panelGroup rendered="#{structureBean.direction != null}">
+            <div style="background:linear-gradient(135deg,var(--navy),#1e293b);border-radius:10px;padding:20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;color:#fff;">
+                <div style="width:56px;height:56px;border-radius:14px;background:rgba(124,58,237,.3);display:flex;align-items:center;justify-content:center;font-size:24px;">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div style="flex:1;">
+                    <div style="font-size:18px;font-weight:800;">#{structureBean.direction.nom}</div>
+                    <div style="font-size:11px;color:var(--purple-l);margin-top:3px;font-family:'Consolas',monospace;">#{structureBean.direction.code}</div>
+                    <div style="margin-top:8px;display:flex;gap:8px;">
+                        <span style="background:rgba(124,58,237,.3);color:var(--purple-l);font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;">#{structureBean.direction.type}</span>
+                        <span style="background:#{structureBean.direction.actif ? 'rgba(16,185,129,.3)' : 'rgba(239,68,68,.3)'};color:#{structureBean.direction.actif ? '#6ee7b7' : '#fca5a5'};font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;">
+                            #{structureBean.direction.actif ? '● Actif' : '● Inactif'}
+                        </span>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:36px;font-weight:800;color:var(--purple-l);">#{structureBean.direction.nombreEmployes}</div>
+                    <div style="font-size:10px;color:var(--text3);">agents affect&#233;s</div>
+                </div>
+            </div>
+
+            <div class="modal-section-title"><i class="fas fa-info-circle"></i> Informations g&#233;n&#233;rales</div>
+            <div class="modal-grid-2">
+                <div class="modal-field">
+                    <label>D&#233;nomination officielle</label>
+                    <div class="modal-field-value">#{structureBean.direction.nom}</div>
+                </div>
+                <div class="modal-field">
+                    <label>Code / Sigle</label>
+                    <div class="modal-field-value" style="font-family:'Consolas',monospace;color:var(--purple);">#{structureBean.direction.code}</div>
+                </div>
+                <div class="modal-field">
+                    <label>Type d&#8217;unit&#233;</label>
+                    <div class="modal-field-value">#{structureBean.direction.type}</div>
+                </div>
+                <div class="modal-field">
+                    <label>Unit&#233; parente</label>
+                    <div class="modal-field-value">#{structureBean.direction.parent != null ? structureBean.direction.parent.nom : '— Niveau racine —'}</div>
+                </div>
+                <div class="modal-field">
+                    <label>Date de cr&#233;ation</label>
+                    <div class="modal-field-value">
+                        <h:outputText value="#{structureBean.direction.dateCreation}">
+                            <f:convertDateTime pattern="dd MMMM yyyy" locale="fr" type="localDateTime"/>
+                        </h:outputText>
+                    </div>
+                </div>
+                <div class="modal-field">
+                    <label>Statut</label>
+                    <div class="modal-field-value">
+                        <span class="badge #{structureBean.direction.actif ? 'badge-active' : 'badge-inactive'}">#{structureBean.direction.actif ? 'Actif' : 'Inactif'}</span>
+                    </div>
+                </div>
+            </div>
+
+            <h:panelGroup rendered="#{structureBean.direction.responsable != null}">
+                <div class="modal-section-title"><i class="fas fa-user-tie"></i> Responsable &amp; Encadrement</div>
+                <div class="resp-card">
+                    <div class="resp-avatar">#{structureBean.direction.responsable.prenom.substring(0,1)}</div>
+                    <div>
+                        <div class="resp-name">#{structureBean.direction.responsable.prenom} #{structureBean.direction.responsable.nom}</div>
+                        <div class="resp-post">#{structureBean.direction.responsable.intiutePoste}</div>
+                        <div style="font-size:10px;color:var(--text3);margin-top:3px;">
+                            <i class="fas fa-envelope" style="margin-right:4px;"></i>#{structureBean.direction.responsable.email}
+                            &#160;&#160;
+                            <i class="fas fa-phone" style="margin-right:4px;"></i>#{structureBean.direction.responsable.telephone}
+                        </div>
+                    </div>
+                    <div class="resp-right">
+                        <span class="badge badge-active">En poste</span>
+                        <div class="resp-since" style="margin-top:4px;">
+                            Depuis <h:outputText value="#{structureBean.direction.responsable.dateAffectation}"><f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/></h:outputText>
+                        </div>
+                    </div>
+                </div>
+            </h:panelGroup>
+        </h:panelGroup>
+    </p:outputPanel>
+
+    <f:facet name="footer">
+        <div style="display:flex;justify-content:flex-end;gap:10px;">
+            <p:commandButton value="Fermer" onclick="PF('dlgDetail').hide();" styleClass="btn-secondary" type="button"/>
+            <p:commandButton value="Modifier" action="#{structureBean.prepareEdit(structureBean.direction)}"
+                             update=":formEdit" oncomplete="PF('dlgDetail').hide();PF('dlgEdit').show();"
+                             styleClass="btn-primary" icon="pi pi-pencil"/>
+        </div>
+    </f:facet>
+</p:dialog>
+</h:form>
+
+<!-- ══════ DIALOG : AJOUTER ══════ -->
+<h:form id="formAjout">
+<p:dialog header="Nouvelle unit&#233; organisationnelle" widgetVar="dlgAjout"
+          modal="true" width="700" responsive="true" closeOnEscape="true"
+          style="border-radius:14px;overflow:hidden;">
+    <div style="padding:4px 4px 0;">
+
+        <div class="modal-section-title">
+            <i class="fas fa-building"/> Informations de base
+        </div>
+
+        <div class="modal-grid-2">
+
+            <!-- Dénomination pleine largeur -->
+            <div class="modal-field" style="grid-column:1/-1;">
+                <label>D&#233;nomination officielle <span class="req">*</span></label>
+                <p:inputText value="#{structureBean.direction.nom}"
+                             placeholder="Ex : Direction des Ressources Humaines"
+                             required="true" requiredMessage="La dénomination est obligatoire."/>
+            </div>
+
+            <!-- Code + Type -->
+            <div class="modal-field">
+                <label>Code / Sigle <span class="req">*</span></label>
+                <p:inputText value="#{structureBean.direction.code}"
+                             placeholder="Ex : DRH"
+                             style="font-family:'Consolas',monospace!important;text-transform:uppercase;letter-spacing:1px;"
+                             required="true"/>
+            </div>
+            <div class="modal-field">
+                <label>Type d&#8217;unit&#233; <span class="req">*</span></label>
+                <p:selectOneMenu value="#{structureBean.direction.type}">
+                    <f:selectItem itemLabel="&#8212; S&#233;lectionner &#8212;" itemValue=""/>
+                    <f:selectItem itemLabel="Direction"        itemValue="DIRECTION"/>
+                    <f:selectItem itemLabel="D&#233;partement" itemValue="DEPARTEMENT"/>
+                    <f:selectItem itemLabel="Service"          itemValue="SERVICE"/>
+                    <f:selectItem itemLabel="Bureau"           itemValue="BUREAU"/>
+                </p:selectOneMenu>
+            </div>
+
+            <!-- Unité parente + Responsable -->
+            <div class="modal-field">
+                <label><i class="fas fa-sitemap" style="color:var(--text3);font-size:10px;"/> Unit&#233; parente</label>
+                <p:selectOneMenu value="#{structureBean.direction.parentId}">
+                    <f:selectItem itemLabel="&#8212; Niveau racine &#8212;" itemValue=""/>
+                    <f:selectItems value="#{structureBean.directions}" var="d"
+                                   itemLabel="#{d.nom}" itemValue="#{d.id}"/>
+                </p:selectOneMenu>
+            </div>
+            <div class="modal-field">
+                <label><i class="fas fa-user" style="color:var(--text3);font-size:10px;"/> Responsable</label>
+                <p:selectOneMenu value="#{structureBean.direction.responsableId}">
+                    <f:selectItem itemLabel="&#8212; Non d&#233;fini &#8212;" itemValue=""/>
+                    <f:selectItems value="#{structureBean.employes}" var="e"
+                                   itemLabel="#{e.prenom} #{e.nom}" itemValue="#{e.id}"/>
+                </p:selectOneMenu>
+            </div>
+
+            <!-- Postes + Budget -->
+            <div class="modal-field">
+                <label><i class="fas fa-briefcase" style="color:var(--text3);font-size:10px;"/> Postes budg&#233;taires</label>
+                <p:inputNumber value="#{structureBean.direction.nombreEmployes}" min="0"/>
+            </div>
+            <div class="modal-field">
+                <label><i class="fas fa-coins" style="color:var(--text3);font-size:10px;"/> Budget allou&#233; (FCFA)</label>
+                <p:inputNumber value="#{structureBean.direction.budget}" min="0"/>
+            </div>
+
+            <!-- Année fiscale + Statut -->
+            <div class="modal-field">
+                <label><i class="fas fa-calendar" style="color:var(--text3);font-size:10px;"/> Ann&#233;e fiscale</label>
+                <p:inputText value="#{structureBean.direction.anneeFiscale}" placeholder="2025"/>
+            </div>
+            <div class="modal-field">
+                <label><i class="fas fa-toggle-on" style="color:var(--text3);font-size:10px;"/> Statut</label>
+                <p:selectOneMenu value="#{structureBean.direction.actif}">
+                    <f:selectItem itemLabel="&#10003; Actif"    itemValue="true"/>
+                    <f:selectItem itemLabel="&#10005; Inactif"  itemValue="false"/>
+                </p:selectOneMenu>
+            </div>
+
+            <!-- Description pleine largeur -->
+            <div class="modal-field" style="grid-column:1/-1;">
+                <label><i class="fas fa-align-left" style="color:var(--text3);font-size:10px;"/> Description / Mission</label>
+                <p:inputTextarea value="#{structureBean.direction.description}" rows="3"
+                                 placeholder="D&#233;crivez les attributions et la mission de cette unit&#233;..."/>
+            </div>
+
+        </div>
+
+        <!-- Note champs requis -->
+        <div style="font-size:11px;color:var(--text3);margin:4px 0 12px;">
+            <span style="color:var(--red);font-weight:700;">*</span> Champs obligatoires
+        </div>
+
+        <div class="modal-footer">
+            <p:commandButton value="Annuler" onclick="PF('dlgAjout').hide(); return false;"
+                             styleClass="btn-secondary" type="button"
+                             icon="pi pi-times"/>
+            <p:commandButton value="Enregistrer"
+                             action="#{structureBean.creer}"
+                             update="dirForm :growl"
+                             oncomplete="if(!args.validationFailed) PF('dlgAjout').hide();"
+                             styleClass="btn-primary"
+                             icon="pi pi-save"/>
+        </div>
+    </div>
+</p:dialog>
+</h:form>
+
+<!-- ══════ DIALOG : MODIFIER ══════ -->
+<h:form id="formEdit">
+<p:dialog header="Modifier &#8212; #{structureBean.direction.nom}" widgetVar="dlgEdit" modal="true" width="680" height="600" scrollable="true" closeOnEscape="true">
+    <h:panelGroup rendered="#{structureBean.direction != null}">
+        <div class="modal-section-title"><i class="fas fa-edit"></i> Modification de l&#8217;unit&#233;</div>
+        <div class="modal-grid-2">
+            <div class="modal-field" style="grid-column:1/-1;">
+                <label>D&#233;nomination officielle *</label>
+                <p:inputText value="#{structureBean.direction.nom}"
+                             style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-size:13px;font-family:'DM Sans',sans-serif;"/>
+            </div>
+            <div class="modal-field">
+                <label>Code / Sigle *</label>
+                <p:inputText value="#{structureBean.direction.code}"
+                             style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-size:13px;font-family:'Consolas',monospace;"/>
+            </div>
+            <div class="modal-field">
+                <label>Type d&#8217;unit&#233;</label>
+                <p:selectOneMenu value="#{structureBean.direction.type}"
+                                 style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-size:13px;font-family:'DM Sans',sans-serif;">
+                    <f:selectItem itemLabel="Direction"    itemValue="DIRECTION"/>
+                    <f:selectItem itemLabel="D&#233;partement" itemValue="DEPARTEMENT"/>
+                    <f:selectItem itemLabel="Service"      itemValue="SERVICE"/>
+                    <f:selectItem itemLabel="Bureau"       itemValue="BUREAU"/>
+                </p:selectOneMenu>
+            </div>
+            <div class="modal-field">
+                <label>Responsable</label>
+                <p:selectOneMenu value="#{structureBean.direction.responsableId}"
+                                 style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-size:13px;font-family:'DM Sans',sans-serif;">
+                    <f:selectItem itemLabel="— Non d&#233;fini —" itemValue=""/>
+                    <f:selectItems value="#{structureBean.employes}" var="e" itemLabel="#{e.prenom} #{e.nom}" itemValue="#{e.id}"/>
+                </p:selectOneMenu>
+            </div>
+            <div class="modal-field">
+                <label>Postes budg&#233;taires</label>
+                <p:inputNumber value="#{structureBean.direction.nombreEmployes}" min="0"
+                               style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-size:13px;font-family:'DM Sans',sans-serif;"/>
+            </div>
+            <div class="modal-field">
+                <label>Budget allou&#233; (FCFA)</label>
+                <p:inputNumber value="#{structureBean.direction.budget}" min="0"
+                               style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-size:13px;font-family:'DM Sans',sans-serif;"/>
+            </div>
+            <div class="modal-field" style="grid-column:1/-1;">
+                <label>Description / Mission</label>
+                <p:inputTextarea value="#{structureBean.direction.description}" rows="3"
+                                 style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-size:13px;font-family:'DM Sans',sans-serif;resize:vertical;"/>
+            </div>
+            <div class="modal-field">
+                <label>Statut</label>
+                <p:selectOneMenu value="#{structureBean.direction.actif}"
+                                 style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-size:13px;font-family:'DM Sans',sans-serif;">
+                    <f:selectItem itemLabel="Actif"   itemValue="true"/>
+                    <f:selectItem itemLabel="Inactif" itemValue="false"/>
+                </p:selectOneMenu>
+            </div>
+        </div>
+    </h:panelGroup>
+
+    <f:facet name="footer">
+        <div style="display:flex;justify-content:flex-end;gap:10px;">
+            <p:commandButton value="Annuler" onclick="PF('dlgEdit').hide();" styleClass="btn-secondary" type="button"/>
+            <p:commandButton value="Sauvegarder" action="#{structureBean.modifier}"
+                             update="dirForm :growl" oncomplete="if(!args.validationFailed) PF('dlgEdit').hide();"
+                             styleClass="btn-primary" icon="pi pi-save"/>
+        </div>
+    </f:facet>
+</p:dialog>
+</h:form>
+
+<!-- ══════ GROWL ══════ -->
+<p:growl id="growl" showDetail="true" life="4000"/>
+
+<!-- ══════ JAVASCRIPT ══════ -->
+<script>
+//<![CDATA[
+    /* ── Sync sidebar mini state avec le main content ── */
+    (function() {
+        var STORAGE_KEY = 'sirh_sidebar_mini';
+        var main = document.getElementById('mainContent');
+
+        function applySidebarState() {
+            var isMini = localStorage.getItem(STORAGE_KEY) === '1';
+            if (isMini) {
+                document.documentElement.style.setProperty('--sidebar-w', '68px');
+                document.body.classList.add('sidebar-mini');
+            } else {
+                document.documentElement.style.setProperty('--sidebar-w', '256px');
+                document.body.classList.remove('sidebar-mini');
+            }
+        }
+
+        applySidebarState();
+
+        /* Écoute les changements de la sidebar (toggle) */
+        window.addEventListener('storage', function(e) {
+            if (e.key === STORAGE_KEY) applySidebarState();
+        });
+
+        /* Override toggleSidebar pour mettre à jour le main aussi */
+        var originalToggle = window.toggleSidebar;
+        window.toggleSidebar = function() {
+            if (typeof originalToggle === 'function') originalToggle();
+            applySidebarState();
+        };
+    })();
+
+    /* ── Vues ── */
+    function showView(view, btn) {
+        ['table','org','cards'].forEach(function(v) {
+            var el = document.getElementById('view-' + v);
+            if (el) el.style.display = (v === view) ? '' : 'none';
+        });
+        document.querySelectorAll('.view-tab').forEach(function(t) {
+            t.classList.remove('active');
+        });
+        if (btn) btn.classList.add('active');
+    }
+
+    /* ── Filtres ── */
+    function filterTable() {
+        var q = document.getElementById('searchInput').value.toLowerCase();
+        document.querySelectorAll('.dir-table tbody tr').forEach(function(row) {
+            row.style.display = row.textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none';
+        });
+    }
+
+    function filterByType(val) {
+        document.querySelectorAll('.dir-table tbody tr').forEach(function(row) {
+            row.style.display = (!val || row.textContent.indexOf(val) !== -1) ? '' : 'none';
+        });
+    }
+
+    function filterByStatut(val) {
+        var label = val === 'ACTIF' ? 'Actif' : 'Inactif';
+        document.querySelectorAll('.dir-table tbody tr').forEach(function(row) {
+            row.style.display = (!val || row.textContent.indexOf(label) !== -1) ? '' : 'none';
+        });
+    }
+//]]>
+</script>
+
+
+    </p:outputPanel>
+    <!-- ══ FIN CONTENU CONDITIONNEL ══ -->
+
+</h:body>
+</html>

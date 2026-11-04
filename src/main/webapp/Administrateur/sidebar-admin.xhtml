@@ -1,0 +1,896 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<!--
+    sidebar-admin.xhtml — ui:composition pure (sans balises HTML englobantes)
+    Inclure via : <ui:include src="sidebar-admin.xhtml"/>
+-->
+<ui:composition>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+a { text-decoration: none; color: inherit; }
+
+:root {
+    --sidebar-w:       256px;
+    --sidebar-w-mini:  68px;
+    --navy:      #0f172a;
+    --navy2:     #1e293b;
+    --gold:      #b58a3a;
+    --gold-l:    #f0c97a;
+    --red:       #ef4444;
+    --text-sb:   #94a3b8;
+    --text-sb-h: #e2e8f0;
+    --active-bg: rgba(181,138,58,.18);
+    --hover-bg:  rgba(181,138,58,.10);
+    --transition: .28s cubic-bezier(.4,0,.2,1);
+}
+
+.sidebar {
+    width: var(--sidebar-w);
+    background: var(--navy);
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    flex-shrink: 0;
+    display: flex; flex-direction: column;
+    z-index: 200;
+    box-shadow: 4px 0 28px rgba(0,0,0,.28);
+    transition: width var(--transition);
+    overflow: hidden;
+}
+.sidebar.mini { width: var(--sidebar-w-mini); }
+.sidebar::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-l), var(--gold));
+    z-index: 1;
+}
+
+.sb-toggle {
+    position: absolute; top: 22px; right: -14px;
+    width: 28px; height: 28px;
+    background: var(--gold); border: 2px solid var(--navy); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--navy); font-size: 11px; font-weight: 900;
+    cursor: pointer;
+    transition: transform var(--transition), background .18s;
+    z-index: 300;
+    box-shadow: 0 2px 10px rgba(181,138,58,.45);
+}
+.sidebar.mini .sb-toggle { transform: rotate(180deg); }
+.sb-toggle:hover { background: var(--gold-l); }
+
+.sb-logo {
+    padding: 26px 14px 18px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    display: flex; align-items: center; gap: 12px;
+    min-height: 80px; white-space: nowrap; overflow: hidden;
+}
+.sb-logo-icon {
+    width: 40px; height: 40px; min-width: 40px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-l));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: var(--navy); flex-shrink: 0;
+    box-shadow: 0 2px 12px rgba(181,138,58,.35);
+}
+.sb-logo-text { overflow: hidden; transition: opacity var(--transition), width var(--transition); }
+.sb-logo-text .t1 { font-size: 13px; font-weight: 800; color: #f8fafc; letter-spacing: -.2px; }
+.sb-logo-text .t2 { font-size: 9px; color: var(--gold-l); text-transform: uppercase; letter-spacing: 1.8px; margin-top: 2px; }
+.sidebar.mini .sb-logo-text { opacity: 0; width: 0; pointer-events: none; }
+
+.sb-user {
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    display: flex; align-items: center; gap: 10px;
+    min-height: 62px; overflow: hidden; white-space: nowrap;
+    background: rgba(255,255,255,.02);
+}
+.sb-avatar {
+    width: 36px; height: 36px; min-width: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--gold-l));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800; color: var(--navy); flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(181,138,58,.3);
+}
+.sb-superadmin-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--gold), var(--gold-l));
+    color: var(--navy);
+    font-size: 8px; font-weight: 800;
+    padding: 2px 7px; border-radius: 10px;
+    text-transform: uppercase; letter-spacing: .6px;
+    margin-top: 3px;
+}
+.sb-user-info { overflow: hidden; transition: opacity var(--transition), width var(--transition); }
+.sb-user-name { font-size: 12px; font-weight: 700; color: #f1f5f9; }
+.sb-user-role { font-size: 9px; color: var(--gold-l); text-transform: uppercase; letter-spacing: .8px; margin-top: 1px; }
+.sidebar.mini .sb-user-info { opacity: 0; width: 0; pointer-events: none; }
+
+.sb-nav { flex: 1; padding: 10px 0; overflow-y: auto; overflow-x: hidden; }
+.sb-nav::-webkit-scrollbar { width: 3px; }
+.sb-nav::-webkit-scrollbar-thumb { background: rgba(181,138,58,.25); border-radius: 2px; }
+
+.sb-section-label {
+    display: flex; align-items: center; justify-content: space-between; gap: 6px;
+    width: 100%; background: none; border: none; cursor: pointer; font-family: inherit;
+    font-size: 9px; text-transform: uppercase; letter-spacing: 1.8px;
+    color: rgba(181,138,58,.4); padding: 14px 20px 4px; font-weight: 700;
+    white-space: nowrap; overflow: hidden;
+    transition: opacity var(--transition), height var(--transition), padding var(--transition), color .15s;
+}
+.sb-section-label:hover { color: rgba(181,138,58,.75); }
+.sidebar.mini .sb-section-label { opacity: 0; height: 0; padding: 0; pointer-events: none; }
+
+.sb-section-chevron { font-size: 8px; transition: transform .2s; flex-shrink: 0; }
+.sb-section.collapsed .sb-section-chevron { transform: rotate(-90deg); }
+
+.sb-section-body {
+    overflow: hidden; max-height: 800px; opacity: 1;
+    transition: max-height .25s ease, opacity .2s ease;
+}
+.sb-section.collapsed .sb-section-body { max-height: 0; opacity: 0; pointer-events: none; }
+/* En mode mini, la barre latérale n'affiche que des icônes : les accordions n'ont plus de sens */
+.sidebar.mini .sb-section-body { max-height: none !important; opacity: 1 !important; pointer-events: auto !important; }
+
+.nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px 9px 14px;
+    color: var(--text-sb); font-size: 12.5px; font-weight: 500;
+    transition: background .18s, color .18s, border-color .18s, padding var(--transition);
+    margin: 1px 6px; border-radius: 8px;
+    border-left: 3px solid transparent;
+    white-space: nowrap; overflow: hidden; position: relative;
+}
+.sidebar.mini .nav-item { padding: 9px 0; justify-content: center; }
+.nav-item:hover { background: var(--hover-bg); color: var(--text-sb-h); border-left-color: rgba(181,138,58,.4); }
+.nav-item.active { background: var(--active-bg); color: #f1f5f9; font-weight: 700; border-left-color: var(--gold); }
+.nav-item.inst-link { background: rgba(181,138,58,.08); color: var(--gold-l); border-left-color: rgba(181,138,58,.4); }
+.nav-item.inst-link:hover { background: rgba(181,138,58,.18); border-left-color: var(--gold); }
+.nav-item.inst-link.active { background: rgba(181,138,58,.22); border-left-color: var(--gold); color: #fff; }
+.sidebar.mini .nav-item.active { border-left-color: transparent; }
+
+.nav-item i { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+.nav-item.active i { color: var(--gold-l); }
+.nav-item.inst-link i { color: var(--gold-l); }
+
+.nav-item-text { transition: opacity var(--transition), width var(--transition); overflow: hidden; }
+.sidebar.mini .nav-item-text { opacity: 0; width: 0; pointer-events: none; }
+
+.nav-badge {
+    margin-left: auto;
+    background: var(--gold); color: var(--navy);
+    font-size: 9px; font-weight: 800;
+    padding: 2px 6px; border-radius: 10px; flex-shrink: 0;
+    transition: opacity var(--transition);
+}
+.sidebar.mini .nav-badge { opacity: 0; pointer-events: none; }
+
+/* Tooltip en mode mini */
+.sidebar.mini .nav-item[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: calc(var(--sidebar-w-mini) - 10px);
+    top: 50%; transform: translateY(-50%);
+    background: var(--navy2); color: #f1f5f9;
+    font-size: 12px; font-weight: 600;
+    padding: 6px 12px; border-radius: 7px;
+    white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+    border: 1px solid rgba(181,138,58,.2); z-index: 9999; pointer-events: none;
+}
+.sidebar.mini .nav-item[data-tooltip]:hover::before {
+    content: '';
+    position: absolute; left: calc(var(--sidebar-w-mini) - 18px);
+    top: 50%; transform: translateY(-50%);
+    border: 6px solid transparent; border-right-color: var(--navy2);
+    z-index: 9999; pointer-events: none;
+}
+
+.sb-footer { flex-shrink: 0; margin-top: auto; padding: 12px 10px; border-top: 1px solid rgba(255,255,255,.06); overflow: hidden; }
+.sb-footer form { margin: 0; }
+.btn-logout {
+    width: 100%; padding: 9px 10px;
+    background: rgba(239,68,68,.1); color: #ef4444;
+    border: 1px solid rgba(239,68,68,.2); border-radius: 8px;
+    font-size: 12px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    transition: all .18s; font-family: 'DM Sans', 'Segoe UI', sans-serif;
+    white-space: nowrap;
+}
+.btn-logout:hover { background: rgba(239,68,68,.22); border-color: rgba(239,68,68,.4); }
+.btn-logout-text { transition: opacity var(--transition), width var(--transition); overflow: hidden; }
+.sidebar.mini .btn-logout-text { opacity: 0; width: 0; }
+
+.sb-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.45); z-index: 199;
+}
+.sb-overlay.active { display: block; }
+
+.sb-hamburger {
+    display: none; position: fixed; top: 14px; left: 14px;
+    width: 38px; height: 38px; background: var(--gold);
+    border: none; border-radius: 8px;
+    align-items: center; justify-content: center;
+    color: var(--navy); font-size: 16px;
+    cursor: pointer; z-index: 201;
+    box-shadow: 0 2px 10px rgba(181,138,58,.4);
+}
+
+@media (max-width: 768px) {
+    .sidebar { position: fixed; top: 0; left: 0; transform: translateX(-100%); transition: transform .3s, width var(--transition); }
+    .sidebar.open { transform: translateX(0); }
+    .sb-toggle { display: none; }
+    .sb-hamburger { display: flex; }
+}
+</style>
+
+<!-- Overlay mobile -->
+<div class="sb-overlay" id="sbOverlay" onclick="closeMobileSidebar()"></div>
+
+<!-- Hamburger mobile -->
+<button class="sb-hamburger" id="sbHamburger" onclick="openMobileSidebar()" aria-label="Menu">
+    <i class="fas fa-bars"></i>
+</button>
+
+<div class="sidebar" id="sidebar">
+
+    <div class="sb-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="R&#233;duire / Agrandir">
+        <i class="fas fa-chevron-left"></i>
+    </div>
+
+    <!-- Logo + cloche -->
+    <div class="sb-logo" style="position:relative;">
+        <div class="sb-logo-icon"><i class="fas fa-landmark"></i></div>
+        <div class="sb-logo-text" style="flex:1;">
+            <div class="t1">SIRH &#8212; Admin</div>
+            <div class="t2">Administration</div>
+        </div>
+
+        <!-- ═══ Cloche notifications ═══ -->
+        <div class="admin-notif-wrapper">
+
+            <button type="button"
+                    class="admin-notif-bell #{notificationBean.compteurNonLues gt 0 ? 'has-unread' : ''}"
+                    onclick="toggleNotifPanel(event)"
+                    title="Notifications (#{notificationBean.compteurNonLues} non lues)">
+                <i class="pi pi-bell" style="font-size:15px;"/>
+                <h:panelGroup rendered="#{notificationBean.compteurNonLues gt 0}">
+                    <span class="admin-notif-badge">
+                        #{notificationBean.compteurNonLues gt 99 ? '99+' : notificationBean.compteurNonLues}
+                    </span>
+                </h:panelGroup>
+            </button>
+
+            <div id="adminNotifPanel" class="admin-notif-panel" onclick="event.stopPropagation();">
+
+                <!-- En-tête -->
+                <div class="admin-notif-header">
+                    <div class="admin-notif-title">
+                        <h:panelGroup rendered="#{notificationBean.compteurNonLues gt 0}">
+                            <span class="admin-notif-title-dot"/>
+                        </h:panelGroup>
+                        Notifications
+                        <span class="admin-notif-count">(#{notificationBean.compteurNonLues} non lues)</span>
+                    </div>
+                    <h:form style="display:inline;">
+                        <p:commandButton value="&#10003; Tout lire"
+                            action="#{notificationBean.marquerToutesLues}"
+                            update="@form :adminNotifList"
+                            styleClass="admin-notif-mark-all"
+                            rendered="#{notificationBean.compteurNonLues gt 0}"/>
+                    </h:form>
+                </div>
+
+                <!-- Liste -->
+                <h:form id="adminNotifList">
+                    <div class="admin-notif-list">
+                        <h:panelGroup rendered="#{notificationBean.recentes.isEmpty()}" layout="block">
+                            <div class="admin-notif-empty">
+                                <i class="pi pi-inbox" style="font-size:32px;color:#cbd5e1;"/>
+                                <div style="font-weight:600;color:#64748b;margin-bottom:4px;">Aucune notification</div>
+                                <div>Vous êtes à jour !</div>
+                            </div>
+                        </h:panelGroup>
+
+                        <ui:repeat value="#{notificationBean.recentes}" var="n">
+                            <p:commandLink action="#{notificationBean.marquerLue(n.id)}"
+                                           update="@form"
+                                           oncomplete="if (#{not empty n.lienAction}) { window.location='#{request.contextPath}#{n.lienAction}#{not empty n.entiteLieeId ? '?entiteId=' : ''}#{n.entiteLieeId}'; }"
+                                           styleClass="admin-notif-item #{n.estLue ? '' : 'unread'}">
+                                <div class="admin-notif-icon"
+                                     style="background:#{notificationBean.getCouleur(n.priorite)}1a;
+                                            color:#{notificationBean.getCouleur(n.priorite)};">
+                                    <i class="pi #{notificationBean.getIcone(n.type)}"/>
+                                </div>
+                                <div class="admin-notif-content">
+                                    <div class="admin-notif-text-title">#{n.titre}</div>
+                                    <div class="admin-notif-msg">#{n.message}</div>
+                                    <div class="admin-notif-time">
+                                        <i class="pi pi-clock" style="font-size:9px;margin-right:3px;"/>
+                                        #{notificationBean.getDateRelative(n.dateCreation)}
+                                    </div>
+                                </div>
+                                <h:panelGroup rendered="#{not n.estLue}">
+                                    <div class="admin-notif-dot"/>
+                                </h:panelGroup>
+                            </p:commandLink>
+                        </ui:repeat>
+                    </div>
+                </h:form>
+
+                <!-- Footer -->
+                <div class="admin-notif-footer">
+                    <a href="#">Voir toutes les notifications <i class="pi pi-arrow-right" style="font-size:10px;"/></a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <script>
+    //<![CDATA[
+        /* ── Fermer le panel au clic en dehors ── */
+        document.addEventListener('click', function() {
+            var p = document.getElementById('adminNotifPanel');
+            if (p) { p.classList.remove('open'); }
+        });
+
+        function toggleNotifPanel(e) {
+            e.stopPropagation();
+            var p = document.getElementById('adminNotifPanel');
+            if (!p) { return; }
+            var isOpen = p.classList.contains('open');
+            document.querySelectorAll('.admin-notif-panel.open').forEach(function(el) {
+                el.classList.remove('open');
+            });
+            if (!isOpen) {
+                var sb = document.getElementById('sidebar');
+                var isMini = false;
+                if (sb) { isMini = sb.classList.contains('mini'); }
+                p.style.left = (isMini ? '80px' : '270px');
+                p.classList.add('open');
+            }
+        }
+    //]]>
+    </script>
+    <style>
+        /* ── Cloche ── */
+        .admin-notif-wrapper { position: relative; margin-left: auto; flex-shrink: 0; }
+
+        @keyframes bell-shake {
+            0%,100% { transform: rotate(0); }
+            15%      { transform: rotate(12deg); }
+            30%      { transform: rotate(-10deg); }
+            45%      { transform: rotate(8deg); }
+            60%      { transform: rotate(-6deg); }
+            75%      { transform: rotate(3deg); }
+        }
+        @keyframes badge-pulse {
+            0%,100% { transform: scale(1); }
+            50%      { transform: scale(1.25); }
+        }
+
+        .admin-notif-bell {
+            position: relative; width: 36px; height: 36px; border-radius: 10px;
+            background: rgba(255,255,255,.08); color: #f1f5f9;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; border: 1px solid rgba(255,255,255,.10);
+            transition: background .15s, border-color .15s;
+        }
+        .admin-notif-bell:hover {
+            background: rgba(255,255,255,.16);
+            border-color: rgba(255,255,255,.22);
+        }
+        /* Animation cloche si notifications non lues */
+        .admin-notif-bell.has-unread i {
+            animation: bell-shake 2.4s ease infinite;
+            transform-origin: top center;
+        }
+
+        .admin-notif-badge {
+            position: absolute; top: -5px; right: -5px;
+            background: #ef4444; color: #fff;
+            min-width: 18px; height: 18px; border-radius: 9px;
+            font-size: 9px; font-weight: 800;
+            display: flex; align-items: center; justify-content: center;
+            padding: 0 4px; border: 2px solid #0f172a;
+            animation: badge-pulse 2s ease infinite;
+        }
+
+        /* ── Panneau dropdown ── */
+        .admin-notif-panel {
+            /* Fixé par rapport au viewport pour ne pas sortir de l'écran */
+            position: fixed; top: 20px; left: 270px;
+            width: 360px; max-height: 520px;
+            background: #fff; border-radius: 14px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.22), 0 4px 16px rgba(0,0,0,.1);
+            display: none; z-index: 9999; color: #0f172a;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            animation-duration: .18s;
+            animation-fill-mode: both;
+        }
+        @keyframes notif-in {
+            from { opacity: 0; transform: translateY(-6px) scale(.97); }
+            to   { opacity: 1; transform: translateY(0)   scale(1);   }
+        }
+        .admin-notif-panel.open {
+            display: flex; flex-direction: column;
+            animation-name: notif-in;
+        }
+
+        /* Header */
+        .admin-notif-header {
+            padding: 14px 16px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex; justify-content: space-between; align-items: center;
+            background: #fafbff;
+            flex-shrink: 0;
+        }
+        .admin-notif-title {
+            font-size: 13px; font-weight: 800; color: #0f172a;
+            display: flex; align-items: center; gap: 7px;
+        }
+        .admin-notif-title-dot {
+            width: 7px; height: 7px; border-radius: 50%; background: #ef4444;
+            animation: badge-pulse 2s ease infinite;
+        }
+        .admin-notif-count {
+            font-size: 11px; font-weight: 600; color: #94a3b8;
+        }
+
+        /* Bouton tout marquer */
+        .admin-notif-mark-all {
+            background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8;
+            font-size: 11px; font-weight: 700; cursor: pointer;
+            padding: 4px 10px; border-radius: 6px;
+            font-family: inherit; transition: all .15s;
+        }
+        .admin-notif-mark-all:hover { background: #dbeafe; }
+
+        /* Liste scrollable */
+        .admin-notif-list { overflow-y: auto; flex: 1; max-height: 380px; }
+
+        /* Item notification */
+        .admin-notif-item {
+            display: flex; gap: 11px; padding: 12px 16px;
+            border-bottom: 1px solid #f8fafc;
+            cursor: pointer; transition: background .12s;
+            text-decoration: none; color: #0f172a;
+            align-items: flex-start;
+        }
+        .admin-notif-item:last-child { border-bottom: none; }
+        .admin-notif-item:hover  { background: #f8fafc; }
+        .admin-notif-item.unread {
+            background: linear-gradient(90deg, #eff6ff 0%, #f8fafc 100%);
+            border-left: 3px solid #3b82f6;
+            padding-left: 13px;
+        }
+        .admin-notif-item.unread:hover { background: #e0f2fe; }
+
+        /* Icône */
+        .admin-notif-icon {
+            width: 36px; height: 36px; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; flex-shrink: 0; margin-top: 1px;
+        }
+
+        /* Contenu texte */
+        .admin-notif-content   { flex: 1; min-width: 0; }
+        .admin-notif-text-title {
+            font-size: 12px; font-weight: 700; color: #0f172a;
+            margin-bottom: 3px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .admin-notif-msg {
+            font-size: 11px; color: #64748b; line-height: 1.45;
+            display: -webkit-box; -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .admin-notif-time { font-size: 10px; color: #94a3b8; margin-top: 4px; }
+
+        /* Point non lu */
+        .admin-notif-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: #3b82f6; flex-shrink: 0; margin-top: 5px;
+        }
+
+        /* État vide */
+        .admin-notif-empty {
+            padding: 48px 16px; text-align: center;
+            color: #94a3b8; font-size: 12px; line-height: 1.6;
+        }
+        .admin-notif-empty i { display: block; margin-bottom: 10px; }
+
+        /* Footer */
+        .admin-notif-footer {
+            padding: 10px 16px; border-top: 1px solid #f1f5f9;
+            background: #fafbff; text-align: center; flex-shrink: 0;
+        }
+        .admin-notif-footer a {
+            font-size: 12px; font-weight: 700; color: #3b82f6;
+            text-decoration: none;
+        }
+        .admin-notif-footer a:hover { color: #1d4ed8; }
+
+        /* Sidebar mini : panel reste accessible */
+        .sidebar.mini .admin-notif-panel { left: 80px; }
+    </style>
+
+    <!-- Utilisateur connecté -->
+    <div class="sb-user">
+        <div class="sb-avatar">
+            #{sessionBean.utilisateurConnecte.prenom != null ?
+              sessionBean.utilisateurConnecte.prenom.substring(0,1) : 'A'}
+        </div>
+        <h:panelGroup id="sbUserInfo" layout="block" styleClass="sb-user-info">
+            <div class="sb-user-name">#{sessionBean.nomComplet}</div>
+            <p:outputPanel rendered="#{sessionBean.isSuperAdmin() and adminBean.institutionFiltreId == null}">
+                <span class="sb-superadmin-badge">&#9733; Super-Admin</span>
+            </p:outputPanel>
+            <p:outputPanel rendered="#{sessionBean.isSuperAdmin() and adminBean.institutionFiltreId != null}">
+                <div class="sb-user-role" style="color:#f0c97a;">
+                    <i class="fas fa-university" style="font-size:8px;margin-right:3px;"/>
+                    #{adminBean.institutionFiltreNom}
+                </div>
+                <span class="sb-superadmin-badge">&#9733; Super-Admin</span>
+            </p:outputPanel>
+            <p:outputPanel rendered="#{not sessionBean.isSuperAdmin()}">
+                <div class="sb-user-role">Admin &#183; #{sessionBean.codeInstitution}</div>
+            </p:outputPanel>
+        </h:panelGroup>
+    </div>
+
+    <h:panelGroup id="sbNav" layout="block">
+    <nav class="sb-nav">
+
+        <!-- ══════ PRINCIPAL ══════ -->
+        <div class="sb-section" data-section="principal">
+        <button type="button" class="sb-section-label" onclick="toggleSection('principal')">
+            <span>Principal</span>
+            <i class="fas fa-chevron-down sb-section-chevron"></i>
+        </button>
+        <div class="sb-section-body" id="sbSectionBody-principal">
+
+        <a href="#{request.contextPath}/Administrateur/dashboard.xhtml"
+           class="nav-item" data-tooltip="Tableau de bord">
+            <i class="fas fa-tachometer-alt"></i>
+            <span class="nav-item-text">Tableau de bord</span>
+        </a>
+
+        <!-- Institutions — super-admin uniquement -->
+        <p:outputPanel rendered="#{sessionBean.isSuperAdmin()}">
+            <a href="#{request.contextPath}/Administrateur/institutions.xhtml"
+               class="nav-item inst-link" data-tooltip="Institutions">
+                <i class="fas fa-university"></i>
+                <span class="nav-item-text">Institutions</span>
+                <span class="nav-badge">#{adminBean.totalInstitutions}</span>
+            </a>
+        </p:outputPanel>
+
+        </div>
+        </div>
+
+        <!-- ══════ ORGANISATION ══════ -->
+        <div class="sb-section" data-section="organisation">
+        <button type="button" class="sb-section-label" onclick="toggleSection('organisation')">
+            <span>Organisation</span>
+            <i class="fas fa-chevron-down sb-section-chevron"></i>
+        </button>
+        <div class="sb-section-body" id="sbSectionBody-organisation">
+
+        <!-- Ces liens nécessitent une institution sélectionnée pour le super-admin -->
+        <p:outputPanel rendered="#{sessionBean.isSuperAdmin() and adminBean.institutionFiltreId == null}"
+                       style="display:block;">
+            <div style="margin:4px 6px;padding:8px 14px;border-radius:8px;
+                        border:1px dashed rgba(181,138,58,.25);
+                        font-size:11px;color:rgba(148,163,184,.5);
+                        text-align:center;line-height:1.5;">
+                <i class="fas fa-lock" style="font-size:10px;margin-right:4px;"/>
+                S&#233;lectionnez une institution<br/>pour acc&#233;der aux modules
+            </div>
+        </p:outputPanel>
+
+        <p:outputPanel rendered="#{not sessionBean.isSuperAdmin() or adminBean.institutionFiltreId != null}"
+                       style="display:block;">
+
+        <a href="#{request.contextPath}/Administrateur/structures.xhtml"
+           class="nav-item" data-tooltip="Structures">
+            <i class="fas fa-sitemap"></i>
+            <span class="nav-item-text">Structures</span>
+        </a>
+
+        <a href="#{request.contextPath}/Administrateur/departements.xhtml"
+           class="nav-item" data-tooltip="Départements">
+            <i class="fas fa-layer-group"></i>
+            <span class="nav-item-text">Départements</span>
+        </a>
+
+        <!-- Masqué si la hiérarchie de l'institution active ne comporte pas le niveau Direction -->
+        <h:panelGroup rendered="#{adminBean.institutionActive == null
+                                  or adminBean.institutionActive.niveauxHierarchie.contains('Direction')}">
+            <a href="#{request.contextPath}/Administrateur/directions.xhtml"
+               class="nav-item" data-tooltip="Directions">
+                <i class="fas fa-building"></i>
+                <span class="nav-item-text">Directions</span>
+            </a>
+        </h:panelGroup>
+
+        <a href="#{request.contextPath}/Administrateur/postes.xhtml"
+           class="nav-item" data-tooltip="Postes &amp; Organigrammes">
+            <i class="fas fa-network-wired"></i>
+            <span class="nav-item-text">Postes &amp; Organigrammes</span>
+        </a>
+
+        </p:outputPanel>
+
+        </div>
+        </div>
+
+        <!-- ══════ RH ══════ -->
+        <div class="sb-section" data-section="rh">
+        <button type="button" class="sb-section-label" onclick="toggleSection('rh')">
+            <span>Ressources Humaines</span>
+            <i class="fas fa-chevron-down sb-section-chevron"></i>
+        </button>
+        <div class="sb-section-body" id="sbSectionBody-rh">
+
+        <p:outputPanel rendered="#{not sessionBean.isSuperAdmin() or adminBean.institutionFiltreId != null}"
+                       style="display:block;">
+
+        <a href="#{request.contextPath}/Administrateur/employes.xhtml"
+           class="nav-item" data-tooltip="Employ&#233;s">
+            <i class="fas fa-id-badge"></i>
+            <span class="nav-item-text">Employ&#233;s</span>
+        </a>
+
+        <a href="#{request.contextPath}/Administrateur/conges.xhtml"
+           class="nav-item" data-tooltip="Pr&#233;sences &amp; Cong&#233;s">
+            <i class="fas fa-umbrella-beach"></i>
+            <span class="nav-item-text">Pr&#233;sences &amp; Cong&#233;s</span>
+            <p:outputPanel rendered="#{adminBean.congesEnAttente gt 0}" style="display:contents;">
+                <span class="nav-badge">#{adminBean.congesEnAttente}</span>
+            </p:outputPanel>
+        </a>
+
+        <a href="#{request.contextPath}/Administrateur/paie.xhtml"
+           class="nav-item" data-tooltip="Paie &amp; R&#233;mun&#233;rations">
+            <i class="fas fa-money-bill-wave"></i>
+            <span class="nav-item-text">Paie &amp; R&#233;mun&#233;rations</span>
+        </a>
+
+        </p:outputPanel>
+
+        </div>
+        </div>
+
+        <!-- ══════ ACCÈS ══════ -->
+        <div class="sb-section" data-section="acces">
+        <button type="button" class="sb-section-label" onclick="toggleSection('acces')">
+            <span>Acc&#232;s &amp; S&#233;curit&#233;</span>
+            <i class="fas fa-chevron-down sb-section-chevron"></i>
+        </button>
+        <div class="sb-section-body" id="sbSectionBody-acces">
+
+        <p:outputPanel rendered="#{not sessionBean.isSuperAdmin() or adminBean.institutionFiltreId != null}"
+                       style="display:block;">
+
+        <a href="#{request.contextPath}/Administrateur/utilisateurs.xhtml"
+           class="nav-item" data-tooltip="Utilisateurs">
+            <i class="fas fa-users"></i>
+            <span class="nav-item-text">Utilisateurs</span>
+            <p:outputPanel rendered="#{adminBean.totalUsers gt 0}" style="display:contents;">
+                <span class="nav-badge">#{adminBean.totalUsers}</span>
+            </p:outputPanel>
+        </a>
+
+        </p:outputPanel>
+
+        <a href="#{request.contextPath}/Administrateur/roles.xhtml"
+           class="nav-item" data-tooltip="R&#244;les &amp; Permissions">
+            <i class="fas fa-shield-alt"></i>
+            <span class="nav-item-text">R&#244;les &amp; Permissions</span>
+        </a>
+
+        </div>
+        </div>
+
+        <!-- ══════ ANALYTIQUE ══════ -->
+        <div class="sb-section" data-section="analytique">
+        <button type="button" class="sb-section-label" onclick="toggleSection('analytique')">
+            <span>Analytique</span>
+            <i class="fas fa-chevron-down sb-section-chevron"></i>
+        </button>
+        <div class="sb-section-body" id="sbSectionBody-analytique">
+
+        <a href="#{request.contextPath}/Administrateur/reporting.xhtml"
+           class="nav-item" data-tooltip="Reporting &amp; Tableaux de bord">
+            <i class="fas fa-chart-bar"></i>
+            <span class="nav-item-text">Reporting &amp; KPI</span>
+        </a>
+
+        </div>
+        </div>
+
+        <!-- ══════ DOCUMENTS ══════ -->
+        <div class="sb-section" data-section="documents">
+        <button type="button" class="sb-section-label" onclick="toggleSection('documents')">
+            <span>Documents</span>
+            <i class="fas fa-chevron-down sb-section-chevron"></i>
+        </button>
+        <div class="sb-section-body" id="sbSectionBody-documents">
+
+        <a href="#{request.contextPath}/Administrateur/documents.xhtml"
+           class="nav-item" data-tooltip="Gestion Documentaire">
+            <i class="fas fa-folder-open"></i>
+            <span class="nav-item-text">Gestion Documentaire</span>
+        </a>
+
+        </div>
+        </div>
+
+        <!-- ══════ COMMUNICATION ══════ -->
+        <div class="sb-section" data-section="communication">
+        <button type="button" class="sb-section-label" onclick="toggleSection('communication')">
+            <span>Communication</span>
+            <i class="fas fa-chevron-down sb-section-chevron"></i>
+        </button>
+        <div class="sb-section-body" id="sbSectionBody-communication">
+
+        <a href="#{request.contextPath}/Administrateur/evenements.xhtml"
+           class="nav-item" data-tooltip="&#201;v&#233;nements (vue consolid&#233;e)">
+            <i class="fas fa-calendar-alt"></i>
+            <span class="nav-item-text">&#201;v&#233;nements</span>
+        </a>
+
+        <a href="#{request.contextPath}/Administrateur/annonces.xhtml"
+           class="nav-item" data-tooltip="Diffuser une annonce">
+            <i class="fas fa-bullhorn"></i>
+            <span class="nav-item-text">Annonces</span>
+        </a>
+
+        </div>
+        </div>
+
+        <!-- ══════ SYSTÈME ══════ -->
+        <div class="sb-section" data-section="systeme">
+        <button type="button" class="sb-section-label" onclick="toggleSection('systeme')">
+            <span>Syst&#232;me</span>
+            <i class="fas fa-chevron-down sb-section-chevron"></i>
+        </button>
+        <div class="sb-section-body" id="sbSectionBody-systeme">
+
+        <a href="#{request.contextPath}/Administrateur/logs.xhtml"
+           class="nav-item" data-tooltip="Journaux d&#8217;activit&#233;">
+            <i class="fas fa-list-alt"></i>
+            <span class="nav-item-text">Journaux d&#8217;activit&#233;</span>
+        </a>
+
+        <a href="#{request.contextPath}/Administrateur/health.xhtml"
+           class="nav-item" data-tooltip="Health Check syst&#232;me">
+            <i class="fas fa-heartbeat"></i>
+            <span class="nav-item-text">Health Check</span>
+        </a>
+
+        <a href="#{request.contextPath}/Administrateur/parametres.xhtml"
+           class="nav-item" data-tooltip="Param&#232;tres">
+            <i class="fas fa-cog"></i>
+            <span class="nav-item-text">Param&#232;tres</span>
+        </a>
+
+        </div>
+        </div>
+
+    </nav>
+    </h:panelGroup>
+
+    <div class="sb-footer">
+       <h:form>
+            <p:commandButton value="D&#233;connexion" icon="fas fa-sign-out-alt"
+                             styleClass="btn-logout"
+                             action="#{loginBean.deconnecter()}"
+                             ajax="false"/>
+        </h:form>
+    </div>
+
+</div>
+
+<script>
+//<![CDATA[
+(function() {
+    var KEY     = 'sirh_sidebar_mini';
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('sbOverlay');
+
+    function applyState(mini) {
+        if (mini) {
+            sidebar.classList.add('mini');
+            document.documentElement.style.setProperty('--sidebar-w', '68px');
+        } else {
+            sidebar.classList.remove('mini');
+            document.documentElement.style.setProperty('--sidebar-w', '256px');
+        }
+        try { localStorage.setItem(KEY, mini ? '1' : '0'); } catch(e){}
+    }
+
+    var saved = false;
+    try { saved = localStorage.getItem(KEY) === '1'; } catch(e){}
+    applyState(saved);
+
+    window.addEventListener('storage', function(e) {
+        if (e.key === KEY) applyState(e.newValue === '1');
+    });
+
+    window.toggleSidebar = function() { applyState(!sidebar.classList.contains('mini')); };
+
+    window.openMobileSidebar = function() {
+        sidebar.classList.add('open');
+        if (overlay) overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+    window.closeMobileSidebar = function() {
+        sidebar.classList.remove('open');
+        if (overlay) overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    };
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeMobileSidebar();
+    });
+
+    /* Marquer le lien actif selon l'URL */
+    var path = window.location.pathname;
+    document.querySelectorAll('.nav-item').forEach(function(a) {
+        var href = a.getAttribute('href');
+        if (href && path.indexOf(href) !== -1) {
+            a.classList.add('active');
+        }
+    });
+
+    /* ── Accordéon exclusif : ouvrir une section referme automatiquement les autres ── */
+    var OPEN_SECTION_KEY = 'sirh_sidebar_open_section';
+    function getOpenSection() {
+        try { return localStorage.getItem(OPEN_SECTION_KEY); } catch(e) { return null; }
+    }
+    function setOpenSection(key) {
+        try { localStorage.setItem(OPEN_SECTION_KEY, key || ''); } catch(e) {}
+    }
+    function applyOpenSection(key) {
+        document.querySelectorAll('.sb-section').forEach(function(section) {
+            var k = section.getAttribute('data-section');
+            section.classList.toggle('collapsed', k !== key);
+        });
+    }
+
+    window.toggleSection = function(key) {
+        var target = document.querySelector('.sb-section[data-section="' + key + '"]');
+        if (!target) return;
+        var isOpen = !target.classList.contains('collapsed');
+        var newOpenKey = isOpen ? null : key;
+        applyOpenSection(newOpenKey);
+        setOpenSection(newOpenKey);
+    };
+
+    /* Au chargement : la section contenant la page courante prime, sinon la dernière ouverte, sinon "principal" */
+    var activeSectionKey = null;
+    document.querySelectorAll('.sb-section').forEach(function(section) {
+        if (section.querySelector('.nav-item.active')) {
+            activeSectionKey = section.getAttribute('data-section');
+        }
+    });
+    if (!activeSectionKey) activeSectionKey = getOpenSection() || 'principal';
+    applyOpenSection(activeSectionKey);
+    setOpenSection(activeSectionKey);
+})();
+//]]>
+</script>
+
+</ui:composition>
+</html>

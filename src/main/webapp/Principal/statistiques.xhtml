@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+<ui:composition template="/Principal/template.xhtml">
+<ui:param name="active" value="statistiques"/>
+<ui:define name="title">Statistiques</ui:define>
+<ui:define name="content">
+
+<div class="page-banner">
+    <div class="breadcrumb"><a href="@P@/index.xhtml">Accueil</a><span>/</span>Statistiques</div>
+    <h1>Les données de l'ANSD</h1>
+    <p>Indicateurs économiques et budgétaires clés du Sénégal.</p>
+</div>
+
+<div class="section alt">
+  <div class="container">
+    <div class="stats-grid">
+        <div class="stat-card"><div class="val">+4.3%</div><div class="lbl">📈 PIB annuel 2025</div><div class="trend up"><i class="fas fa-arrow-up"></i> +0.8 pt vs 2024</div></div>
+        <div class="stat-card"><div class="val">1.4%</div><div class="lbl">💰 Inflation</div><div class="trend up"><i class="fas fa-arrow-down"></i> -0.3 pt vs 2024</div></div>
+        <div class="stat-card"><div class="val">+155%</div><div class="lbl">🌍 Exportations</div><div class="trend up"><i class="fas fa-arrow-up"></i> Forte progression</div></div>
+        <div class="stat-card"><div class="val">-23.6%</div><div class="lbl">📉 Importations</div><div class="trend down"><i class="fas fa-arrow-down"></i> Réduction du déficit commercial</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="container">
+    <div class="section-header"><div class="section-title">Tableau des <span>indicateurs</span></div></div>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Indicateur</th><th>Valeur</th><th>Évolution</th></tr></thead>
+        <tbody>
+          <tr><td>Croissance du PIB (2025)</td><td class="num">+4.3%</td><td>+0.8 pt vs 2024 – croissance soutenue</td></tr>
+          <tr><td>Taux d'inflation</td><td class="num">1.4%</td><td>-0.3 pt vs 2024</td></tr>
+          <tr><td>Exportations</td><td class="num">+155%</td><td>Forte progression</td></tr>
+          <tr><td>Importations</td><td class="num">-23.6%</td><td>Réduction du déficit commercial</td></tr>
+          <tr><td>Recettes fiscales (T4 2025)</td><td class="num">+8%</td><td>Au-dessus des prévisions</td></tr>
+          <tr><td>Budget général de l'État 2026</td><td class="num">6 800 Mds FCFA</td><td>Loi de Finances 2026</td></tr>
+          <tr><td>Déficit budgétaire cible</td><td class="num">3% du PIB</td><td>Objectif de discipline budgétaire</td></tr>
+          <tr><td>Population totale</td><td class="num">17 M</td><td>Habitants</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="source-note">Sources : ANSD et Ministère des Finances et du Budget.</p>
+  </div>
+</div>
+
+<div class="section alt">
+  <div class="container two-col">
+    <div class="info-card">
+        <h3>Aller plus loin</h3>
+        <p>Retrouvez l'analyse détaillée des indicateurs dans la note de conjoncture et les rapports de suivi budgétaire.</p>
+        <a href="@P@/publications.xhtml" class="btn">Voir les publications</a>
+    </div>
+    <div class="info-card">
+        <h3>Budget 2026</h3>
+        <p>Consultez le détail du budget général de 6 800 milliards FCFA et les documents de la Loi de Finances.</p>
+        <a href="@P@/loi-finances.xhtml" class="btn outline">Loi de Finances 2026</a>
+    </div>
+  </div>
+</div>
+
+</ui:define>
+</ui:composition>
+</html>

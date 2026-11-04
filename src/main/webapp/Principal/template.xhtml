@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+    <title><ui:insert name="title">Portail</ui:insert> – Ministère des Finances et du Budget</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <h:outputStylesheet library="css" name="portail.css"/>
+    <h:outputScript library="js" name="portail.js"/>
+    <ui:insert name="head"/>
+</h:head>
+
+<h:body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+    <div class="topbar-left">
+        <h:graphicImage value="/resources/images/R.jpg" styleClass="flag" alt="Drapeau du Sénégal"/>
+        <span>République du Sénégal – Un Peuple, Un But, Une Foi</span>
+    </div>
+    <div class="topbar-right">
+        <a href="tel:+221338892100"><i class="fas fa-phone"></i> +221 33 889 21 00</a>
+        <a href="mailto:contact@finances.gouv.sn"><i class="fas fa-envelope"></i> contact@finances.gouv.sn</a>
+        <a href="#{request.contextPath}/Principal/contact.xhtml#adresse"><i class="fas fa-map-marker-alt"></i> Rue René Ndiaye, Dakar</a>
+    </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+    <a href="#{request.contextPath}/Principal/index.xhtml" class="logo" aria-label="Accueil">
+        <div class="logo-mark">MFB</div>
+        <div class="logo-text">
+            <h2>MINISTÈRE DES FINANCES ET DU BUDGET</h2>
+            <small>République du Sénégal</small>
+        </div>
+    </a>
+    <div class="menu">
+        <a class="nav-link #{active eq 'ministere' ? 'active' : ''}" href="#{request.contextPath}/Principal/ministere.xhtml">Le Ministère</a>
+        <a class="nav-link #{active eq 'services' ? 'active' : ''}" href="#{request.contextPath}/Principal/services.xhtml">Services</a>
+        <a class="nav-link #{active eq 'publications' ? 'active' : ''}" href="#{request.contextPath}/Principal/publications.xhtml">Publications</a>
+        <a class="nav-link #{active eq 'actualites' ? 'active' : ''}" href="#{request.contextPath}/Principal/actualites.xhtml">Actualités</a>
+        <a class="nav-link #{active eq 'contact' ? 'active' : ''}" href="#{request.contextPath}/Principal/contact.xhtml">Contact</a>
+        <h:outputLink value="#{request.contextPath}/Authentification/login.xhtml" styleClass="btn-login">Connexion</h:outputLink>
+        <h:outputLink value="#{request.contextPath}/Authentification/inscription.xhtml" styleClass="btn-register">Créer un compte</h:outputLink>
+    </div>
+    <button type="button" class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+</div>
+
+<!-- MOBILE NAV -->
+<div class="mobile-nav" id="mobileNav">
+    <button type="button" class="mobile-close" id="mobileClose" aria-label="Fermer">&#10005;</button>
+    <a href="#{request.contextPath}/Principal/index.xhtml">Accueil</a>
+    <a href="#{request.contextPath}/Principal/ministere.xhtml">Le Minist&#232;re</a>
+    <a href="#{request.contextPath}/Principal/services.xhtml">Services</a>
+    <a href="#{request.contextPath}/Principal/publications.xhtml">Publications</a>
+    <a href="#{request.contextPath}/Principal/actualites.xhtml">Actualit&#233;s</a>
+    <a href="#{request.contextPath}/Principal/contact.xhtml">Contact</a>
+    <div class="mobile-auth">
+        <h:outputLink value="#{request.contextPath}/Authentification/login.xhtml" styleClass="btn-login">Connexion</h:outputLink>
+        <h:outputLink value="#{request.contextPath}/Authentification/inscription.xhtml" styleClass="btn-register">S&#39;inscrire</h:outputLink>
+    </div>
+</div>
+
+<!-- MENU SECONDAIRE -->
+<div class="submenu">
+    <a href="#{request.contextPath}/Principal/services.xhtml#particuliers">Particuliers</a>
+    <a href="#{request.contextPath}/Principal/services.xhtml#entreprises">Entreprises</a>
+    <a href="#">Investisseurs</a>
+    <a href="#">Réformes</a>
+    <a href="#">Discours</a>
+    <a href="#">Appels d'offres</a>
+    <a class="#{active eq 'loi-finances' ? 'active' : ''}" href="#{request.contextPath}/Principal/loi-finances.xhtml">Loi de Finances 2026</a>
+</div>
+
+<!-- CONTENU DE LA PAGE -->
+<ui:insert name="content">Contenu</ui:insert>
+
+<!-- SOCIAL -->
+<div class="footer-social">
+    <h4>Suivez-nous</h4>
+    <div class="social-icons">
+        <a href="#" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+        <a href="#" target="_blank" rel="noopener" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+        <a href="#" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+        <a href="#" target="_blank" rel="noopener" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="#" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="#" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+    </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+    <div class="footer-container">
+        <div class="footer-column">
+            <h4>Le Ministère</h4>
+            <a href="#{request.contextPath}/Principal/ministere.xhtml#ministre">Le Ministre</a>
+            <a href="#">Le Secrétaire Général</a>
+            <a href="#">Cabinet du Ministre</a>
+            <a href="#{request.contextPath}/Principal/ministere.xhtml#missions">Missions et Visions</a>
+            <a href="#{request.contextPath}/Principal/ministere.xhtml#organisation">Organigramme</a>
+            <a href="#{request.contextPath}/Principal/ministere.xhtml#directions">Directions rattachées</a>
+        </div>
+        <div class="footer-column">
+            <h4>Liens Utiles</h4>
+            <a href="#">Direction Générale du Trésor</a>
+            <a href="#">Direction Générale des Douanes</a>
+            <a href="#">Direction Générale des Impôts</a>
+            <a href="#">Direction Générale du Budget</a>
+            <a href="#">DTAI</a>
+            <a href="#">APIX SA</a>
+        </div>
+        <div class="footer-column">
+            <h4>Priorités &amp; Réformes</h4>
+            <a href="#">Budget-Programme</a>
+            <a href="#">SRMT</a>
+            <a href="#">Plan Sénégal Émergent</a>
+            <a href="#">Réforme fiscale 2026</a>
+            <a href="#">Modernisation douanière</a>
+        </div>
+        <div class="footer-column">
+            <h4>Investir au Sénégal</h4>
+            <a href="#">Fiche Pays</a>
+            <a href="#">Doing Business</a>
+            <a href="#">Codes et Procédures</a>
+            <a href="#{request.contextPath}/Principal/services.xhtml">Services &amp; Démarches</a>
+            <a href="#">Ressources naturelles</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span>Ministère des Finances et du Budget – République du Sénégal</span>
+        <span>© Copyright DTAI – 2026</span>
+    </div>
+</div>
+
+</h:body>
+</html>

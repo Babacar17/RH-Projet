@@ -1,0 +1,761 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+    <title>Paie — Administration SIRH</title>
+    <h:outputStylesheet library="css" name="admin-style.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <style>
+        .tabs { display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:20px; }
+        .tab  { padding:10px 20px;font-size:13px;font-weight:600;color:#64748b;
+                cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px; }
+        .tab.active { color:#6d28d9;border-bottom-color:#6d28d9; }
+
+        .cycle-card { background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;
+                      display:flex;align-items:center;justify-content:space-between;margin-bottom:10px; }
+        .cycle-status { font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px; }
+        .status-ouvert    { background:#dcfce7;color:#15803d; }
+        .status-cloture   { background:#fef3c7;color:#92400e; }
+        .status-traite    { background:#dbeafe;color:#1e40af; }
+        .status-valide    { background:#ede9fe;color:#5b21b6; }
+
+        .grille-row { display:flex;align-items:center;justify-content:space-between;
+                      padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:13px; }
+        .grille-row:last-child { border-bottom:none; }
+        .montant { font-weight:700;color:#0f172a; }
+        .rubrique-badge { font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px; }
+        .rb-gain   { background:#dcfce7;color:#15803d; }
+        .rb-retenu { background:#fee2e2;color:#991b1b; }
+        .rb-indmn  { background:#dbeafe;color:#1e40af; }
+
+        .bulletin-item { display:flex;align-items:center;gap:12px;padding:10px 0;
+                         border-bottom:1px solid #f1f5f9; }
+        .bulletin-item:last-child { border-bottom:none; }
+        .bulletin-avatar { width:36px;height:36px;border-radius:50%;
+                           background:linear-gradient(135deg,#6d28d9,#a78bfa);
+                           display:flex;align-items:center;justify-content:center;
+                           font-size:13px;font-weight:700;color:#fff;flex-shrink:0; }
+        .progress-bar-wrap { height:6px;background:#e2e8f0;border-radius:3px; }
+        .progress-bar-fill { height:100%;border-radius:3px;background:#6d28d9; }
+    </style>
+</h:head>
+
+<h:body>
+    <ui:include src="sidebar-admin.xhtml"/>
+    <!-- ══ GARDE INSTITUTION — super-admin doit sélectionner une institution ══ -->
+    <p:outputPanel rendered="#{sessionBean.isSuperAdmin() and adminBean.institutionFiltreId == null}"
+                   style="display:block;">
+        <div style="min-height:60vh;display:flex;align-items:center;justify-content:center;padding:2rem;">
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:2.5rem 3rem;
+                        max-width:520px;width:100%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.06);">
+                <div style="width:64px;height:64px;background:linear-gradient(135deg,#b58a3a,#f0c97a);
+                             border-radius:16px;display:flex;align-items:center;justify-content:center;
+                             margin:0 auto 1.25rem;font-size:28px;color:#0f172a;">
+                    <i class="fas fa-university"/>
+                </div>
+                <h2 style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:.5rem;">
+                    Sélectionnez une institution
+                </h2>
+                <p style="font-size:13px;color:#64748b;margin-bottom:1.5rem;line-height:1.6;">
+                    En tant que super-administrateur, vous devez choisir une institution
+                    avant d'accéder à cette section.
+                </p>
+                <h:form id="guardForm">
+                    <p:selectOneMenu value="#{adminBean.institutionFiltreId}"
+                                     style="width:100%;font-size:13px;font-weight:600;
+                                            border:1.5px solid #7c3aed;border-radius:8px;
+                                            padding:10px 12px;background:#faf5ff;">
+                        <f:selectItem itemValue="" itemLabel="— Choisir une institution —"/>
+                        <f:selectItems value="#{adminBean.toutesInstitutions}"
+                                       var="inst"
+                                       itemValue="#{inst.id}"
+                                       itemLabel="#{inst.code} — #{inst.nom}"/>
+                        <p:ajax update="@form" listener="#{adminBean.filtrerParInstitution}"/>
+                    </p:selectOneMenu>
+                </h:form>
+                <div style="margin-top:1.5rem;border-top:1px solid #e2e8f0;padding-top:1rem;">
+                    <h:link value="← Retour au tableau de bord global"
+                            outcome="/Administrateur/dashboard"
+                            style="font-size:12px;color:#7c3aed;font-weight:600;"/>
+                </div>
+            </div>
+        </div>
+    </p:outputPanel>
+    <!-- ══ FIN GARDE ══ -->
+
+    <p:outputPanel rendered="#{not sessionBean.isSuperAdmin() or adminBean.institutionFiltreId != null}"
+                   style="display:block;">
+
+
+    <div class="main-content">
+
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Gestion de la Paie</h1>
+                <p class="page-subtitle">Administration &gt; Paie &amp; Rémunérations</p>
+            </div>
+            <h:form id="fBtnPaie">
+                <p:commandButton value="+ Nouveau cycle"
+                                 action="#{paieBean.lancerCyclePaie}"
+                                 oncomplete="PF('dlgCycle').show()"
+                                 update="formDlgCycle"
+                                 styleClass="btn btn-primary"
+                                 process="@none"/>
+            </h:form>
+        </div>
+
+        <p:growl id="growl" showDetail="true" life="4000"/>
+
+        <!-- Stats masse salariale -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+            <div class="stat-card" style="display:flex;align-items:center;gap:14px;">
+                <div style="width:40px;height:40px;background:#ede9fe;border-radius:9px;
+                            display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-coins" style="color:#6d28d9;font-size:17px;"/>
+                </div>
+                <div>
+                    <div style="font-size:18px;font-weight:800;">
+                        <h:outputText value="#{paieBean.masseSalarialeMensuelle}">
+                            <f:convertNumber type="number" groupingUsed="true" maxFractionDigits="0"/>
+                        </h:outputText>
+                        <span style="font-size:11px;font-weight:400;color:#94a3b8;"> FCFA</span>
+                    </div>
+                    <div style="font-size:11px;color:#64748b;">Masse salariale (mois)</div>
+                </div>
+            </div>
+            <div class="stat-card" style="display:flex;align-items:center;gap:14px;">
+                <div style="width:40px;height:40px;background:#dcfce7;border-radius:9px;
+                            display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-users" style="color:#16a34a;font-size:17px;"/>
+                </div>
+                <div>
+                    <div style="font-size:22px;font-weight:800;color:#16a34a;">#{paieBean.bulletinsGeneres}</div>
+                    <div style="font-size:11px;color:#64748b;">Employés payés</div>
+                </div>
+            </div>
+            <div class="stat-card" style="display:flex;align-items:center;gap:14px;">
+                <div style="width:40px;height:40px;background:#fef3c7;border-radius:9px;
+                            display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-file-invoice-dollar" style="color:#d97706;font-size:17px;"/>
+                </div>
+                <div>
+                    <div style="font-size:22px;font-weight:800;color:#d97706;">#{paieBean.bulletinsGeneres}</div>
+                    <div style="font-size:11px;color:#64748b;">Bulletins générés</div>
+                </div>
+            </div>
+            <div class="stat-card" style="display:flex;align-items:center;gap:14px;">
+                <div style="width:40px;height:40px;background:#fee2e2;border-radius:9px;
+                            display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-exclamation-triangle" style="color:#dc2626;font-size:17px;"/>
+                </div>
+                <div>
+                    <div style="font-size:22px;font-weight:800;color:#dc2626;">#{paieBean.bulletinsEnAttente}</div>
+                    <div style="font-size:11px;color:#64748b;">Anomalies</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onglets -->
+        <div class="tabs">
+            <div class="tab active" onclick="showTab2('cycles',this)">Cycles de paie</div>
+            <div class="tab" onclick="showTab2('grilles',this)">Grilles salariales</div>
+            <div class="tab" onclick="showTab2('rubriques',this)">Rubriques</div>
+            <div class="tab" onclick="showTab2('bulletins',this)">Bulletins</div>
+        </div>
+
+        <!-- TAB 1 : Cycles de paie -->
+        <div id="tab-cycles">
+            <div class="section-card">
+                <h:form id="formCycles">
+                    <p:dataTable id="tableCycles"
+                                 value="#{paieBean.bulletins}"
+                                 var="c"
+                                 rows="10" paginator="true"
+                                 emptyMessage="Aucun cycle de paie."
+                                 style="border:none;">
+
+                        <p:column headerText="Période" sortBy="#{c.mois}">
+                            <div style="font-weight:700;font-size:14px;">#{c.libelle}</div>
+                            <div style="font-size:11px;color:#94a3b8;">
+                                Clôture : <h:outputText value="#{c.datePaiementEffective}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                                </h:outputText>
+                            </div>
+                        </p:column>
+
+                        <p:column headerText="Institution" style="width:180px;">
+                            <span style="font-size:12px;background:#ede9fe;color:#5b21b6;
+                                         padding:3px 9px;border-radius:7px;font-weight:600;">
+                                #{c.institution != null ? c.institution.code : 'Global'}
+                            </span>
+                        </p:column>
+
+                        <p:column headerText="Effectif" style="width:90px;text-align:center;">
+                            <span style="font-weight:700;">#{c.nbEmployes}</span>
+                        </p:column>
+
+                        <p:column headerText="Masse salariale" style="width:160px;text-align:right;">
+                            <div style="font-weight:700;font-size:13px;">
+                                <h:outputText value="#{c.totalBrut}">
+                                    <f:convertNumber type="number" groupingUsed="true" maxFractionDigits="0"/>
+                                </h:outputText>
+                            </div>
+                            <div style="font-size:10px;color:#94a3b8;">FCFA brut</div>
+                        </p:column>
+
+                        <p:column headerText="Avancement" style="width:140px;">
+                            <div class="progress-bar-wrap">
+                                <div class="progress-bar-fill" style="width:#{c.avancement}%;"/>
+                            </div>
+                            <div style="font-size:10px;color:#64748b;margin-top:3px;text-align:right;">
+                                #{c.avancement}% traité
+                            </div>
+                        </p:column>
+
+                        <p:column headerText="Statut" style="width:110px;text-align:center;">
+                            <span class="cycle-status #{c.statut eq 'CLOTURE' ? 'status-refuse' : c.statut eq 'EN_COURS' ? 'status-attente' : 'status-approuve'}">
+                                #{c.statut}
+                            </span>
+                        </p:column>
+
+                        <p:column headerText="Actions" style="width:160px;">
+                            <div style="display:flex;gap:6px;">
+                                <p:commandButton value="▶" title="Lancer le traitement"
+                                                 rendered="#{c.statut == 'OUVERT'}"
+                                                 action="#{paieBean.genererBulletinPour(c.employe)}"
+                                                 update="tableCycles growl"
+                                                 style="width:32px;height:32px;padding:0;background:#dcfce7;color:#15803d;border:1px solid #bbf7d0;border-radius:8px;font-size:13px;">
+                                    <p:confirm header="Lancer le traitement"
+                                               message="Confirmer le lancement du cycle #{c.libelle} ?"
+                                               icon="pi pi-info-circle"/>
+                                </p:commandButton>
+                                <p:commandButton value="✅" title="Valider"
+                                                 rendered="#{c.statut == 'TRAITE'}"
+                                                 action="#{paieBean.validerBulletin(c.id)}"
+                                                 update="tableCycles growl"
+                                                 style="width:32px;height:32px;padding:0;background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;">
+                                    <p:confirm header="Valider le cycle"
+                                               message="Valider et verrouiller le cycle #{c.libelle} ?"
+                                               icon="pi pi-check-circle"/>
+                                </p:commandButton>
+                                <p:commandButton value="📥" title="Exporter bulletins"
+                                                 action="#{paieBean.selectionnerBulletin(c)}"
+                                                 update="growl"
+                                                 style="width:32px;height:32px;padding:0;background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;"/>
+                                <p:commandButton value="✏" title="Modifier"
+                                                 rendered="#{c.statut == 'OUVERT'}"
+                                                 action="#{paieBean.selectionnerBulletin(c)}"
+                                                 oncomplete="PF('dlgCycle').show()"
+                                                 update="formDlgCycle"
+                                                 style="width:32px;height:32px;padding:0;background:#fffbeb;color:#d97706;border:1px solid #fde68a;border-radius:8px;font-size:13px;"/>
+                            </div>
+                        </p:column>
+                    </p:dataTable>
+
+                    <p:confirmDialog global="true" showEffect="fade" width="380">
+                        <p:commandButton value="Confirmer" type="button"
+                                         styleClass="ui-confirmdialog-yes ui-button-success"/>
+                        <p:commandButton value="Annuler" type="button"
+                                         styleClass="ui-confirmdialog-no ui-button-secondary"/>
+                    </p:confirmDialog>
+                </h:form>
+            </div>
+        </div>
+
+        <!-- TAB 2 : Grilles salariales -->
+        <div id="tab-grilles" style="display:none;">
+            <div class="section-card">
+                <h:form id="formGrilles">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <div style="font-weight:700;color:#0f172a;">Référentiel des grilles salariales</div>
+                        <p:commandButton value="+ Nouvelle grille"
+                                         action="#{paieBean.preparerNouvelleGrille()}"
+                                         oncomplete="PF('dlgGrille').show()"
+                                         update="formDlgGrille"
+                                         styleClass="btn btn-primary"
+                                         process="@none"/>
+                    </div>
+                    <p:dataTable id="tableGrilles"
+                                 value="#{paieBean.grilles}"
+                                 var="g"
+                                 rows="10" paginator="true"
+                                 emptyMessage="Aucune grille salariale."
+                                 style="border:none;">
+
+                        <p:column headerText="Grille / Grade" sortBy="#{g.libelle}">
+                            <div style="font-weight:700;">#{g.libelle}</div>
+                            <div style="font-size:11px;color:#94a3b8;">#{g.corps}</div>
+                        </p:column>
+                        <p:column headerText="Salaire de base" style="width:150px;text-align:right;">
+                            <div style="font-weight:700;">
+                                <h:outputText value="#{g.salaireBase}">
+                                    <f:convertNumber type="number" groupingUsed="true" maxFractionDigits="0"/>
+                                </h:outputText>
+                            </div>
+                            <div style="font-size:10px;color:#94a3b8;">FCFA / mois</div>
+                        </p:column>
+                        <p:column headerText="Indice major&#233;" style="width:130px;text-align:right;">
+                            <div style="font-size:13px;">
+                                <h:outputText value="#{g.indiceMajore}">
+                                    <f:convertNumber type="number" groupingUsed="true" maxFractionDigits="0"/>
+                                </h:outputText>
+                            </div>
+                        </p:column>
+                        <p:column headerText="Statut" style="width:90px;text-align:center;">
+                            <span class="#{g.statut eq 'ACTIF' ? 'occupe-badge' : 'vacant-badge'}"
+                                  style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;">
+                                #{g.statut}
+                            </span>
+                        </p:column>
+                        <p:column headerText="Statut" style="width:90px;text-align:center;">
+                            <span class="#{g.statut eq 'ACTIF' ? 'occupe-badge' : 'vacant-badge'}" style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;">
+                                #{g.statut}
+                            </span>
+                        </p:column>
+                        <p:column headerText="Actions" style="width:80px;">
+                            <p:commandButton value="✏" title="Modifier"
+                                             action="#{paieBean.preparerEditionGrille(g)}"
+                                             oncomplete="PF('dlgGrille').show()"
+                                             update="formDlgGrille"
+                                             style="width:32px;height:32px;padding:0;background:#fffbeb;color:#d97706;border:1px solid #fde68a;border-radius:8px;font-size:14px;"/>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </div>
+        </div>
+
+        <!-- TAB 3 : Rubriques -->
+        <div id="tab-rubriques" style="display:none;">
+            <div class="section-card">
+                <h:form id="formRubriques">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <div style="font-weight:700;color:#0f172a;">Rubriques de paie</div>
+                        <p:commandButton value="+ Nouvelle rubrique"
+                                         action="#{paieBean.preparerNouvelleGrille}"
+                                         oncomplete="PF('dlgRubrique').show()"
+                                         update="formDlgRubrique"
+                                         styleClass="btn btn-primary"
+                                         process="@none"/>
+                    </div>
+                    <p:dataTable id="tableRubriques"
+                                 value="#{paieBean.grilles}"
+                                 var="r"
+                                 rows="15" paginator="true"
+                                 emptyMessage="Aucune grille salariale pour cette institution."
+                                 style="border:none;">
+                        <p:column headerText="Libell&#233;" sortBy="#{r.libelle}">
+                            <div style="font-weight:600;">#{r.libelle}</div>
+                            <div style="font-size:11px;color:#94a3b8;">#{r.corps}</div>
+                        </p:column>
+                        <p:column headerText="&#201;chelon" style="width:100px;">
+                            <span style="font-family:monospace;font-size:12px;background:#f1f5f9;
+                                         padding:2px 8px;border-radius:5px;">#{r.echelon}</span>
+                        </p:column>
+                        <p:column headerText="Salaire de base" style="width:160px;text-align:right;">
+                            <div style="font-weight:700;">
+                                <h:outputText value="#{r.salaireBase}">
+                                    <f:convertNumber type="number" groupingUsed="true" maxFractionDigits="0"/>
+                                </h:outputText> FCFA
+                            </div>
+                        </p:column>
+                        <p:column headerText="Indice major&#233;" style="width:120px;text-align:center;">
+                            <span style="font-size:13px;">#{r.indiceMajore}</span>
+                        </p:column>
+                        <p:column headerText="Statut" style="width:90px;text-align:center;">
+                            <span class="#{r.statut eq 'ACTIF' ? 'occupe-badge' : 'vacant-badge'}"
+                                  style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;">
+                                #{r.statut}
+                            </span>
+                        </p:column>
+                        <p:column headerText="Actions" style="width:80px;">
+                            <p:commandButton value="&#x270F;"
+                                             action="#{paieBean.preparerEditionGrille(r)}"
+                                             oncomplete="PF('dlgGrille').show()"
+                                             update="formDlgGrille"
+                                             style="width:32px;height:32px;padding:0;background:#fffbeb;color:#d97706;border:1px solid #fde68a;border-radius:8px;font-size:14px;"/>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </div>
+        </div>
+
+        <!-- TAB 4 : Bulletins -->
+        <div id="tab-bulletins" style="display:none;">
+            <div class="section-card">
+                <h:form id="formBulletins">
+                    <div style="display:flex;gap:10px;margin-bottom:16px;align-items:center;">
+                        <p:selectOneMenu value="#{paieBean.moisSelectionne}" style="width:200px;">
+                            <p:ajax listener="#{paieBean.filtrerBulletins}" update="tableBulletins"/>
+                            <f:selectItem itemValue="" itemLabel="— Choisir un cycle —"/>
+                            <f:selectItems value="#{paieBean.bulletins}" var="c"
+                                           itemValue="#{c.id}" itemLabel="#{c.libelle}"/>
+                        </p:selectOneMenu>
+                        <p:inputText id="srchBulletin"
+                                     value="#{paieBean.moisSelectionne}"
+                                     placeholder="Rechercher un employé..."
+                                     style="flex:1;">
+                            <p:ajax event="keyup" listener="#{paieBean.filtrerBulletins}"
+                                    update="tableBulletins" delay="300"/>
+                        </p:inputText>
+                        <p:commandButton value="📥 Exporter tout"
+                                         action="#{paieBean.filtrerBulletins}" disabled="true"
+                                         update="growl"
+                                         styleClass="btn btn-secondary"/>
+                    </div>
+
+                    <p:dataTable id="tableBulletins"
+                                 value="#{paieBean.bulletins}"
+                                 var="b"
+                                 rows="15" paginator="true"
+                                 emptyMessage="Sélectionnez un cycle pour voir les bulletins."
+                                 style="border:none;">
+
+                        <p:column headerText="Employé" style="min-width:200px;">
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <div class="bulletin-avatar">
+                                    #{not empty b.employe.prenom ? b.employe.prenom.substring(0,1) : ''}
+                                </div>
+                                <div>
+                                    <div style="font-weight:600;font-size:13px;">#{b.employe.nomComplet}</div>
+                                    <div style="font-size:11px;color:#94a3b8;">#{b.employe.matricule}</div>
+                                </div>
+                            </div>
+                        </p:column>
+
+                        <p:column headerText="Salaire brut" style="width:140px;text-align:right;">
+                            <div style="font-weight:700;">
+                                <h:outputText value="#{b.salaireBrut}">
+                                    <f:convertNumber type="number" groupingUsed="true" maxFractionDigits="0"/>
+                                </h:outputText>
+                            </div>
+                        </p:column>
+
+                        <p:column headerText="Cotisations" style="width:130px;text-align:right;">
+                            <div style="color:#dc2626;font-weight:600;">
+                                -<h:outputText value="#{b.totalRetenues}">
+                                    <f:convertNumber type="number" groupingUsed="true" maxFractionDigits="0"/>
+                                </h:outputText>
+                            </div>
+                        </p:column>
+
+                        <p:column headerText="Net à payer" style="width:150px;text-align:right;">
+                            <div style="font-weight:800;font-size:14px;color:#16a34a;">
+                                <h:outputText value="#{b.salaireNet}">
+                                    <f:convertNumber type="number" groupingUsed="true" maxFractionDigits="0"/>
+                                </h:outputText>
+                            </div>
+                        </p:column>
+
+                        <p:column headerText="Mode paiement" style="width:130px;">
+                            <span style="font-size:12px;color:#475569;">#{b.modePaiement}</span>
+                        </p:column>
+
+                        <p:column headerText="Actions" style="width:100px;">
+                            <div style="display:flex;gap:6px;">
+                                <p:commandButton value="👁" title="Voir le bulletin"
+                                                 action="#{paieBean.selectionnerBulletin(b)}"
+                                                 oncomplete="PF('dlgBulletin').show()"
+                                                 update="formDlgBulletin"
+                                                 style="width:32px;height:32px;padding:0;background:#eff6ff;color:#3b82f6;border:1px solid #bfdbfe;border-radius:8px;font-size:14px;"/>
+                                <p:commandButton value="📥" title="Télécharger PDF"
+                                                 action="#{paieBean.selectionnerBulletin(b)}" disabled="true"
+                                                 update="growl"
+                                                 style="width:32px;height:32px;padding:0;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;border-radius:8px;font-size:14px;"/>
+                            </div>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </div>
+        </div>
+
+    </div><!-- /main-content -->
+
+    <!-- ═══════════════════ DIALOG CYCLE ═══════════════════ -->
+    <h:form id="formDlgCycle">
+        <p:dialog header="#{paieBean.modeEditionGrille ? 'Modifier le cycle' : 'Nouveau cycle de paie'}"
+                  widgetVar="dlgCycle" modal="true" width="560"
+                  resizable="false" closeOnEscape="true">
+            <div style="padding:20px;">
+                <p:messages showDetail="true" style="margin-bottom:12px;"/>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Libell&#233; (informatif)</label>
+                        <p:inputText value="#{paieBean.cycleLibelle}" style="width:100%;"
+                                     placeholder="Ex : Paie Mai 2025"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mois *</label>
+                        <p:selectOneMenu value="#{paieBean.moisSelectionne}" style="width:100%;">
+                            <f:selectItem itemValue="1" itemLabel="Janvier"/>
+                            <f:selectItem itemValue="2" itemLabel="Février"/>
+                            <f:selectItem itemValue="3" itemLabel="Mars"/>
+                            <f:selectItem itemValue="4" itemLabel="Avril"/>
+                            <f:selectItem itemValue="5" itemLabel="Mai"/>
+                            <f:selectItem itemValue="6" itemLabel="Juin"/>
+                            <f:selectItem itemValue="7" itemLabel="Juillet"/>
+                            <f:selectItem itemValue="8" itemLabel="Août"/>
+                            <f:selectItem itemValue="9" itemLabel="Septembre"/>
+                            <f:selectItem itemValue="10" itemLabel="Octobre"/>
+                            <f:selectItem itemValue="11" itemLabel="Novembre"/>
+                            <f:selectItem itemValue="12" itemLabel="Décembre"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Année *</label>
+                        <p:inputText value="#{paieBean.anneeSelectionnee}" style="width:100%;"
+                                     placeholder="2025"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date de clôture *</label>
+                        <p:datePicker value="#{paieBean.bulletin.datePaiement}"
+                                      pattern="dd/MM/yyyy" style="width:100%;"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date de paiement</label>
+                        <p:datePicker value="#{paieBean.bulletin.datePaiement}"
+                                      pattern="dd/MM/yyyy" style="width:100%;"/>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Institution</label>
+                        <p:selectOneMenu value="#{paieBean.bulletin.institutionId}" style="width:100%;">
+                            <f:selectItem itemValue="" itemLabel="— Toutes institutions —"/>
+                            <f:selectItems value="#{adminBean.toutesInstitutions}" var="inst"
+                                           itemValue="#{inst.id}" itemLabel="#{inst.nom}"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Observations</label>
+                        <p:inputTextarea value="#{paieBean.bulletin.observations}" rows="2"
+                                         style="width:100%;"/>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;
+                            padding-top:16px;border-top:1px solid #e2e8f0;">
+                    <p:commandButton value="Annuler" type="button"
+                                     onclick="PF('dlgCycle').hide()"
+                                     styleClass="btn btn-secondary"/>
+                    <p:commandButton value="#{paieBean.modeEditionGrille ? 'Enregistrer' : 'Créer le cycle'}"
+                                     action="#{paieBean.lancerCyclePaie()}"
+                                     update="formCycles growl"
+                                     oncomplete="if(!args.validationFailed) PF('dlgCycle').hide()"
+                                     process="formDlgCycle"
+                                     styleClass="btn btn-primary"/>
+                </div>
+            </div>
+        </p:dialog>
+    </h:form>
+
+    <!-- ═══════════════════ DIALOG GRILLE ═══════════════════ -->
+    <h:form id="formDlgGrille">
+        <p:dialog header="#{paieBean.modeEditionGrille ? 'Modifier la grille' : 'Nouvelle grille salariale'}"
+                  widgetVar="dlgGrille" modal="true" width="560"
+                  resizable="false" closeOnEscape="true">
+            <div style="padding:20px;">
+                <p:messages showDetail="true" style="margin-bottom:12px;"/>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Libellé de la grille *</label>
+                        <p:inputText value="#{paieBean.grille.libelle}" style="width:100%;"
+                                     placeholder="Ex : Grille Catégorie A Echelon 1" required="true"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Catégorie</label>
+                        <p:inputText value="#{paieBean.grille.categorie}" style="width:100%;"
+                                     placeholder="Ex : A, B, C..."/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Salaire de base (FCFA) *</label>
+                        <p:inputText value="#{paieBean.grille.salaireBase}" style="width:100%;"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Indemnité de résidence</label>
+                        <p:inputText value="#{paieBean.grille.indemResidence}" style="width:100%;"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Indemnité de transport</label>
+                        <p:inputText value="#{paieBean.grille.indemTransport}" style="width:100%;"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Indemnité de représentation</label>
+                        <p:inputText value="#{paieBean.grille.indemRepresentation}" style="width:100%;"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Prime de risque</label>
+                        <p:inputText value="#{paieBean.grille.primeRisque}" style="width:100%;"/>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;display:flex;align-items:center;gap:10px;">
+                        <p:selectBooleanCheckbox value="#{paieBean.grille.actif}"/>
+                        <label class="form-label" style="margin:0;">Grille active</label>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;
+                            padding-top:16px;border-top:1px solid #e2e8f0;">
+                    <p:commandButton value="Annuler" type="button"
+                                     onclick="PF('dlgGrille').hide()"
+                                     styleClass="btn btn-secondary"/>
+                    <p:commandButton value="Enregistrer"
+                                     action="#{paieBean.sauvegarderGrille()}"
+                                     update="tableGrilles growl"
+                                     oncomplete="if(!args.validationFailed) PF('dlgGrille').hide()"
+                                     process="formDlgGrille"
+                                     styleClass="btn btn-primary"/>
+                </div>
+            </div>
+        </p:dialog>
+    </h:form>
+
+    <!-- ═══════════════════ DIALOG RUBRIQUE ═══════════════════ -->
+    <h:form id="formDlgRubrique">
+        <p:dialog header="#{paieBean.modeEditionGrille ? 'Modifier la rubrique' : 'Nouvelle rubrique'}"
+                  widgetVar="dlgRubrique" modal="true" width="500"
+                  resizable="false" closeOnEscape="true">
+            <div style="padding:20px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                    <div class="form-group">
+                        <label class="form-label">Code *</label>
+                        <p:inputText value="#{paieBean.grille.code}" style="width:100%;"
+                                     placeholder="Ex : SAL_BASE" required="true"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Type *</label>
+                        <p:selectOneMenu value="#{paieBean.grille.type}" style="width:100%;">
+                            <f:selectItem itemValue="GAIN"     itemLabel="Gain"/>
+                            <f:selectItem itemValue="RETENU"   itemLabel="Retenue"/>
+                            <f:selectItem itemValue="INDMN"    itemLabel="Indemnité"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Libellé *</label>
+                        <p:inputText value="#{paieBean.grille.libelle}" style="width:100%;"
+                                     required="true"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mode de calcul</label>
+                        <p:selectOneMenu value="#{paieBean.grille.modeCalcul}" style="width:100%;">
+                            <f:selectItem itemValue="FIXE"        itemLabel="Montant fixe"/>
+                            <f:selectItem itemValue="POURCENTAGE" itemLabel="Pourcentage du brut"/>
+                            <f:selectItem itemValue="FORMULE"     itemLabel="Formule personnalisée"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Valeur (montant ou %)</label>
+                        <p:inputText value="#{paieBean.grille.taux}" style="width:100%;"/>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;display:flex;align-items:center;gap:10px;">
+                        <p:selectBooleanCheckbox value="#{paieBean.grille.actif}"/>
+                        <label class="form-label" style="margin:0;">Rubrique active</label>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;
+                            padding-top:16px;border-top:1px solid #e2e8f0;">
+                    <p:commandButton value="Annuler" type="button"
+                                     onclick="PF('dlgRubrique').hide()"
+                                     styleClass="btn btn-secondary"/>
+                    <p:commandButton value="Enregistrer"
+                                     action="#{paieBean.sauvegarderGrille}" disabled="true"
+                                     update="tableRubriques growl"
+                                     oncomplete="if(!args.validationFailed) PF('dlgRubrique').hide()"
+                                     process="formDlgRubrique"
+                                     styleClass="btn btn-primary"/>
+                </div>
+            </div>
+        </p:dialog>
+    </h:form>
+
+    <!-- ═══════════════════ DIALOG APERÇU BULLETIN ═══════════════════ -->
+    <h:form id="formDlgBulletin">
+        <p:dialog header="Bulletin de paie" widgetVar="dlgBulletin" modal="true" width="600"
+                  resizable="false" closeOnEscape="true">
+            <div style="padding:20px;">
+                <p:outputPanel id="panBulletin">
+                    <!-- En-tête bulletin -->
+                    <div style="text-align:center;margin-bottom:16px;padding-bottom:16px;
+                                border-bottom:2px solid #e2e8f0;">
+                        <div style="font-size:16px;font-weight:800;color:#0f172a;">BULLETIN DE PAIE</div>
+                        <div style="font-size:13px;color:#64748b;margin-top:4px;">
+                            #{paieBean.bulletin.cycle != null ? paieBean.bulletin.cycle.periodeLibelle : ''}
+                        </div>
+                    </div>
+                    <!-- Infos employé -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;
+                                margin-bottom:16px;font-size:12px;">
+                        <div><span style="color:#64748b;">Employé : </span>
+                            <strong>#{paieBean.bulletin.employe.nomComplet}</strong></div>
+                        <div><span style="color:#64748b;">Matricule : </span>
+                            <strong>#{paieBean.bulletin.employe.matricule}</strong></div>
+                        <div><span style="color:#64748b;">Poste : </span>
+                            <strong>#{paieBean.bulletin.employe.intiutePoste}</strong></div>
+                        <div><span style="color:#64748b;">Mode de paiement : </span>
+                            <strong>#{paieBean.bulletin.modePaiement}</strong></div>
+                    </div>
+                    <!-- Lignes de paie -->
+                    <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:12px;">
+                        <div style="background:#f8fafc;padding:8px 14px;font-size:11px;font-weight:700;
+                                    color:#475569;display:grid;grid-template-columns:1fr auto auto;">
+                            <span>Rubrique</span><span>Base</span><span>Montant</span>
+                        </div>
+                        <ui:repeat value="#{paieBean.bulletin.lignes}" var="l">
+                            <div style="padding:8px 14px;font-size:12px;border-top:1px solid #f1f5f9;
+                                        display:grid;grid-template-columns:1fr auto auto;gap:10px;
+                                        color:#{l.type == 'GAIN' ? '#15803d' : (l.type == 'RETENU' ? '#dc2626' : '#0f172a')}">
+                                <span>#{l.libelle}</span>
+                                <span>#{l.base}</span>
+                                <span style="font-weight:600;">
+                                    #{l.type == 'RETENU' ? '- ' : ''}
+                                    <h:outputText value="#{l.montant}">
+                                        <f:convertNumber type="number" groupingUsed="true" maxFractionDigits="0"/>
+                                    </h:outputText>
+                                </span>
+                            </div>
+                        </ui:repeat>
+                    </div>
+                    <!-- Total net -->
+                    <div style="background:#0f172a;color:#fff;border-radius:8px;padding:14px;
+                                display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-weight:700;">NET À PAYER</span>
+                        <span style="font-size:20px;font-weight:800;color:#4ade80;">
+                            <h:outputText value="#{paieBean.bulletin.salaireNet}">
+                                <f:convertNumber type="number" groupingUsed="true" maxFractionDigits="0"/>
+                            </h:outputText>
+                            FCFA
+                        </span>
+                    </div>
+                </p:outputPanel>
+                <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+                    <p:commandButton value="Fermer" type="button"
+                                     onclick="PF('dlgBulletin').hide()"
+                                     styleClass="btn btn-secondary"/>
+                    <p:commandButton value="📥 Télécharger PDF"
+                                     action="#{paieBean.sauvegarderBulletin}" disabled="true"
+                                     update="growl"
+                                     styleClass="btn btn-primary"/>
+                </div>
+            </div>
+        </p:dialog>
+    </h:form>
+
+    <script>
+    //<![CDATA[
+    function showTab2(name, el) {
+        ['cycles','grilles','rubriques','bulletins'].forEach(function(t) {
+            var c = document.getElementById('tab-'+t);
+            if (c) c.style.display = (t === name) ? '' : 'none';
+        });
+        document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+        if (el) el.classList.add('active');
+    }
+    //]]>
+    </script>
+
+
+    </p:outputPanel>
+    <!-- ══ FIN CONTENU CONDITIONNEL ══ -->
+
+</h:body>
+</html>

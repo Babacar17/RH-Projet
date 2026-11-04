@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+    <title>Événements (vue consolidée) — Administration</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <style>
+        body { background:#f1f5f9; font-family:'Segoe UI',sans-serif; margin:0; display:flex; min-height:100vh; }
+        .main { flex: 1; padding: 28px; }
+        .page-title { font-size:22px;font-weight:800;color:#0f172a;margin-bottom:4px; }
+        .page-sub   { font-size:12px;color:#94a3b8;margin-bottom:22px; }
+        .kpi-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px; }
+        .kpi-card { background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px; }
+        .kpi-card.blue   { border-top:3px solid #2563eb; }
+        .kpi-card.orange { border-top:3px solid #f59e0b; }
+        .kpi-card.purple { border-top:3px solid #7c3aed; }
+        .kpi-card.green  { border-top:3px solid #16a34a; }
+        .kpi-label { font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px; }
+        .kpi-value { font-size:24px;font-weight:800;color:#0f172a; }
+        .kpi-sub   { font-size:11px;color:#94a3b8;margin-top:2px; }
+
+        .card { background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin-bottom:20px; }
+        .toolbar { display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px; }
+        .btn { display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:7px;
+               font-size:13px;font-weight:600;cursor:pointer;border:none;text-decoration:none; }
+        .btn-primary   { background:#2563eb;color:#fff; }
+        .btn-secondary { background:#f1f5f9;color:#475569;border:1px solid #e2e8f0; }
+
+        .badge { display:inline-block;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700; }
+        .badge-info { background:#dbeafe;color:#1d4ed8; }
+        .badge-primary { background:#ede9fe;color:#6d28d9; }
+        .badge-warning { background:#fef3c7;color:#92400e; }
+        .badge-success { background:#dcfce7;color:#15803d; }
+        .badge-danger { background:#fee2e2;color:#b91c1c; }
+        .badge-secondary { background:#f1f5f9;color:#475569; }
+        .inst-pill {
+            display:inline-block;font-size:10px;font-weight:700;letter-spacing:.5px;
+            background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:8px;
+        }
+
+        .chart-grid { display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:22px; }
+        .chart-card { background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px; }
+        .chart-title { font-size:13px;font-weight:800;color:#0f172a;margin-bottom:14px;
+                       display:flex;align-items:center;gap:8px; }
+        @media (max-width:900px) { .chart-grid { grid-template-columns:1fr; } }
+    </style>
+</h:head>
+
+<h:body>
+
+<ui:include src="sidebar-admin.xhtml"/>
+
+<div class="main">
+    <p:growl id="growl"/>
+
+    <div>
+        <h1 class="page-title"><i class="pi pi-calendar" style="margin-right:6px;color:#7c3aed;"/> Événements (vue consolidée)</h1>
+        <div class="page-sub">Tous les séminaires, réunions, voyages et formations à travers les institutions</div>
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-grid">
+        <div class="kpi-card blue">
+            <div class="kpi-label">Total événements</div>
+            <div class="kpi-value">#{adminEvenementBean.nombreEvenements}</div>
+            <div class="kpi-sub">Tous statuts</div>
+        </div>
+        <div class="kpi-card orange">
+            <div class="kpi-label">À venir</div>
+            <div class="kpi-value">#{adminEvenementBean.nombreAVenir}</div>
+            <div class="kpi-sub">Planifiés ou confirmés</div>
+        </div>
+        <div class="kpi-card purple">
+            <div class="kpi-label">En cours</div>
+            <div class="kpi-value">#{adminEvenementBean.nombreEnCours}</div>
+            <div class="kpi-sub">Maintenant</div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-label">Budget cumulé</div>
+            <div class="kpi-value">
+                <h:outputText value="#{adminEvenementBean.budgetTotal}">
+                    <f:convertNumber type="number" groupingUsed="true" maxFractionDigits="0"/>
+                </h:outputText>
+            </div>
+            <div class="kpi-sub">FCFA (toutes institutions)</div>
+        </div>
+    </div>
+
+    <!-- Graphiques -->
+    <div class="chart-grid">
+        <div class="chart-card">
+            <div class="chart-title">
+                <i class="pi pi-chart-bar" style="color:#2563eb;"/>
+                Répartition par institution
+            </div>
+            <canvas id="chartEvtInst" style="max-height:240px;"/>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title">
+                <i class="pi pi-chart-pie" style="color:#7c3aed;"/>
+                Répartition par type
+            </div>
+            <canvas id="chartEvtType" style="max-height:240px;"/>
+        </div>
+    </div>
+
+    <!-- Toolbar + table -->
+    <div class="card">
+        <div class="toolbar">
+            <h:form id="formFiltres" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <p:selectOneMenu value="#{adminEvenementBean.filtreInstitutionId}" style="min-width:200px;">
+                    <f:selectItem itemLabel="Toutes institutions" itemValue="#{null}"/>
+                    <f:selectItems value="#{adminEvenementBean.toutesInstitutions}" var="i"
+                                   itemValue="#{i.id}" itemLabel="#{i.code} — #{i.nom}"/>
+                </p:selectOneMenu>
+                <p:selectOneMenu value="#{adminEvenementBean.filtreType}" style="min-width:160px;">
+                    <f:selectItem itemLabel="Tous types" itemValue=""/>
+                    <f:selectItem itemLabel="Réunion"    itemValue="REUNION"/>
+                    <f:selectItem itemLabel="Formation"  itemValue="FORMATION"/>
+                    <f:selectItem itemLabel="Séminaire"  itemValue="SEMINAIRE"/>
+                    <f:selectItem itemLabel="Atelier"    itemValue="ATELIER"/>
+                    <f:selectItem itemLabel="Conférence" itemValue="CONFERENCE"/>
+                    <f:selectItem itemLabel="Autre"      itemValue="AUTRE"/>
+                </p:selectOneMenu>
+                <p:selectOneMenu value="#{adminEvenementBean.filtreStatut}" style="min-width:140px;">
+                    <f:selectItem itemLabel="Tous statuts" itemValue=""/>
+                    <f:selectItem itemLabel="Programmé"   itemValue="PROGRAMME"/>
+                    <f:selectItem itemLabel="Confirmé"    itemValue="CONFIRME"/>
+                    <f:selectItem itemLabel="En cours"    itemValue="EN_COURS"/>
+                    <f:selectItem itemLabel="Terminé"     itemValue="TERMINE"/>
+                    <f:selectItem itemLabel="Annulé"      itemValue="ANNULE"/>
+                </p:selectOneMenu>
+                <p:commandButton value="Filtrer" icon="pi pi-filter"
+                    action="#{adminEvenementBean.appliquerFiltres}"
+                    update="formFiltres tableEvts growl"
+                    styleClass="btn btn-secondary"/>
+                <p:commandButton value="Réinitialiser" icon="pi pi-refresh"
+                    action="#{adminEvenementBean.reinitialiserFiltres}"
+                    update="formFiltres tableEvts growl"
+                    styleClass="btn btn-secondary"/>
+            </h:form>
+        </div>
+
+        <h:form>
+            <p:dataTable id="tableEvts" value="#{adminEvenementBean.evenements}" var="e"
+                         rows="20" paginator="true"
+                         emptyMessage="Aucun événement à afficher avec ces filtres.">
+                <p:column headerText="Type" style="width:60px;text-align:center;padding:10px;">
+                    <i class="pi #{adminEvenementBean.getIconeType(e.type)}"
+                       style="font-size:16px;color:#6d28d9;"/>
+                </p:column>
+                <p:column headerText="Titre" style="padding:10px;">
+                    <div style="font-weight:700;font-size:13px;">#{e.titre}</div>
+                    <div style="font-size:11px;color:#64748b;">#{e.modalite}#{not empty e.lieu ? ' — ' : ''}#{e.lieu}</div>
+                </p:column>
+                <p:column headerText="Institution" style="width:150px;padding:10px;">
+                    <h:panelGroup rendered="#{e.institution != null}">
+                        <span class="inst-pill">
+                            #{e.institution.code}
+                        </span>
+                    </h:panelGroup>
+                </p:column>
+                <p:column headerText="Dates" style="width:200px;padding:10px;">
+                    <div style="font-size:12px;font-weight:600;">
+                        <h:outputText value="#{e.dateDebut}">
+                            <f:convertDateTime pattern="dd/MM/yyyy HH:mm" type="localDateTime"/>
+                        </h:outputText>
+                    </div>
+                    <div style="font-size:11px;color:#94a3b8;">
+                        au
+                        <h:outputText value="#{e.dateFin}">
+                            <f:convertDateTime pattern="dd/MM/yyyy HH:mm" type="localDateTime"/>
+                        </h:outputText>
+                    </div>
+                </p:column>
+                <p:column headerText="Participants" style="width:100px;text-align:center;padding:10px;">
+                    <span style="font-weight:700;color:#2563eb;">#{e.nombreParticipants}</span>
+                </p:column>
+                <p:column headerText="Budget" style="width:130px;text-align:right;padding:10px;">
+                    <h:outputText value="#{e.budget}" rendered="#{e.budget != null}">
+                        <f:convertNumber type="number" groupingUsed="true" maxFractionDigits="0"/>
+                    </h:outputText>
+                    <span style="color:#94a3b8;font-size:11px;"> #{e.devise}</span>
+                </p:column>
+                <p:column headerText="Statut" style="width:110px;padding:10px;">
+                    <span class="badge #{adminEvenementBean.getBadgeStatut(e.statut)}">#{e.statut}</span>
+                </p:column>
+            </p:dataTable>
+        </h:form>
+    </div>
+</div>
+
+<!-- Charts data -->
+<script id="evtAdminData" type="application/json">
+{
+    "inst": {
+        "labels":[<ui:repeat value="#{adminEvenementBean.repartitionParInstitution.keySet().toArray()}" var="k" varStatus="s">"#{k}"#{s.last?'':','}</ui:repeat>],
+        "values":[<ui:repeat value="#{adminEvenementBean.repartitionParInstitution.values().toArray()}" var="v" varStatus="s">#{v}#{s.last?'':','}</ui:repeat>]
+    },
+    "type": {
+        "labels":[<ui:repeat value="#{adminEvenementBean.repartitionParType.keySet().toArray()}" var="k" varStatus="s">"#{k}"#{s.last?'':','}</ui:repeat>],
+        "values":[<ui:repeat value="#{adminEvenementBean.repartitionParType.values().toArray()}" var="v" varStatus="s">#{v}#{s.last?'':','}</ui:repeat>]
+    }
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    (function(){
+        var d = JSON.parse(document.getElementById('evtAdminData').textContent);
+        if (!window.Chart) return;
+        var palette = ['#2563eb','#7c3aed','#15803d','#f59e0b','#dc2626','#0891b2','#94a3b8'];
+
+        new Chart(document.getElementById('chartEvtInst'), {
+            type:'bar',
+            data:{labels:d.inst.labels,datasets:[{label:'Événements',data:d.inst.values,
+                  backgroundColor:palette,borderRadius:6}]},
+            options:{responsive:true,maintainAspectRatio:false,
+                     plugins:{legend:{display:false}},
+                     scales:{y:{beginAtZero:true,ticks:{precision:0}}}}
+        });
+        new Chart(document.getElementById('chartEvtType'), {
+            type:'doughnut',
+            data:{labels:d.type.labels,datasets:[{data:d.type.values,
+                  backgroundColor:palette,borderWidth:2,borderColor:'#fff'}]},
+            options:{responsive:true,maintainAspectRatio:false,
+                     plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}}}}
+        });
+    })();
+</script>
+
+</h:body>
+</html>

@@ -1,0 +1,630 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <f:metadata>
+        <f:viewParam name="entiteId" value="#{rhBean.demandeCongeCibleId}"/>
+    </f:metadata>
+
+    <ui:param name="page" value="conges"/>
+    <ui:define name="title">Congés et Absences – Responsable RH</ui:define>
+    <ui:define name="pageTitle">
+        <span style="display:flex;align-items:center;gap:10px;">
+            <i class="fas fa-calendar-check" style="color:#2563eb;font-size:18px;"/>
+            Congés et Absences
+        </span>
+    </ui:define>
+    <ui:define name="breadcrumb">Validation et suivi des demandes de congé</ui:define>
+
+    <ui:define name="styles">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+        <style>
+            /* ── KPI cards congés ── */
+            .cg-kpi-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 16px;
+                margin-bottom: 28px;
+            }
+            .cg-kpi {
+                background: #fff;
+                border: 1px solid #e2e8f0;
+                border-radius: 14px;
+                padding: 20px 22px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                position: relative;
+                overflow: hidden;
+                transition: transform .2s, box-shadow .2s;
+            }
+            .cg-kpi:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,.09); }
+            .cg-kpi::after {
+                content: '';
+                position: absolute;
+                top: 0; left: 0; right: 0;
+                height: 3px;
+                border-radius: 14px 14px 0 0;
+            }
+            .cg-kpi.gold::after   { background: linear-gradient(90deg,#b45309,#f59e0b); }
+            .cg-kpi.green::after  { background: linear-gradient(90deg,#059669,#10b981); }
+            .cg-kpi.red::after    { background: linear-gradient(90deg,#dc2626,#ef4444); }
+            .cg-kpi.blue::after   { background: linear-gradient(90deg,#1d4ed8,#3b82f6); }
+            .cg-icon {
+                width: 48px; height: 48px;
+                border-radius: 12px;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 20px;
+                flex-shrink: 0;
+            }
+            .cg-icon.gold   { background: #fef3c7; color: #d97706; }
+            .cg-icon.green  { background: #d1fae5; color: #059669; }
+            .cg-icon.red    { background: #fee2e2; color: #dc2626; }
+            .cg-icon.blue   { background: #dbeafe; color: #1d4ed8; }
+            .cg-kpi-body {}
+            .cg-kpi-val {
+                font-size: 32px;
+                font-weight: 800;
+                color: #0f172a;
+                line-height: 1;
+                margin-bottom: 4px;
+            }
+            .cg-kpi-lbl {
+                font-size: 11px;
+                font-weight: 700;
+                color: #64748b;
+                text-transform: uppercase;
+                letter-spacing: .7px;
+            }
+            .cg-kpi-sub {
+                font-size: 11px;
+                color: #94a3b8;
+                margin-top: 2px;
+            }
+
+            /* ── Section wrapper ── */
+            .cg-section {
+                background: #fff;
+                border: 1px solid #e2e8f0;
+                border-radius: 14px;
+                overflow: hidden;
+                box-shadow: 0 1px 6px rgba(0,0,0,.04);
+            }
+            .cg-section-header {
+                padding: 16px 24px;
+                border-bottom: 1px solid #e2e8f0;
+                background: #f8fafc;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+            }
+            .cg-section-title {
+                font-size: 14px;
+                font-weight: 800;
+                color: #0f172a;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .cg-section-title i { color: #2563eb; }
+            .cg-cal-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                padding: 7px 14px;
+                background: #eff6ff;
+                color: #1d4ed8;
+                border: 1px solid #bfdbfe;
+                border-radius: 8px;
+                font-size: 12px;
+                font-weight: 700;
+                text-decoration: none;
+                transition: all .15s;
+            }
+            .cg-cal-btn:hover { background: #dbeafe; }
+
+            /* ── Actions en masse ── */
+            .cg-mass-bar {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 12px 20px;
+                background: #f1f5f9;
+                border-bottom: 1px solid #e2e8f0;
+                flex-wrap: wrap;
+            }
+            .cg-mass-label {
+                font-size: 12px;
+                font-weight: 700;
+                color: #475569;
+                white-space: nowrap;
+            }
+            .cg-hint {
+                font-size: 11px;
+                color: #94a3b8;
+                margin-left: auto;
+            }
+
+            /* ── Boutons action inline ── */
+            .cg-reveal { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:16px; }
+            .cg-reveal-btn {
+                display:inline-flex; align-items:center; gap:8px;
+                padding:8px 14px; border:1px solid #bfdbfe; border-radius:8px;
+                background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700;
+                cursor:pointer; font-family:inherit;
+            }
+            .cg-reveal-btn:hover { background:#dbeafe; }
+
+            /* Ligne ciblée depuis une notification */
+            .cg-highlight > td {
+                background:#fffbeb !important;
+                box-shadow: inset 0 0 0 2px #f59e0b;
+            }
+
+            .btn-approve, .btn-refuse {
+                display: inline-flex !important; align-items: center; gap: 4px;
+                padding: 4px 10px !important; min-height: 0 !important;
+                font-size: 11px !important; font-weight: 700 !important; line-height: 1.2 !important;
+                border-radius: 6px !important; cursor: pointer; font-family: inherit;
+                transition: all .15s;
+            }
+            .btn-approve .ui-button-text, .btn-refuse .ui-button-text,
+            .btn-mass-approve .ui-button-text, .btn-mass-refuse .ui-button-text {
+                padding: 0 !important; line-height: 1.2 !important;
+            }
+            .btn-approve { background: #d1fae5 !important; color: #065f46 !important; border: 1px solid #6ee7b7 !important; }
+            .btn-approve:hover { background: #10b981 !important; color: #fff !important; border-color: #10b981 !important; }
+            .btn-refuse { background: #fee2e2 !important; color: #991b1b !important; border: 1px solid #fca5a5 !important; }
+            .btn-refuse:hover { background: #ef4444 !important; color: #fff !important; border-color: #ef4444 !important; }
+
+            .btn-mass-approve, .btn-mass-refuse {
+                display: inline-flex !important; align-items: center; gap: 6px;
+                padding: 6px 12px !important; min-height: 0 !important;
+                font-size: 12px !important; font-weight: 700 !important; line-height: 1.2 !important;
+                border: none !important; border-radius: 7px !important;
+                cursor: pointer; font-family: inherit;
+                transition: opacity .15s;
+            }
+            .btn-mass-approve { background: #059669 !important; color: #fff !important; }
+            .btn-mass-refuse { background: #dc2626 !important; color: #fff !important; }
+            .btn-mass-approve:hover, .btn-mass-refuse:hover { opacity: .88; }
+
+            /* ── Avatar employé ── */
+            .emp-avatar {
+                width: 36px; height: 36px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+                display: flex; align-items: center; justify-content: center;
+                font-size: 13px; font-weight: 800; color: #fff;
+                flex-shrink: 0;
+            }
+            .emp-name  { font-weight: 700; font-size: 13px; color: #0f172a; }
+            .emp-sub   { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+            /* ── Période badge ── */
+            .periode-box {
+                display: flex; flex-direction: column; gap: 2px;
+            }
+            .periode-dates {
+                font-size: 12px; font-weight: 600; color: #1e293b;
+            }
+            .periode-jours {
+                font-size: 11px; font-weight: 700;
+                background: #eff6ff; color: #1d4ed8;
+                display: inline-block; padding: 1px 8px;
+                border-radius: 20px;
+            }
+
+            /* ── Badges statut ── */
+            .badge-conge {
+                padding: 3px 10px;
+                border-radius: 20px;
+                font-size: 10px;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: .5px;
+                white-space: nowrap;
+            }
+            .badge-conge.attente  { background: #fef3c7; color: #92400e; }
+            .badge-conge.approuve { background: #d1fae5; color: #065f46; }
+            .badge-conge.refuse   { background: #fee2e2; color: #991b1b; }
+            .badge-conge.type     { background: #ede9fe; color: #4c1d95; }
+
+            /* ── Filtre toolbar ── */
+            .cg-toolbar {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                padding: 14px 20px;
+                background: #f8fafc;
+                border-bottom: 1px solid #e2e8f0;
+                flex-wrap: wrap;
+            }
+            .cg-filter-label {
+                font-size: 12px; font-weight: 700; color: #475569;
+            }
+
+            /* ── PrimeFaces tabView override ── */
+            .cg-tab .ui-tabview-nav {
+                background: #f8fafc !important;
+                border-bottom: 2px solid #e2e8f0 !important;
+                padding: 0 20px !important;
+            }
+            .cg-tab .ui-tabview-nav li a {
+                font-size: 13px !important;
+                font-weight: 600 !important;
+                color: #64748b !important;
+                padding: 12px 18px !important;
+                border: none !important;
+                border-bottom: 2px solid transparent !important;
+                margin-bottom: -2px !important;
+                background: transparent !important;
+            }
+            .cg-tab .ui-tabview-nav li.ui-state-active a {
+                color: #2563eb !important;
+                border-bottom-color: #2563eb !important;
+                font-weight: 800 !important;
+            }
+            .cg-tab .ui-tabview-panels {
+                padding: 0 !important;
+                border: none !important;
+            }
+            .cg-tab .ui-tabview {
+                border: none !important;
+            }
+
+            /* ── Motif tronqué ── */
+            .motif-cell {
+                max-width: 180px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                font-size: 12px;
+                color: #64748b;
+            }
+
+            /* ── Validé par ── */
+            .valide-par {
+                font-size: 12px; font-weight: 600; color: #1e293b;
+            }
+            .valide-date {
+                font-size: 11px; color: #94a3b8; margin-top: 2px;
+            }
+
+            @media (max-width: 1100px) {
+                .cg-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            }
+            @media (max-width: 640px) {
+                .cg-kpi-grid { grid-template-columns: 1fr; }
+                .cg-hint { display: none; }
+            }
+        </style>
+    </ui:define>
+
+    <ui:define name="content">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+            <a href="conges-calendrier.xhtml" class="cg-cal-btn">
+                <i class="fas fa-calendar-alt"/> Vue calendrier
+            </a>
+        </div>
+
+        <!-- ══ KPI CARDS ══ -->
+        <div class="cg-kpi-grid">
+
+            <div class="cg-kpi gold" title="Voir les demandes en attente" onclick="PF('tabConges').select(0);">
+                <div class="cg-icon gold"><i class="fas fa-clock"/></div>
+                <div class="cg-kpi-body">
+                    <div class="cg-kpi-val" style="color:#d97706;">#{rhBean.congesEnAttente}</div>
+                    <div class="cg-kpi-lbl">En attente</div>
+                    <div class="cg-kpi-sub">À valider</div>
+                </div>
+            </div>
+
+            <div class="cg-kpi green" title="Voir les demandes approuvées" onclick="kpiApprouvesRC();">
+                <div class="cg-icon green"><i class="fas fa-check-circle"/></div>
+                <div class="cg-kpi-body">
+                    <div class="cg-kpi-val" style="color:#059669;">#{rhBean.congesApprouves}</div>
+                    <div class="cg-kpi-lbl">Approuvés</div>
+                    <div class="cg-kpi-sub">Ce mois</div>
+                </div>
+            </div>
+
+            <div class="cg-kpi red" title="Voir les demandes refusées" onclick="kpiRefusesRC();">
+                <div class="cg-icon red"><i class="fas fa-times-circle"/></div>
+                <div class="cg-kpi-body">
+                    <div class="cg-kpi-val" style="color:#dc2626;">#{rhBean.congesRefuses}</div>
+                    <div class="cg-kpi-lbl">Refusés</div>
+                    <div class="cg-kpi-sub">Ce mois</div>
+                </div>
+            </div>
+
+            <div class="cg-kpi blue" title="Voir toutes les demandes" onclick="kpiTotalRC();">
+                <div class="cg-icon blue"><i class="fas fa-list-alt"/></div>
+                <div class="cg-kpi-body">
+                    <div class="cg-kpi-val" style="color:#1d4ed8;">#{rhBean.demandesConge.size()}</div>
+                    <div class="cg-kpi-lbl">Total</div>
+                    <div class="cg-kpi-sub">Toutes demandes</div>
+                </div>
+            </div>
+
+            <h:panelGroup rendered="#{rhBean.congesEnRetard gt 0}" layout="block">
+                <div class="cg-kpi red" style="border-color:#b91c1c;" title="Voir les demandes en retard de traitement" onclick="kpiRetardRC();">
+                    <div class="cg-icon red"><i class="fas fa-exclamation-triangle"/></div>
+                    <div class="cg-kpi-body">
+                        <div class="cg-kpi-val" style="color:#b91c1c;">#{rhBean.congesEnRetard}</div>
+                        <div class="cg-kpi-lbl">En retard</div>
+                        <div class="cg-kpi-sub">Période déjà passée</div>
+                    </div>
+                </div>
+            </h:panelGroup>
+
+        </div>
+
+        <!-- ══ SECTION PRINCIPALE ══ -->
+        <div class="cg-section">
+            <div class="cg-section-header">
+                <div class="cg-section-title">
+                    <i class="fas fa-inbox"/>
+                    Gestion des demandes de congé
+                </div>
+            </div>
+
+            <h:form id="formConges">
+                <p:remoteCommand name="kpiApprouvesRC" action="#{rhBean.filtrerParStatutDepuisKpi('APPROUVE')}"
+                                  update="formConges" oncomplete="PF('tabConges').select(1);"/>
+                <p:remoteCommand name="kpiRefusesRC" action="#{rhBean.filtrerParStatutDepuisKpi('REFUSE')}"
+                                  update="formConges" oncomplete="PF('tabConges').select(1);"/>
+                <p:remoteCommand name="kpiTotalRC" action="#{rhBean.filtrerParStatutDepuisKpi('')}"
+                                  update="formConges" oncomplete="PF('tabConges').select(1);"/>
+                <p:remoteCommand name="kpiRetardRC" action="#{rhBean.filtrerParStatutDepuisKpi('EN_RETARD')}"
+                                  update="formConges" oncomplete="PF('tabConges').select(1);"/>
+
+                <p:tabView id="tabConges" widgetVar="tabConges" dynamic="true" styleClass="cg-tab"
+                           style="border:none;background:transparent;">
+
+                    <!-- ════ ONGLET 1 : En attente ════ -->
+                    <p:tab title="⏳  En attente de validation">
+
+                        <div class="cg-reveal">
+                            <button type="button" class="cg-reveal-btn" onclick="cgToggleAttente(this)">
+                                <i class="fas #{rhBean.demandeCongeCibleId != null ? 'fa-eye-slash' : 'fa-eye'}"/>
+                                Afficher les demandes en attente (#{rhBean.demandesCongeEnAttente.size()})
+                            </button>
+                            <span class="cg-hint">Les demandes restent masquées tant que vous ne les affichez pas.</span>
+                        </div>
+
+                        <script>
+                            function cgToggleAttente(btn) {
+                                var zone = document.getElementById('cgAttenteData');
+                                var visible = zone.style.display !== 'none';
+                                zone.style.display = visible ? 'none' : 'block';
+                                btn.querySelector('i').className = visible ? 'fas fa-eye' : 'fas fa-eye-slash';
+                            }
+                            document.addEventListener('DOMContentLoaded', function() {
+                                var hl = document.querySelector('.cg-highlight');
+                                if (hl) hl.scrollIntoView({behavior:'smooth', block:'center'});
+                            });
+                        </script>
+                        <div id="cgAttenteData" style="display:#{rhBean.demandeCongeCibleId != null ? 'block' : 'none'};">
+
+                        <!-- Barre actions en masse -->
+                        <div class="cg-mass-bar">
+                            <span class="cg-mass-label">
+                                <i class="fas fa-tasks" style="color:#2563eb;margin-right:4px;"/>
+                                Actions en masse :
+                            </span>
+                            <p:commandButton value="✔ Approuver la sélection"
+                                action="#{rhBean.approuverCongesEnMasse}"
+                                update="formConges growl"
+                                styleClass="btn-mass-approve"
+                                onclick="return confirm('Approuver toutes les demandes cochées ?')"/>
+                            <p:commandButton value="✖ Refuser la sélection"
+                                action="#{rhBean.refuserCongesEnMasse}"
+                                update="formConges growl"
+                                styleClass="btn-mass-refuse"
+                                onclick="return confirm('Refuser toutes les demandes cochées ?')"/>
+                            <span class="cg-hint">
+                                <i class="fas fa-info-circle"/>
+                                Cochez les lignes à traiter puis cliquez sur l'action souhaitée.
+                            </span>
+                        </div>
+
+                        <p:dataTable value="#{rhBean.demandesCongeEnAttente}" var="d"
+                                     paginator="true" rows="10"
+                                     paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="10,20,50"
+                                     emptyMessage="Aucune demande en attente de validation."
+                                     style="border:none;"
+                                     rowStyleClass="#{d.id == rhBean.demandeCongeCibleId ? 'conge-row cg-highlight' : 'conge-row'}">
+
+                            <!-- Sélection -->
+                            <p:column style="width:46px;text-align:center;padding:14px 8px;">
+                                <p:selectBooleanCheckbox value="#{rhBean.congeCoche[d.id]}"/>
+                            </p:column>
+
+                            <!-- Employé -->
+                            <p:column headerText="Employé" style="min-width:200px;padding:14px 16px;">
+                                <div style="display:flex;align-items:center;gap:10px;">
+                                    <div class="emp-avatar">
+                                        #{d.employe.prenom != null and d.employe.prenom.length() > 0
+                                          ? d.employe.prenom.substring(0,1) : ''}#{d.employe.nom != null
+                                          and d.employe.nom.length() > 0 ? d.employe.nom.substring(0,1) : ''}
+                                    </div>
+                                    <div>
+                                        <div class="emp-name">#{d.employe.nomComplet}</div>
+                                        <div class="emp-sub">#{d.employe.intiutePoste} — #{d.employe.departement}</div>
+                                    </div>
+                                </div>
+                            </p:column>
+
+                            <!-- Type -->
+                            <p:column headerText="Type de congé" style="width:150px;padding:14px 16px;">
+                                <span class="badge-conge type">#{d.typeConge.libelle}</span>
+                            </p:column>
+
+                            <!-- Période -->
+                            <p:column headerText="Période" style="width:210px;padding:14px 16px;">
+                                <div class="periode-box">
+                                    <div class="periode-dates">
+                                        <i class="fas fa-calendar-day" style="color:#94a3b8;margin-right:4px;font-size:10px;"/>
+                                        Du <h:outputText value="#{d.dateDebut}">
+                                            <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                                        </h:outputText>
+                                        au <h:outputText value="#{d.dateFin}">
+                                            <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                                        </h:outputText>
+                                    </div>
+                                    <span class="periode-jours">#{d.nombreJours} jour(s)</span>
+                                    <h:panelGroup rendered="#{rhBean.isCongeEnRetard(d)}">
+                                        <span title="La période de congé est déjà passée sans qu'une décision ait été prise."
+                                              style="display:inline-block;margin-top:4px;padding:2px 8px;border-radius:10px;
+                                                     background:#fee2e2;color:#b91c1c;font-size:10.5px;font-weight:700;">
+                                            ⚠ En retard de traitement
+                                        </span>
+                                    </h:panelGroup>
+                                </div>
+                            </p:column>
+
+                            <!-- Motif -->
+                            <p:column headerText="Motif" style="padding:14px 16px;">
+                                <div class="motif-cell" title="#{d.motif}">#{d.motif}</div>
+                            </p:column>
+
+                            <!-- Actions -->
+                            <p:column headerText="Actions" style="width:190px;padding:14px 16px;">
+                                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                                    <p:commandButton value="✔ Approuver"
+                                        action="#{rhBean.approuverConge(d.id)}"
+                                        update="formConges growl"
+                                        styleClass="btn-approve"
+                                        onclick="return confirm('Approuver la demande de #{d.employe.nomComplet} ?')"/>
+                                    <p:commandButton value="✖ Refuser"
+                                        action="#{rhBean.refuserConge(d.id)}"
+                                        update="formConges growl"
+                                        styleClass="btn-refuse"
+                                        onclick="return confirm('Refuser la demande de #{d.employe.nomComplet} ?')"/>
+                                </div>
+                            </p:column>
+
+                        </p:dataTable>
+                        </div>
+                    </p:tab>
+
+                    <!-- ════ ONGLET 2 : Toutes les demandes ════ -->
+                    <p:tab title="📋  Toutes les demandes">
+
+                        <!-- Barre filtre -->
+                        <div class="cg-toolbar">
+                            <span class="cg-filter-label">
+                                <i class="fas fa-filter" style="color:#2563eb;margin-right:5px;"/>
+                                Filtrer par statut :
+                            </span>
+                            <p:selectOneMenu value="#{rhBean.filtreStatut}"
+                                             style="padding:7px 12px;border:1px solid #e2e8f0;
+                                                    border-radius:8px;font-size:12px;
+                                                    font-weight:600;background:#fff;
+                                                    color:#1e293b;min-width:180px;">
+                                <f:selectItem itemLabel="Tous les statuts" itemValue=""/>
+                                <f:selectItem itemLabel="⏳ En attente"    itemValue="EN_ATTENTE"/>
+                                <f:selectItem itemLabel="✔ Approuvé"       itemValue="APPROUVE"/>
+                                <f:selectItem itemLabel="✖ Refusé"         itemValue="REFUSE"/>
+                                <f:selectItem itemLabel="⚠ En retard"      itemValue="EN_RETARD"/>
+                                <p:ajax event="change" listener="#{rhBean.filtrerConges}" update="tableCongesAll growl"/>
+                            </p:selectOneMenu>
+                            <!-- Export -->
+                            <p:commandButton value="⬇ Excel" ajax="false"
+                                style="padding:7px 14px;background:#16a34a;color:#fff;border:none;
+                                       border-radius:8px;font-size:12px;font-weight:700;
+                                       cursor:pointer;font-family:inherit;margin-left:auto;">
+                                <p:dataExporter type="xls" target="tableCongesAll" fileName="conges"/>
+                            </p:commandButton>
+                        </div>
+
+                        <p:dataTable id="tableCongesAll"
+                                     value="#{rhBean.demandesConge}" var="d"
+                                     paginator="true" rows="10"
+                                     paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="10,25,50"
+                                     emptyMessage="Aucune demande trouvée."
+                                     style="border:none;">
+
+                            <!-- Employé -->
+                            <p:column headerText="Employé" style="min-width:200px;padding:14px 16px;">
+                                <div style="display:flex;align-items:center;gap:10px;">
+                                    <div class="emp-avatar">
+                                        #{d.employe.prenom != null and d.employe.prenom.length() > 0
+                                          ? d.employe.prenom.substring(0,1) : ''}#{d.employe.nom != null
+                                          and d.employe.nom.length() > 0 ? d.employe.nom.substring(0,1) : ''}
+                                    </div>
+                                    <div>
+                                        <div class="emp-name">#{d.employe.nomComplet}</div>
+                                        <div class="emp-sub">#{d.employe.departement}</div>
+                                    </div>
+                                </div>
+                            </p:column>
+
+                            <!-- Type -->
+                            <p:column headerText="Type" style="width:140px;padding:14px 16px;">
+                                <span class="badge-conge type">#{d.typeConge.libelle}</span>
+                            </p:column>
+
+                            <!-- Période -->
+                            <p:column headerText="Période" style="width:230px;padding:14px 16px;">
+                                <div class="periode-box">
+                                    <div class="periode-dates">
+                                        Du <h:outputText value="#{d.dateDebut}">
+                                            <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                                        </h:outputText>
+                                        au <h:outputText value="#{d.dateFin}">
+                                            <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                                        </h:outputText>
+                                    </div>
+                                    <span class="periode-jours">#{d.nombreJours} jour(s)</span>
+                                </div>
+                            </p:column>
+
+                            <!-- Statut -->
+                            <p:column headerText="Statut" style="width:150px;padding:14px 16px;">
+                                <span class="badge-conge #{d.statut == 'EN_ATTENTE' ? 'attente' :
+                                                           d.statut == 'APPROUVE'   ? 'approuve' : 'refuse'}">
+                                    #{d.statut == 'EN_ATTENTE' ? '⏳ En attente' :
+                                      d.statut == 'APPROUVE'   ? '✔ Approuvé'   : '✖ Refusé'}
+                                </span>
+                                <h:panelGroup rendered="#{rhBean.isCongeEnRetard(d)}">
+                                    <span title="La période de congé est déjà passée sans qu'une décision ait été prise."
+                                          style="display:inline-block;margin-top:4px;padding:2px 8px;border-radius:10px;
+                                                 background:#fee2e2;color:#b91c1c;font-size:10.5px;font-weight:700;">
+                                        ⚠ En retard de traitement
+                                    </span>
+                                </h:panelGroup>
+                            </p:column>
+
+                            <!-- Validé par -->
+                            <p:column headerText="Traité par" style="width:160px;padding:14px 16px;">
+                                <div class="valide-par">
+                                    <h:outputText value="#{d.traitePar}" rendered="#{not empty d.traitePar}"/>
+                                    <h:panelGroup rendered="#{empty d.traitePar}">
+                                        <span style="color:#94a3b8;">—</span>
+                                    </h:panelGroup>
+                                </div>
+                                <div class="valide-date">
+                                    <h:outputText value="#{d.dateTraitement}" rendered="#{d.dateTraitement != null}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy" type="localDateTime"/>
+                                    </h:outputText>
+                                </div>
+                            </p:column>
+
+                        </p:dataTable>
+                    </p:tab>
+
+                </p:tabView>
+            </h:form>
+        </div>
+    </ui:define>
+
+</ui:composition>

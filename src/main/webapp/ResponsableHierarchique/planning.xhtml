@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+<h:head>
+    <title>Planning — Chef de Structure</title>
+    <h:outputStylesheet library="css" name="manager-style.css"/>
+    <style>
+        .mp-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px;}
+        .mp-kpi{background:#fff;border:1px solid #dcfce7;border-radius:10px;padding:14px 16px;}
+        .mp-kpi b{display:block;font-size:24px;font-weight:800;color:#14532d;line-height:1;margin-bottom:3px;}
+        .mp-kpi.warn b{color:#b3261e;}
+        .mp-kpi span{color:#64748b;font-size:12.5px;}
+        .mp-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px;}
+        .mp-legend{display:flex;flex-wrap:wrap;gap:14px;color:#64748b;font-size:12.5px;margin:0 0 12px;}
+        .mp-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;}
+        .mp-grid{background:#fff;border:1px solid #dcfce7;border-radius:12px;overflow-x:auto;}
+        .mp-grid-in{min-width:900px;}
+        .mp-row{display:grid;grid-template-columns:220px repeat(7,1fr);}
+        .mp-cell{padding:6px;border-left:1px solid #f0fdf4;border-bottom:1px solid #f0fdf4;min-height:54px;}
+        .mp-cell.h{text-align:center;font-weight:700;color:#64748b;min-height:0;padding:9px 4px;font-size:12.5px;background:#f0fdf4;}
+        .mp-cell.h b{display:block;font-size:17px;color:#14532d;}
+        .mp-emp{border-left:0;display:flex;flex-direction:column;justify-content:center;padding-left:14px;}
+        .mp-emp b{font-size:13px;color:#0f172a;}
+        .mp-emp small{color:#94a3b8;font-size:11.5px;}
+        .mp-grp{background:#f0fdf4;border-left:0!important;display:flex;align-items:center;gap:8px;font-weight:700;font-size:12.5px;}
+        .mp-grp .dot{width:9px;height:9px;border-radius:50%;background:var(--c2,#16a34a);flex-shrink:0;}
+        .mp-grp small{font-weight:500;color:#64748b;}
+        .mp-sh{display:block;width:100%;text-align:left;border:0;border-left:4px solid var(--c,#16a34a);border-radius:6px;padding:5px 7px;cursor:pointer;font-size:11.5px;line-height:1.3;background:color-mix(in srgb,var(--c,#16a34a) 15%,#fff);font-family:inherit;}
+        .mp-sh:hover{box-shadow:0 0 0 2px var(--c,#16a34a);}
+        .mp-sh b{display:block;font-size:12.5px;}
+        .mp-sh.off{background:repeating-linear-gradient(135deg,#fff,#fff 6px,#f1f5f9 6px,#f1f5f9 12px);border-left-color:#8a93a6;}
+        .mp-sh.exc{outline:2px dashed #b3261e;outline-offset:-2px;}
+        .mp-sh .tag{color:#b3261e;font-weight:700;font-size:10px;display:block;margin-top:2px;}
+        .mp-cov{font-weight:700;text-align:center;padding-top:10px;font-size:12.5px;color:#334155;}
+        .mp-cov.low{color:#b3261e;}
+        .mp-acc-h{cursor:pointer;user-select:none;}
+        .mp-acc-h .mp-chev{margin-left:auto;color:#94a3b8;font-size:12px;transition:transform .15s;}
+        .mp-acc-body{display:none;}
+        .mp-acc.open .mp-acc-body{display:block;}
+        .mp-acc.open .mp-acc-h .mp-chev{transform:rotate(90deg);}
+        .stat-bar-wrap {
+            background: #f0fdf4;
+            border-radius: 999px;
+            height: 10px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+        .stat-bar-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #16a34a, #22c55e);
+            transition: width .6s ease;
+        }
+    </style>
+</h:head>
+<h:body>
+<div style="display:flex;">
+    <ui:include src="sidebar-manager.xhtml">
+        <ui:param name="page" value="planning"/>
+    </ui:include>
+
+    <div class="mg-main">
+        <div class="mg-topbar">
+            <div class="mg-topbar-left">
+                <h1>Planning et Presences</h1>
+                <div class="breadcrumb">Mon equipe &gt; Planning de la semaine</div>
+            </div>
+            <div class="mg-topbar-right">
+                <div class="topbar-badge">
+                    <span>#{sessionBean.nomComplet}</span>
+                    <span class="role-pill">MANAGER</span>
+                </div>
+                <h:form>
+                    <p:commandButton value="Deconnexion" action="#{loginBean.logout}"
+                        styleClass="btn-logout" ajax="false"/>
+                </h:form>
+            </div>
+        </div>
+
+        <div class="mg-content">
+            <p:growl id="growl" showDetail="true" life="4000"/>
+
+            <!-- ── STATS PRÉSENCE ── -->
+            <div class="kpi-grid" style="margin-bottom:24px;">
+                <div class="kpi-card green">
+                    <div class="kpi-label">Equipe totale</div>
+                    <div class="kpi-value">#{managerBean.totalEquipe}</div>
+                    <div class="kpi-sub">Collaborateurs</div>
+                </div>
+                <div class="kpi-card green">
+                    <div class="kpi-label">Presents</div>
+                    <div class="kpi-value">#{managerBean.presentsAujourdhui}</div>
+                    <div class="kpi-sub">Aujourd'hui</div>
+                    <div class="stat-bar-wrap">
+                        <div class="stat-bar-fill" style="width:#{managerBean.tauxPresence}%;"/>
+                    </div>
+                </div>
+                <div class="kpi-card red">
+                    <div class="kpi-label">Absents</div>
+                    <div class="kpi-value">#{managerBean.absentsAujourdhui}</div>
+                    <div class="kpi-sub">Aujourd'hui</div>
+                </div>
+                <div class="kpi-card amber">
+                    <div class="kpi-label">Conges valides</div>
+                    <div class="kpi-value">#{managerBean.nbCongesApprouves}</div>
+                    <div class="kpi-sub">Total actifs</div>
+                </div>
+                <div class="kpi-card slate">
+                    <div class="kpi-label">Taux presence</div>
+                    <div class="kpi-value">#{managerBean.tauxPresence}%</div>
+                    <div class="kpi-sub">Ce jour</div>
+                </div>
+            </div>
+
+            <!-- ── PLANNING SEMAINE (régime FIXE ou EQUIPES, éditable) ── -->
+            <h:form id="formMP">
+            <p:growl id="growlMP" showDetail="true" life="4000"/>
+
+            <h:panelGroup rendered="#{managerPlanningBean.monService == null}">
+                <div class="section-card" style="margin-bottom:24px;">
+                    <div style="padding:20px;color:#64748b;font-size:13px;">
+                        Aucun service rattaché à votre fiche — le planning d'équipe n'est disponible qu'au niveau Chef de Service.
+                    </div>
+                </div>
+            </h:panelGroup>
+
+            <h:panelGroup rendered="#{managerPlanningBean.monService != null}">
+                <div class="section-card" style="margin-bottom:24px;">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <div class="section-dot" style="background:#16a34a;"></div>
+                            Planning de la semaine — #{managerPlanningBean.monService.nom}
+                        </div>
+                        <div class="mp-bar" style="margin:0;">
+                            <p:commandButton value="‹" action="#{managerPlanningBean.semainePrecedente}" update="@form" styleClass="btn btn-secondary btn-sm"/>
+                            <p:commandButton value="Aujourd'hui" action="#{managerPlanningBean.aujourdhui}" update="@form" styleClass="btn btn-secondary btn-sm"/>
+                            <p:commandButton value="›" action="#{managerPlanningBean.semaineSuivante}" update="@form" styleClass="btn btn-secondary btn-sm"/>
+                            <p:commandButton value="⚙ Configurer l'équipe" rendered="#{managerPlanningBean.regimeEquipes}"
+                                action="#{managerPlanningBean.ouvrirDlgConfig}" update="@form" styleClass="btn btn-secondary btn-sm"/>
+                            <p:commandButton value="+ Nouveau planning" rendered="#{not managerPlanningBean.regimeEquipes}"
+                                action="#{managerPlanningBean.preparerNouveauPlanning}" update="@form" styleClass="btn btn-secondary btn-sm"/>
+                        </div>
+                    </div>
+
+                    <div style="padding:16px 20px 0;">
+                        <p style="font-size:12.5px;color:#64748b;margin:0 0 10px;">#{managerPlanningBean.libelleSemaine}</p>
+
+                        <section class="mp-kpis">
+                            <div class="mp-kpi"><b>#{managerPlanningBean.nbEmployesPlanifies} / #{managerPlanningBean.employesDuService.size()}</b><span>agents planifiés cette semaine</span></div>
+                            <h:panelGroup rendered="#{managerPlanningBean.regimeEquipes}" layout="block" styleClass="mp-kpi #{managerPlanningBean.nbAlertesCouverture gt 0 ? 'warn' : ''}"><b>#{managerPlanningBean.nbAlertesCouverture}</b><span>alertes de sous-effectif</span></h:panelGroup>
+                            <div class="mp-kpi"><b>#{managerPlanningBean.nbExceptionsSemaine}</b><span>exceptions cette semaine</span></div>
+                        </section>
+
+                        <p class="mp-legend">
+                            <span><i style="background:#2563eb;"></i>Normal / Matin</span>
+                            <span><i style="background:#c27a14;"></i>Décalé / Soir</span>
+                            <span><i style="background:#5b4bb7;"></i>Nuit</span>
+                            <span><i style="background:#8a93a6;"></i>Férié, congé, absence ou non planifié</span>
+                            <span>Contour pointillé : exception ponctuelle</span>
+                            <span>Cliquez sur une case pour créer une exception</span>
+                        </p>
+                    </div>
+
+                    <div style="padding:0 20px 20px;overflow-x:auto;">
+                        <div class="mp-grid">
+                        <div class="mp-grid-in">
+
+                            <div class="mp-row">
+                                <div class="mp-cell h" style="border-left:0;"></div>
+                                <ui:repeat value="#{managerPlanningBean.joursSemaine}" var="j">
+                                    <div class="mp-cell h">#{managerPlanningBean.getNomJour(j)}<b><h:outputText value="#{j}"><f:convertDateTime pattern="d" type="localDate"/></h:outputText></b></div>
+                                </ui:repeat>
+                            </div>
+
+                            <!-- Régime équipes : groupé par équipe -->
+                            <h:panelGroup rendered="#{managerPlanningBean.regimeEquipes}">
+                                <ui:repeat value="#{managerPlanningBean.equipes}" var="equipe">
+                                    <div class="mp-row">
+                                        <div class="mp-cell mp-grp" style="--c2:#{equipe.couleur};">
+                                            <span class="dot"></span>#{equipe.nom}
+                                            <small>cette semaine : #{managerPlanningBean.getPlageEquipeSemaine(equipe).nom}</small>
+                                        </div>
+                                        <ui:repeat value="#{managerPlanningBean.joursSemaine}" var="jg"><div class="mp-cell" style="border-left:0;"></div></ui:repeat>
+                                    </div>
+                                    <ui:repeat value="#{managerPlanningBean.getMembres(equipe.id)}" var="m">
+                                        <div class="mp-row">
+                                            <div class="mp-cell mp-emp"><b>#{m.nomComplet}</b><small>#{m.poste.intitule}</small></div>
+                                            <ui:repeat value="#{managerPlanningBean.joursSemaine}" var="jc">
+                                                <div class="mp-cell">
+                                                    <p:commandLink actionListener="#{managerPlanningBean.ouvrirDlgException(m.id, jc)}" update="@form" style="display:block;">
+                                                        <span class="mp-sh #{managerPlanningBean.getCellule(m.id, jc).off ? 'off' : ''} #{managerPlanningBean.getCellule(m.id, jc).exception ? 'exc' : ''}"
+                                                              style="--c:#{managerPlanningBean.getCellule(m.id, jc).couleur};">
+                                                            <b>#{managerPlanningBean.getCellule(m.id, jc).libelle}</b>
+                                                            <h:outputText rendered="#{not managerPlanningBean.getCellule(m.id, jc).off}">
+                                                                <h:outputText value="#{managerPlanningBean.getCellule(m.id, jc).heureDebut}"><f:convertDateTime pattern="HH:mm" type="localTime"/></h:outputText> – <h:outputText value="#{managerPlanningBean.getCellule(m.id, jc).heureFin}"><f:convertDateTime pattern="HH:mm" type="localTime"/></h:outputText>
+                                                            </h:outputText>
+                                                            <h:outputText styleClass="tag" rendered="#{managerPlanningBean.getCellule(m.id, jc).exception}" value="⚠ exception"/>
+                                                        </span>
+                                                    </p:commandLink>
+                                                </div>
+                                            </ui:repeat>
+                                        </div>
+                                    </ui:repeat>
+                                </ui:repeat>
+                                <ui:repeat value="#{managerPlanningBean.plages}" var="pc">
+                                    <div class="mp-row">
+                                        <div class="mp-cell mp-emp"><b>Couverture — #{pc.nom}</b><small>minimum #{pc.effectifMinimum}</small></div>
+                                        <ui:repeat value="#{managerPlanningBean.joursSemaine}" var="jcov">
+                                            <div class="mp-cell mp-cov #{managerPlanningBean.getCouverture(pc.id, jcov) lt pc.effectifMinimum ? 'low' : ''}">
+                                                #{managerPlanningBean.getCouverture(pc.id, jcov)} / #{pc.effectifMinimum}
+                                            </div>
+                                        </ui:repeat>
+                                    </div>
+                                </ui:repeat>
+                            </h:panelGroup>
+
+                            <!-- Régime fixe : employés directement -->
+                            <h:panelGroup rendered="#{not managerPlanningBean.regimeEquipes}">
+                                <ui:repeat value="#{managerPlanningBean.employesDuService}" var="mf">
+                                    <div class="mp-row">
+                                        <div class="mp-cell mp-emp"><b>#{mf.nomComplet}</b><small>#{mf.poste.intitule}</small></div>
+                                        <ui:repeat value="#{managerPlanningBean.joursSemaine}" var="jf">
+                                            <div class="mp-cell">
+                                                <p:commandLink actionListener="#{managerPlanningBean.ouvrirDlgException(mf.id, jf)}" update="@form" style="display:block;">
+                                                    <span class="mp-sh #{managerPlanningBean.getCellule(mf.id, jf).off ? 'off' : ''} #{managerPlanningBean.getCellule(mf.id, jf).exception ? 'exc' : ''}"
+                                                          style="--c:#{managerPlanningBean.getCellule(mf.id, jf).couleur};">
+                                                        <b>#{managerPlanningBean.getCellule(mf.id, jf).libelle}</b>
+                                                        <h:outputText rendered="#{not managerPlanningBean.getCellule(mf.id, jf).off}">
+                                                            <h:outputText value="#{managerPlanningBean.getCellule(mf.id, jf).heureDebut}"><f:convertDateTime pattern="HH:mm" type="localTime"/></h:outputText> – <h:outputText value="#{managerPlanningBean.getCellule(mf.id, jf).heureFin}"><f:convertDateTime pattern="HH:mm" type="localTime"/></h:outputText>
+                                                        </h:outputText>
+                                                        <h:outputText styleClass="tag" rendered="#{managerPlanningBean.getCellule(mf.id, jf).exception}" value="⚠ exception"/>
+                                                    </span>
+                                                </p:commandLink>
+                                            </div>
+                                        </ui:repeat>
+                                    </div>
+                                </ui:repeat>
+                            </h:panelGroup>
+
+                        </div>
+                        </div>
+                    </div>
+
+                    <!-- Liste des plannings individuels (régime fixe) — gestion directe par le chef de service -->
+                    <h:panelGroup rendered="#{not managerPlanningBean.regimeEquipes and not empty managerPlanningBean.planningsDuService}">
+                        <div class="mp-acc" style="padding:0 20px 20px;">
+                            <h4 class="mp-acc-h" style="font-size:12px;color:#64748b;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px;"
+                                onclick="this.closest('.mp-acc').classList.toggle('open')">
+                                Plannings individuels (#{managerPlanningBean.planningsDuService.size()})
+                                <span class="mp-chev">▸</span>
+                            </h4>
+                            <div class="mp-acc-body">
+                            <table style="border-collapse:collapse;width:100%;">
+                                <thead><tr style="font-size:11px;color:#64748b;text-align:left;">
+                                    <th style="padding:6px 8px;">Employé</th><th style="padding:6px 8px;">Période</th><th style="padding:6px 8px;">Horaires</th><th style="padding:6px 8px;">Jours</th><th></th>
+                                </tr></thead>
+                                <tbody>
+                                <ui:repeat value="#{managerPlanningBean.planningsDuService}" var="pl">
+                                    <tr style="border-top:1px solid #f0fdf4;font-size:12px;">
+                                        <td style="padding:6px 8px;font-weight:600;">#{pl.employe.nomComplet}</td>
+                                        <td style="padding:6px 8px;">
+                                            <h:outputText value="#{pl.dateDebut}"><f:convertDateTime pattern="dd/MM/yy" type="localDate"/></h:outputText> → <h:outputText value="#{pl.dateFin}"><f:convertDateTime pattern="dd/MM/yy" type="localDate"/></h:outputText>
+                                        </td>
+                                        <td style="padding:6px 8px;">
+                                            <h:outputText value="#{pl.heureDebut}"><f:convertDateTime pattern="HH:mm" type="localTime"/></h:outputText> – <h:outputText value="#{pl.heureFin}"><f:convertDateTime pattern="HH:mm" type="localTime"/></h:outputText>
+                                        </td>
+                                        <td style="padding:6px 8px;color:#64748b;">#{pl.joursTravailles}</td>
+                                        <td style="padding:6px 8px;text-align:right;white-space:nowrap;">
+                                            <p:commandButton icon="pi pi-pencil" action="#{managerPlanningBean.preparerEditionPlanning(pl)}" update="@form" styleClass="ui-button-flat" style="width:28px;height:28px;"/>
+                                            <p:commandButton icon="pi pi-trash" action="#{managerPlanningBean.supprimerPlanning(pl.id)}" update="@form" styleClass="ui-button-flat" style="width:28px;height:28px;" onclick="return confirm('Supprimer ce planning ?')"/>
+                                        </td>
+                                    </tr>
+                                </ui:repeat>
+                                </tbody>
+                            </table>
+                            </div>
+                        </div>
+                    </h:panelGroup>
+                </div>
+            </h:panelGroup>
+
+            <!-- ══════════════ Dialogue : exception ponctuelle ══════════════ -->
+            <p:remoteCommand name="fermerDlgExcMPRC" action="#{managerPlanningBean.fermerDlgException}" update="@form"/>
+            <p:dialog header="Exception ponctuelle" widgetVar="dlgExcMP" modal="true" dynamic="true" width="480" closable="true"
+                      visible="#{managerPlanningBean.dlgExcOuvert}" onHide="fermerDlgExcMPRC();">
+                <h:panelGroup rendered="#{managerPlanningBean.dlgExcOuvert and managerPlanningBean.excEmploye != null}">
+                    <p style="font-size:12.5px;color:#64748b;margin-bottom:14px;">
+                        #{managerPlanningBean.excEmploye.nomComplet} — <h:outputText value="#{managerPlanningBean.excDate}"><f:convertDateTime pattern="EEEE d MMMM yyyy" type="localDate" locale="fr"/></h:outputText>
+                    </p>
+                    <div class="form-group">
+                        <label class="form-label">Type</label>
+                        <p:selectOneMenu value="#{managerPlanningBean.excType}" style="width:100%;">
+                            <f:selectItems value="#{managerPlanningBean.excTypeOptions}"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <h:panelGroup rendered="#{(managerPlanningBean.excType == 'REMPLACEMENT' or managerPlanningBean.excType == 'ECHANGE') and managerPlanningBean.regimeEquipes}" layout="block" styleClass="form-group">
+                        <label class="form-label">Nouvelle plage</label>
+                        <p:selectOneMenu value="#{managerPlanningBean.excPlageId}" converter="jakarta.faces.Long" style="width:100%;">
+                            <f:selectItems value="#{managerPlanningBean.plages}" var="pp" itemValue="#{pp.id}" itemLabel="#{pp.nom}"/>
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                    <div class="form-group">
+                        <label class="form-label">Commentaire</label>
+                        <p:inputText value="#{managerPlanningBean.excCommentaire}" style="width:100%;"/>
+                    </div>
+                    <div style="display:flex;gap:10px;justify-content:flex-end;">
+                        <p:commandButton value="Retirer l'exception" rendered="#{managerPlanningBean.excExisteDeja}"
+                                          action="#{managerPlanningBean.retirerException}" update="@form" styleClass="btn btn-danger"/>
+                        <p:commandButton value="Enregistrer" action="#{managerPlanningBean.enregistrerException}" update="@form" styleClass="btn btn-primary"/>
+                    </div>
+                </h:panelGroup>
+            </p:dialog>
+
+            <!-- ══════════════ Dialogue : configuration du régime équipes ══════════════ -->
+            <p:remoteCommand name="fermerDlgConfigMPRC" action="#{managerPlanningBean.fermerDlgConfig}" update="@form"/>
+            <p:dialog header="Configurer le régime — #{managerPlanningBean.monService.nom}" widgetVar="dlgConfigMP" modal="true" dynamic="true" width="700" closable="true"
+                      visible="#{managerPlanningBean.dlgConfigOuvert}" onHide="fermerDlgConfigMPRC();">
+                <h:panelGroup rendered="#{managerPlanningBean.dlgConfigOuvert}" layout="block" style="max-height:72vh;overflow-y:auto;padding-right:10px;">
+
+                    <div class="form-group">
+                        <label class="form-label">Lundi de référence <span style="color:#94a3b8;font-weight:400;">(la 1ʳᵉ équipe commence sur la 1ʳᵉ plage cette semaine-là)</span></label>
+                        <div style="display:flex;gap:10px;">
+                            <p:datePicker value="#{managerPlanningBean.configDateReference}" pattern="dd/MM/yyyy" style="width:100%;"/>
+                            <p:commandButton value="Enregistrer" action="#{managerPlanningBean.enregistrerDateReference}" update="@form" styleClass="btn btn-secondary btn-sm" style="white-space:nowrap;"/>
+                        </div>
+                    </div>
+
+                    <h4 style="font-size:12px;color:#64748b;text-transform:uppercase;margin-top:18px;">Plages horaires (ordre de rotation)</h4>
+                    <ui:repeat value="#{managerPlanningBean.plages}" var="p">
+                        <div style="display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:12.5px;">
+                            <span style="width:18px;height:18px;border-radius:5px;border:1px solid #e2e8f0;flex-shrink:0;background:#{p.couleur};"></span>
+                            <span style="flex:1;font-weight:600;">#{p.nom}</span>
+                            <span style="color:#64748b;"><h:outputText value="#{p.heureDebut}"><f:convertDateTime pattern="HH:mm" type="localTime"/></h:outputText> – <h:outputText value="#{p.heureFin}"><f:convertDateTime pattern="HH:mm" type="localTime"/></h:outputText></span>
+                            <span style="color:#64748b;">min. #{p.effectifMinimum}</span>
+                            <p:commandButton icon="pi pi-pencil" action="#{managerPlanningBean.ouvrirDlgPlage(p)}" update="@form" styleClass="ui-button-flat" style="width:28px;height:28px;"/>
+                            <p:commandButton icon="pi pi-trash" action="#{managerPlanningBean.supprimerPlage(p.id)}" update="@form" styleClass="ui-button-flat" style="width:28px;height:28px;"
+                                              onclick="return confirm('Supprimer cette plage ?')"/>
+                        </div>
+                    </ui:repeat>
+                    <p:commandButton value="+ Ajouter une plage" action="#{managerPlanningBean.ouvrirDlgPlage(null)}" update="@form" styleClass="btn btn-secondary btn-sm" style="margin-top:8px;"/>
+
+                    <h4 style="font-size:12px;color:#64748b;text-transform:uppercase;margin-top:18px;">Équipes</h4>
+                    <ui:repeat value="#{managerPlanningBean.equipes}" var="eq2">
+                        <div style="display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:12.5px;">
+                            <span style="width:18px;height:18px;border-radius:5px;border:1px solid #e2e8f0;flex-shrink:0;background:#{eq2.couleur};"></span>
+                            <span style="flex:1;font-weight:600;">#{eq2.nom}</span>
+                            <span style="color:#64748b;">#{managerPlanningBean.getMembres(eq2.id).size()} membre(s)</span>
+                            <p:commandButton icon="pi pi-pencil" action="#{managerPlanningBean.ouvrirDlgEquipe(eq2)}" update="@form" styleClass="ui-button-flat" style="width:28px;height:28px;"/>
+                            <p:commandButton icon="pi pi-trash" action="#{managerPlanningBean.supprimerEquipe(eq2.id)}" update="@form" styleClass="ui-button-flat" style="width:28px;height:28px;"
+                                              onclick="return confirm('Supprimer cette équipe ?')"/>
+                        </div>
+                    </ui:repeat>
+                    <p:commandButton value="+ Ajouter une équipe" action="#{managerPlanningBean.ouvrirDlgEquipe(null)}" update="@form" styleClass="btn btn-secondary btn-sm" style="margin-top:8px;"/>
+
+                    <h4 style="font-size:12px;color:#64748b;text-transform:uppercase;margin-top:18px;">Affectation des membres</h4>
+                    <ui:repeat value="#{managerPlanningBean.employesDuService}" var="emp">
+                        <div style="display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:12.5px;">
+                            <span style="flex:1;">#{emp.nomComplet}</span>
+                            <p:selectOneMenu value="#{managerPlanningBean.equipeParEmploye[emp.id]}" converter="jakarta.faces.Long" style="width:200px;">
+                                <f:selectItem itemLabel="— Aucune équipe —" itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItems value="#{managerPlanningBean.equipes}" var="eq3" itemValue="#{eq3.id}" itemLabel="#{eq3.nom}"/>
+                                <p:ajax listener="#{managerPlanningBean.affecterMembre(emp.id, managerPlanningBean.equipeParEmploye[emp.id])}" update="@form"/>
+                            </p:selectOneMenu>
+                        </div>
+                    </ui:repeat>
+                </h:panelGroup>
+            </p:dialog>
+
+            <!-- ══════════════ Dialogue : édition plage ══════════════ -->
+            <p:dialog header="Plage horaire" widgetVar="dlgPlageMP" modal="true" dynamic="true" width="420" closable="true"
+                      visible="#{managerPlanningBean.dlgPlageOuvert}" onHide="fermerDlgPlageMPRC();">
+                <p:remoteCommand name="fermerDlgPlageMPRC" action="#{managerPlanningBean.fermerDlgPlage}" update="@form"/>
+                <h:panelGroup rendered="#{managerPlanningBean.dlgPlageOuvert}">
+                    <div class="form-group"><label class="form-label">Nom</label><p:inputText value="#{managerPlanningBean.plageEnEdition.nom}" style="width:100%;"/></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div class="form-group"><label class="form-label">Début</label><p:datePicker value="#{managerPlanningBean.plageEnEdition.heureDebut}" timeOnly="true" pattern="HH:mm" style="width:100%;"/></div>
+                        <div class="form-group"><label class="form-label">Fin</label><p:datePicker value="#{managerPlanningBean.plageEnEdition.heureFin}" timeOnly="true" pattern="HH:mm" style="width:100%;"/></div>
+                    </div>
+                    <div class="form-group"><label class="form-label">Effectif minimum</label><p:inputNumber value="#{managerPlanningBean.plageEnEdition.effectifMinimum}" style="width:100%;"/></div>
+                    <div class="form-group"><label class="form-label">Couleur <span style="color:#94a3b8;font-weight:400;">(code hexadécimal)</span></label><p:inputText value="#{managerPlanningBean.plageEnEdition.couleur}" placeholder="#2563eb" style="width:140px;"/></div>
+                    <div style="display:flex;justify-content:flex-end;"><p:commandButton value="Enregistrer" action="#{managerPlanningBean.enregistrerPlage}" update="@form" styleClass="btn btn-primary"/></div>
+                </h:panelGroup>
+            </p:dialog>
+
+            <!-- ══════════════ Dialogue : édition équipe ══════════════ -->
+            <p:dialog header="Équipe" widgetVar="dlgEquipeMP" modal="true" dynamic="true" width="380" closable="true"
+                      visible="#{managerPlanningBean.dlgEquipeOuvert}" onHide="fermerDlgEquipeMPRC();">
+                <p:remoteCommand name="fermerDlgEquipeMPRC" action="#{managerPlanningBean.fermerDlgEquipe}" update="@form"/>
+                <h:panelGroup rendered="#{managerPlanningBean.dlgEquipeOuvert}">
+                    <div class="form-group"><label class="form-label">Nom</label><p:inputText value="#{managerPlanningBean.equipeEnEdition.nom}" style="width:100%;"/></div>
+                    <div class="form-group"><label class="form-label">Couleur <span style="color:#94a3b8;font-weight:400;">(code hexadécimal)</span></label><p:inputText value="#{managerPlanningBean.equipeEnEdition.couleur}" placeholder="#2563eb" style="width:140px;"/></div>
+                    <div style="display:flex;justify-content:flex-end;"><p:commandButton value="Enregistrer" action="#{managerPlanningBean.enregistrerEquipe}" update="@form" styleClass="btn btn-primary"/></div>
+                </h:panelGroup>
+            </p:dialog>
+
+            <!-- ══════════════ Dialogue : planning individuel (régime fixe) ══════════════ -->
+            <p:remoteCommand name="fermerDlgPlanningMPRC" action="#{managerPlanningBean.fermerDlgPlanning}" update="@form"/>
+            <p:dialog header="#{managerPlanningBean.modeEditionPlanning ? 'Modifier le planning' : 'Nouveau planning'}" widgetVar="dlgPlanningMP" modal="true" dynamic="true" width="640" closable="true"
+                      visible="#{managerPlanningBean.dlgPlanningOuvert}" onHide="fermerDlgPlanningMPRC();">
+                <h:panelGroup rendered="#{managerPlanningBean.dlgPlanningOuvert}">
+                    <h:panelGroup rendered="#{not managerPlanningBean.modeEditionPlanning}" layout="block" styleClass="form-group">
+                        <label class="form-label">Appliquer à</label>
+                        <p:selectOneRadio value="#{managerPlanningBean.ciblePlanning}" layout="grid" columns="1">
+                            <f:selectItem itemLabel="Un employé" itemValue="EMPLOYE"/>
+                            <f:selectItem itemLabel="Tout le service (#{managerPlanningBean.employesDuService.size()} agents)" itemValue="SERVICE"/>
+                            <p:ajax update="@form"/>
+                        </p:selectOneRadio>
+                    </h:panelGroup>
+                    <h:panelGroup rendered="#{managerPlanningBean.modeEditionPlanning or managerPlanningBean.ciblePlanning == 'EMPLOYE'}" layout="block" styleClass="form-group">
+                        <label class="form-label">Employé *</label>
+                        <p:selectOneMenu value="#{managerPlanningBean.employePlanningId}" converter="jakarta.faces.Long"
+                                         filter="true" filterMatchMode="contains" style="width:100%;" disabled="#{managerPlanningBean.modeEditionPlanning}">
+                            <f:selectItem itemLabel="— Choisir —" itemValue="#{null}"/>
+                            <f:selectItems value="#{managerPlanningBean.employesDuService}" var="e" itemValue="#{e.id}" itemLabel="#{e.prenom} #{e.nom} — #{e.matricule}"/>
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                    <h:panelGroup rendered="#{not managerPlanningBean.modeEditionPlanning and managerPlanningBean.ciblePlanning == 'SERVICE'}" layout="block" styleClass="form-group">
+                        <p style="color:#64748b;font-size:12.5px;margin:0;">Ces horaires seront appliqués aux #{managerPlanningBean.employesDuService.size()} employés du service (création ou mise à jour de leur planning).</p>
+                    </h:panelGroup>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+                        <div class="form-group">
+                            <label class="form-label">Heure d'arrivée</label>
+                            <p:datePicker value="#{managerPlanningBean.planningEnEdition.heureDebut}" timeOnly="true" pattern="HH:mm" style="width:100%;"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Heure de départ</label>
+                            <p:datePicker value="#{managerPlanningBean.planningEnEdition.heureFin}" timeOnly="true" pattern="HH:mm" style="width:100%;"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Pause déjeuner (min)</label>
+                            <p:inputNumber value="#{managerPlanningBean.planningEnEdition.dureePauseMinutes}" style="width:100%;"/>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Type de planning</label>
+                        <p:selectOneMenu value="#{managerPlanningBean.planningEnEdition.typePlanning}" style="width:100%;">
+                            <f:selectItem itemLabel="Normal" itemValue="NORMAL"/>
+                            <f:selectItem itemLabel="Décalé" itemValue="DECALE"/>
+                            <f:selectItem itemLabel="Nuit" itemValue="NUIT"/>
+                            <f:selectItem itemLabel="Rotation" itemValue="ROTATION"/>
+                            <f:selectItem itemLabel="Astreinte" itemValue="ASTREINTE"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Jours travaillés</label>
+                        <p:selectManyCheckbox value="#{managerPlanningBean.joursSelectionnes}" layout="grid" columns="4">
+                            <f:selectItems value="#{managerPlanningBean.tousLesJours}" var="j" itemValue="#{j}" itemLabel="#{j}"/>
+                        </p:selectManyCheckbox>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Commentaire</label>
+                        <p:inputTextarea value="#{managerPlanningBean.planningEnEdition.commentaire}" rows="2" style="width:100%;"/>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;border-top:1px solid #e2e8f0;">
+                        <p:commandButton value="Enregistrer" icon="pi pi-check" action="#{managerPlanningBean.sauvegarderPlanning}" update="@form" styleClass="btn btn-primary"/>
+                    </div>
+                </h:panelGroup>
+            </p:dialog>
+
+            </h:form>
+
+            <!-- ── DÉTAIL CONGÉS ── -->
+            <div class="section-card mp-acc" style="margin-bottom:24px;">
+                <div class="section-header mp-acc-h" onclick="this.closest('.mp-acc').classList.toggle('open')">
+                    <div class="section-title">
+                        <div class="section-dot" style="background:#d97706;"></div>
+                        Conges approuves — calendrier des absences
+                    </div>
+                    <span class="mp-chev">▸</span>
+                </div>
+                <div class="mp-acc-body">
+                <p:dataTable value="#{managerBean.congesEquipe}" var="d"
+                             rows="10" paginator="true"
+                             paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink}"
+                             emptyMessage="Aucun conge enregistre." style="border:none;">
+                    <p:column headerText="Collaborateur" style="padding:12px 16px;">
+                        <div style="font-weight:600;font-size:13px;">#{d.employe.nomComplet}</div>
+                        <div style="font-size:11px;color:#64748b;">#{d.employe.intiutePoste}</div>
+                    </p:column>
+                    <p:column headerText="Type" style="padding:12px 16px;width:120px;">
+                        <span style="font-size:12px;font-weight:600;">#{d.typeConge.libelle}</span>
+                    </p:column>
+                    <p:column headerText="Debut" style="padding:12px 16px;width:120px;">
+                        <h:outputText value="#{d.dateDebut}">
+                            <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Fin" style="padding:12px 16px;width:120px;">
+                        <h:outputText value="#{d.dateFin}">
+                            <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Duree" style="padding:12px 16px;width:80px;text-align:center;">
+                        <span style="font-weight:700;font-size:16px;">#{d.nombreJours}</span>
+                        <span style="font-size:11px;color:#94a3b8;"> j</span>
+                    </p:column>
+                    <p:column headerText="Statut" style="padding:12px 16px;width:110px;">
+                        <span class="badge badge-#{d.statut}">#{d.statut}</span>
+                    </p:column>
+                </p:dataTable>
+                </div>
+            </div>
+
+            <!-- ── STATISTIQUES PAR EMPLOYÉ ── -->
+            <div class="section-card mp-acc">
+                <div class="section-header mp-acc-h" onclick="this.closest('.mp-acc').classList.toggle('open')">
+                    <div class="section-title">
+                        <div class="section-dot" style="background:#2563eb;"></div>
+                        Statistiques d'absence par collaborateur
+                    </div>
+                    <span class="mp-chev">▸</span>
+                </div>
+                <div class="mp-acc-body">
+                <div style="padding:20px;">
+                    <ui:repeat value="#{managerBean.monEquipe}" var="e">
+                        <div style="display:flex;align-items:center;gap:16px;
+                             padding:12px 0;border-bottom:1px solid #f0fdf4;">
+                            <div class="employe-avatar"
+                                 style="width:36px;height:36px;font-size:11px;flex-shrink:0;">
+                                #{e.prenom.substring(0,1)}#{e.nom.substring(0,1)}
+                            </div>
+                            <div style="min-width:160px;">
+                                <div style="font-weight:600;font-size:13px;">#{e.nomComplet}</div>
+                                <div style="font-size:11px;color:#64748b;">#{e.intiutePoste}</div>
+                            </div>
+                            <div style="flex:1;">
+                                <div style="display:flex;justify-content:space-between;
+                                     font-size:11px;color:#64748b;margin-bottom:4px;">
+                                    <span>Jours pris</span>
+                                    <span style="font-weight:700;color:#0f172a;">
+                                        #{managerBean.getJoursPrisParEmploye(e.id)} j
+                                    </span>
+                                </div>
+                                <div class="stat-bar-wrap">
+                                    <div class="stat-bar-fill"
+                                         style="width:#{managerBean.getTauxAbsenceEmploye(e.id)}%;"/>
+                                </div>
+                            </div>
+                            <div style="min-width:90px;text-align:right;">
+                                <span class="badge badge-#{e.statut}">#{e.statut}</span>
+                            </div>
+                        </div>
+                    </ui:repeat>
+                </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+</h:body>
+</html>

@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Mon Compte — SIRH</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #f1f5f9; font-family: 'Segoe UI', sans-serif; font-size: 14px; color: #0f172a; min-height: 100vh; }
+
+        .page-wrap { max-width: 860px; margin: 0 auto; padding: 36px 24px; }
+
+        /* En-tête profil */
+        .profile-header { background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+                          border-radius: 14px; padding: 28px 32px;
+                          display: flex; align-items: center; gap: 20px; margin-bottom: 28px;
+                          box-shadow: 0 4px 16px rgba(0,0,0,.12); }
+        .profile-avatar { width: 72px; height: 72px; border-radius: 50%;
+                          background: linear-gradient(135deg, #6366f1, #a78bfa);
+                          display: flex; align-items: center; justify-content: center;
+                          font-size: 26px; font-weight: 800; color: #fff; flex-shrink: 0; }
+        .profile-name   { font-size: 22px; font-weight: 800; color: #f1f5f9; }
+        .profile-sub    { font-size: 13px; color: #94a3b8; margin-top: 4px; }
+        .profile-role   { display: inline-block; background: rgba(99,102,241,.3); color: #a5b4fc;
+                          padding: 3px 10px; border-radius: 999px; font-size: 11px;
+                          font-weight: 700; margin-top: 6px; }
+        .back-btn { margin-left: auto; background: rgba(255,255,255,.1); color: #e2e8f0;
+                    border: 1px solid rgba(255,255,255,.15); border-radius: 8px;
+                    padding: 8px 16px; font-size: 12px; font-weight: 600; cursor: pointer;
+                    text-decoration: none; display: inline-block; }
+        .back-btn:hover { background: rgba(255,255,255,.2); }
+
+        /* Cards */
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+                padding: 24px 28px; margin-bottom: 20px;
+                box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+        .card-title { display: flex; align-items: center; gap: 10px;
+                      font-size: 14px; font-weight: 700; color: #0f172a;
+                      margin-bottom: 20px; padding-bottom: 14px;
+                      border-bottom: 1px solid #f1f5f9; }
+        .card-icon { width: 34px; height: 34px; border-radius: 8px;
+                     display: flex; align-items: center; justify-content: center;
+                     font-size: 16px; flex-shrink: 0; }
+        .icon-blue   { background: #dbeafe; }
+        .icon-amber  { background: #fef3c7; }
+        .icon-green  { background: #dcfce7; }
+
+        /* Forms */
+        .form-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-grid-1 { display: grid; grid-template-columns: 1fr; gap: 16px; }
+        .form-group  { display: flex; flex-direction: column; gap: 5px; }
+        .form-label  { font-size: 11px; font-weight: 700; color: #64748b;
+                       text-transform: uppercase; letter-spacing: .5px; }
+        .form-hint   { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+        .form-footer { display: flex; justify-content: flex-end; margin-top: 20px;
+                       padding-top: 16px; border-top: 1px solid #f1f5f9; }
+
+        /* Indicateur force mot de passe */
+        .strength-bar { height: 4px; border-radius: 2px; margin-top: 6px;
+                        transition: all .3s; }
+        .strength-weak   { background: #ef4444; width: 33%; }
+        .strength-medium { background: #f59e0b; width: 66%; }
+        .strength-strong { background: #10b981; width: 100%; }
+
+        /* Boutons */
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px;
+               border-radius: 8px; font-size: 13px; font-weight: 600;
+               cursor: pointer; border: none; transition: all .15s; }
+        .btn-primary { background: #6366f1; color: #fff; }
+        .btn-primary:hover { background: #4f46e5; }
+        .btn-amber   { background: #f59e0b; color: #fff; }
+        .btn-amber:hover { background: #d97706; }
+        .btn-green   { background: #10b981; color: #fff; }
+        .btn-green:hover { background: #059669; }
+        .btn-logout  { background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; }
+        .btn-logout:hover { background: #ef4444; color: #fff; }
+
+        /* Info box */
+        .info-box { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;
+                    padding: 12px 16px; font-size: 12px; color: #0369a1;
+                    display: flex; gap: 8px; align-items: flex-start; margin-bottom: 16px; }
+
+        /* PrimeFaces overrides */
+        .ui-inputtext, .ui-password input {
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 8px !important;
+            padding: 9px 12px !important;
+            font-size: 13px !important;
+            color: #0f172a !important;
+            background: #fff !important;
+            width: 100% !important;
+            transition: border-color .15s !important;
+        }
+        .ui-inputtext:focus, .ui-password input:focus {
+            border-color: #6366f1 !important;
+            outline: none !important;
+            box-shadow: 0 0 0 3px rgba(99,102,241,.1) !important;
+        }
+        .ui-button { font-family: 'Segoe UI', sans-serif !important; }
+        .ui-growl  { top: 20px !important; right: 20px !important; z-index: 9999 !important; }
+    </style>
+</h:head>
+<h:body>
+<div class="page-wrap">
+    <p:growl id="growl" showDetail="true" life="5000"/>
+
+    <!-- En-tête profil -->
+    <div class="profile-header">
+        <div class="profile-avatar">
+            #{not empty monCompteBean.prenom ? monCompteBean.prenom.substring(0,1) : '?'}#{not empty monCompteBean.nom ? monCompteBean.nom.substring(0,1) : '?'}
+        </div>
+        <div>
+            <div class="profile-name">#{monCompteBean.prenom} #{monCompteBean.nom}</div>
+            <div class="profile-sub">#{monCompteBean.userCourant.email}</div>
+            <div>
+                <ui:repeat xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                           value="#{monCompteBean.userCourant.roles}" var="r">
+                    <span class="profile-role">#{r.nom}</span>
+                </ui:repeat>
+            </div>
+        </div>
+        <!-- Bouton retour dynamique selon le rôle -->
+        <h:outputLink value="#{request.contextPath}/#{sessionBean.dashboardUrl}"
+                      styleClass="back-btn">
+            ← Retour au dashboard
+        </h:outputLink>
+        <h:form style="margin-left:8px;">
+            <p:commandButton value="Déconnexion" action="#{loginBean.logout}"
+                styleClass="btn btn-logout" ajax="false"/>
+        </h:form>
+    </div>
+
+    <!-- ── BLOC 1 : Informations personnelles ── -->
+    <div class="card">
+        <div class="card-title">
+            <div class="card-icon icon-blue">👤</div>
+            Informations personnelles
+        </div>
+        <h:form id="fInfos">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Nom *</label>
+                    <p:inputText value="#{monCompteBean.nom}" style="width:100%;"/>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Prénom *</label>
+                    <p:inputText value="#{monCompteBean.prenom}" style="width:100%;"/>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email *</label>
+                    <p:inputText value="#{monCompteBean.email}" style="width:100%;"/>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Téléphone</label>
+                    <p:inputText value="#{monCompteBean.telephone}" style="width:100%;"
+                                 placeholder="+221 77 XXX XX XX"/>
+                </div>
+            </div>
+            <div class="form-footer">
+                <p:commandButton value="Enregistrer les modifications"
+                    action="#{monCompteBean.sauvegarderInfos}"
+                    update="fInfos growl"
+                    styleClass="btn btn-primary"
+                    icon="pi pi-check"/>
+            </div>
+        </h:form>
+    </div>
+
+    <!-- ── BLOC 2 : Nom d'utilisateur ── -->
+    <div class="card">
+        <div class="card-title">
+            <div class="card-icon icon-amber">🔑</div>
+            Nom d'utilisateur (identifiant de connexion)
+        </div>
+        <div class="info-box">
+            ℹ️ Votre identifiant actuel est
+            <strong style="margin:0 4px;font-family:monospace;">#{monCompteBean.userCourant.username}</strong>.
+            Après modification, utilisez le nouvel identifiant pour vous reconnecter.
+        </div>
+        <h:form id="fUsername">
+            <div class="form-grid-1">
+                <div class="form-group">
+                    <label class="form-label">Nouveau nom d'utilisateur *</label>
+                    <p:inputText value="#{monCompteBean.nouveauUsername}" style="width:100%;"
+                                 placeholder="Ex: jean.dupont"/>
+                    <span class="form-hint">Lettres minuscules, chiffres et points uniquement. Min. 3 caractères.</span>
+                </div>
+            </div>
+            <div class="form-footer">
+                <p:commandButton value="Changer l'identifiant"
+                    action="#{monCompteBean.changerUsername}"
+                    update="fUsername growl"
+                    styleClass="btn btn-amber"
+                    icon="pi pi-user-edit"/>
+            </div>
+        </h:form>
+    </div>
+
+    <!-- ── BLOC 3 : Mot de passe ── -->
+    <div class="card">
+        <div class="card-title">
+            <div class="card-icon icon-green">🔒</div>
+            Changer le mot de passe
+        </div>
+        <h:form id="fPassword">
+            <div class="form-grid-1">
+                <div class="form-group">
+                    <label class="form-label">Mot de passe actuel *</label>
+                    <p:password value="#{monCompteBean.ancienMotDePasse}"
+                                feedback="false" style="width:100%;"/>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nouveau mot de passe *</label>
+                    <p:password value="#{monCompteBean.nouveauMotDePasse}"
+                                feedback="true" promptLabel="Entrez un mot de passe"
+                                weakLabel="Faible" goodLabel="Correct" strongLabel="Fort"
+                                style="width:100%;"/>
+                    <span class="form-hint">Minimum 6 caractères.</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Confirmer le nouveau mot de passe *</label>
+                    <p:password value="#{monCompteBean.confirmMotDePasse}"
+                                feedback="false" style="width:100%;"/>
+                </div>
+            </div>
+            <div class="form-footer">
+                <p:commandButton value="Mettre à jour le mot de passe"
+                    action="#{monCompteBean.changerMotDePasse}"
+                    update="fPassword growl"
+                    styleClass="btn btn-green"
+                    icon="pi pi-lock"/>
+            </div>
+        </h:form>
+    </div>
+
+    <!-- ── BLOC 4 : Infos compte (lecture seule) ── -->
+    <div class="card">
+        <div class="card-title">
+            <div class="card-icon" style="background:#f1f5f9;">ℹ️</div>
+            Informations du compte
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div style="background:#f8fafc;border-radius:8px;padding:12px 16px;">
+                <div style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Identifiant</div>
+                <div style="font-family:monospace;font-size:14px;font-weight:700;color:#6366f1;">
+                    #{monCompteBean.userCourant.username}
+                </div>
+            </div>
+            <div style="background:#f8fafc;border-radius:8px;padding:12px 16px;">
+                <div style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Statut</div>
+                <span style="background:#dcfce7;color:#15803d;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700;">
+                    #{monCompteBean.userCourant.actif ? 'Actif' : 'Inactif'}
+                </span>
+            </div>
+            <div style="background:#f8fafc;border-radius:8px;padding:12px 16px;">
+                <div style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Rôle(s)</div>
+                <div>
+                    <ui:repeat xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                               value="#{monCompteBean.userCourant.roles}" var="r">
+                        <span style="background:#ede9fe;color:#7c3aed;padding:2px 9px;border-radius:12px;font-size:12px;font-weight:700;margin-right:4px;">
+                            #{r.nom}
+                        </span>
+                    </ui:repeat>
+                </div>
+            </div>
+            <div style="background:#f8fafc;border-radius:8px;padding:12px 16px;">
+                <div style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Dernière connexion</div>
+                <div style="font-size:13px;font-weight:600;">
+                    <h:outputText value="#{monCompteBean.userCourant.derniereConnexion}"
+                                  rendered="#{monCompteBean.userCourant.derniereConnexion != null}">
+                        <f:convertDateTime pattern="dd/MM/yyyy à HH:mm" type="localDateTime"/>
+                    </h:outputText>
+                    <h:outputText value="—"
+                                  rendered="#{monCompteBean.userCourant.derniereConnexion == null}"/>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</h:body>
+</html>

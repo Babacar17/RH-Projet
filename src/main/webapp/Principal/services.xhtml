@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+<ui:composition template="/Principal/template.xhtml">
+<ui:param name="active" value="services"/>
+<ui:define name="title">Services et démarches</ui:define>
+<ui:define name="content">
+
+<div class="page-banner">
+    <div class="breadcrumb"><a href="#{request.contextPath}/Principal/index.xhtml">Accueil</a><span>/</span>Services</div>
+    <h1>Démarches en ligne</h1>
+    <p>Accédez rapidement aux services les plus demandés du Ministère. Un compte est nécessaire pour les démarches personnelles.</p>
+</div>
+
+<div class="section alt">
+  <div class="container" data-filterable="true">
+    <div class="toolbar">
+        <div class="chips" role="group" aria-label="Filtrer par profil">
+            <button type="button" class="chip active" data-filter="all" aria-pressed="true">Toutes</button>
+            <button type="button" class="chip" data-filter="particuliers" aria-pressed="false">Particuliers</button>
+            <button type="button" class="chip" data-filter="entreprises" aria-pressed="false">Entreprises</button>
+        </div>
+        <div class="search-field">
+            <i class="fas fa-search"></i>
+            <input type="text" data-search="true" placeholder="Rechercher une démarche" aria-label="Rechercher une démarche"/>
+        </div>
+    </div>
+
+    <div class="service-grid">
+        <a class="service-card" data-cat="particuliers entreprises" href="#{request.contextPath}/Authentification/login.xhtml">
+            <div class="service-icon"><i class="fas fa-file-alt"></i></div>
+            <h3>Déclaration fiscale</h3>
+            <p>Déposez votre déclaration en ligne de façon sécurisée.</p>
+            <span class="go">Se connecter pour déclarer</span>
+        </a>
+        <a class="service-card" data-cat="particuliers entreprises" href="#{request.contextPath}/Authentification/login.xhtml">
+            <div class="service-icon"><i class="fas fa-university"></i></div>
+            <h3>Paiement taxes</h3>
+            <p>Réglez vos impôts et taxes depuis chez vous.</p>
+            <span class="go">Se connecter pour payer</span>
+        </a>
+        <a class="service-card" data-cat="entreprises" href="#{request.contextPath}/Authentification/login.xhtml">
+            <div class="service-icon"><i class="fas fa-search-dollar"></i></div>
+            <h3>Suivi remboursement</h3>
+            <p>Consultez l'état de vos dossiers de remboursement TVA.</p>
+            <span class="go">Suivre mes dossiers</span>
+        </a>
+        <a class="service-card" data-cat="entreprises" href="#">
+            <div class="service-icon"><i class="fas fa-handshake"></i></div>
+            <h3>Marchés publics</h3>
+            <p>Accédez aux appels d'offres et consultez les attributions.</p>
+            <span class="go">Voir les appels d'offres</span>
+        </a>
+        <a class="service-card" data-cat="particuliers entreprises" href="#">
+            <div class="service-icon"><i class="fas fa-chart-pie"></i></div>
+            <h3>Suivi budget</h3>
+            <p>Tableaux de bord sur l'exécution du budget de l'État.</p>
+            <span class="go">Consulter les tableaux</span>
+        </a>
+        <a class="service-card" data-cat="particuliers" href="#{request.contextPath}/Authentification/login.xhtml">
+            <div class="service-icon"><i class="fas fa-passport"></i></div>
+            <h3>Légalisation docs</h3>
+            <p>Légalisation de documents administratifs financiers.</p>
+            <span class="go">Faire une demande</span>
+        </a>
+        <a class="service-card" data-cat="entreprises" href="#{request.contextPath}/Authentification/login.xhtml">
+            <div class="service-icon"><i class="fas fa-building"></i></div>
+            <h3>Création entreprise</h3>
+            <p>Démarches fiscales liées à la création d'une société.</p>
+            <span class="go">Démarrer</span>
+        </a>
+        <a class="service-card" data-cat="particuliers entreprises" href="#{request.contextPath}/Principal/contact.xhtml">
+            <div class="service-icon"><i class="fas fa-question-circle"></i></div>
+            <h3>Assistance en ligne</h3>
+            <p>Un conseiller répond à vos questions fiscales.</p>
+            <span class="go">Contacter un conseiller</span>
+        </a>
+    </div>
+    <p class="empty-state" hidden="hidden">Aucune démarche ne correspond à votre recherche.</p>
+  </div>
+</div>
+
+<div class="section">
+  <div class="container two-col">
+    <div class="info-card">
+        <h3>Pas encore de compte ?</h3>
+        <p>Créez votre compte pour déclarer, payer et suivre vos dossiers en ligne.</p>
+        <h:outputLink value="#{request.contextPath}/Authentification/inscription.xhtml" styleClass="btn">Créer un compte</h:outputLink>
+    </div>
+    <div class="info-card">
+        <h3>Une question sur une démarche ?</h3>
+        <p>Notre équipe vous répond par téléphone au +221 33 889 21 00 ou par e-mail.</p>
+        <a href="#{request.contextPath}/Principal/contact.xhtml" class="btn outline">Nous contacter</a>
+    </div>
+  </div>
+</div>
+
+</ui:define>
+</ui:composition>
+</html>

@@ -1,0 +1,670 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <ui:param name="page" value="candidatures"/>
+    <ui:define name="title">Candidatures - SIRH</ui:define>
+    <ui:define name="pageTitle">Candidatures</ui:define>
+    <ui:define name="breadcrumb">Recrutement &gt; Gestion des candidatures</ui:define>
+
+    <ui:define name="styles">
+        <style>
+            /* Statut badges */
+            .badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+            .badge-RECUE      { background:#dbeafe; color:#1d4ed8; }
+            .badge-ENTRETIEN  { background:#fef9c3; color:#854d0e; }
+            .badge-RETENUE    { background:#dcfce7; color:#15803d; }
+            .badge-RECRUTEE   { background:#d1fae5; color:#065f46; }
+            .badge-REFUSEE    { background:#fee2e2; color:#b91c1c; }
+
+            /* Tableau */
+            .cand-tbl .ui-datatable th {
+                background:#f8fafc; color:#64748b; font-size:11px; font-weight:700;
+                text-transform:uppercase; letter-spacing:.5px; padding:10px 14px;
+                border-bottom:2px solid #e2e8f0; vertical-align:top;
+            }
+            .cand-tbl .ui-datatable td { padding:10px 14px; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+            .cand-tbl .ui-datatable tr:hover td { background:#f8fafc; }
+
+            /* En-tete + filtre par colonne : titre et champ de recherche alignes proprement,
+               meme hauteur pour toutes les colonnes qu'elles aient un filtre ou non. */
+            .cand-tbl .ui-datatable th .ui-column-title {
+                display:block; margin-bottom:8px; text-transform:uppercase; letter-spacing:.5px;
+            }
+            .cand-tbl .ui-datatable th .ui-column-filter {
+                width:100%; box-sizing:border-box; padding:5px 8px; font-size:11px;
+                font-weight:400; text-transform:none; letter-spacing:normal;
+                border:1px solid #e2e8f0; border-radius:5px; background:#fff;
+            }
+            .cand-tbl .ui-datatable th:not(:has(.ui-column-filter)) { padding-bottom:10px; }
+
+            /* Boutons action dans tableau — couleur posée en style= inline (cf. commandButton),
+               car PrimeFaces .ui-button.ui-state-default gagne sur une classe seule. */
+            .abtn { padding:5px 10px; border-radius:5px; font-size:11px; font-weight:700; }
+
+            /* Dialog sections */
+            .dl-sect { margin-bottom:20px; }
+            .dl-sect-title {
+                font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;
+                letter-spacing:.5px; padding-bottom:7px; margin-bottom:12px;
+                border-bottom:1px solid #f1f5f9; display:flex; align-items:center; gap:6px;
+            }
+            .dl-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+            .dl-item label { font-size:11px; color:#94a3b8; display:block; margin-bottom:2px; }
+            .dl-item span  { font-size:13px; color:#0f172a; font-weight:500; }
+
+            /* Ligne document */
+            .doc-row {
+                display:flex; justify-content:space-between; align-items:center;
+                padding:10px 14px; border-radius:8px; background:#f8fafc;
+                border:1px solid #f1f5f9; margin-bottom:7px;
+            }
+            .doc-row .doc-name { font-weight:600; font-size:12px; color:#334155; }
+            .doc-row .doc-sub  { font-size:11px; color:#94a3b8; margin-top:1px; }
+            .dl-link {
+                display:inline-flex; align-items:center; gap:5px; background:#f0f9ff;
+                border:1px solid #bae6fd; border-radius:6px; padding:5px 10px;
+                font-size:11px; color:#0369a1; font-weight:600; text-decoration:none;
+            }
+            .dl-link:hover { background:#e0f2fe; }
+            .dl-none {
+                background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px;
+                padding:5px 10px; font-size:11px; color:#94a3b8; font-style:italic;
+            }
+
+            /* Visionneuse de document en superposition — garde le RH sur la page */
+            .dv-overlay{position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:100000;align-items:center;justify-content:center;padding:24px;}
+            .dv-box{background:#fff;border-radius:12px;width:min(1000px,100%);height:86vh;display:flex;flex-direction:column;overflow:hidden;}
+            .dv-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #e2e8f0;font-weight:700;font-size:14px;color:#0f172a;}
+            .dv-close{border:none;background:#f1f5f9;padding:6px 12px;border-radius:6px;cursor:pointer;font-weight:700;font-size:12px;}
+            .dv-frame{flex:1;width:100%;border:0;}
+
+            /* Lettre box */
+            .lettre-box {
+                background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;
+                padding:14px; font-size:13px; color:#334155; line-height:1.7;
+                white-space:pre-wrap; max-height:180px; overflow-y:auto;
+            }
+
+            /* Boutons footer dialog */
+            .dbtn { padding:8px 16px; border:none; border-radius:6px; font-weight:700;
+                    font-size:12px; cursor:pointer; color:#fff; }
+            .dbtn-entretien { background:#d97706; }
+            .dbtn-retenir   { background:#16a34a; }
+            .dbtn-recruter  { background:#0ea5e9; }
+            .dbtn-refuser   { background:#dc2626; }
+
+            /* Zone motif refus */
+            .refus-header {
+                background:#fff1f2; border:1px solid #fecdd3; border-radius:8px;
+                padding:14px 16px; margin-bottom:18px;
+            }
+        </style>
+    </ui:define>
+
+    <ui:define name="content">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:14px;">
+            <h:form id="formSelectOffreCandidature" style="flex:1;max-width:420px;">
+                <label class="form-label" style="font-size:11px;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Aller directement à une offre</label>
+                <p:selectOneMenu value="#{rhBean.offreSelectionneeCandidatureId}" converter="jakarta.faces.Long"
+                                 style="width:100%;" filter="true" filterMatchMode="contains">
+                    <f:selectItem itemLabel="— Choisir une offre —" itemValue="#{null}"/>
+                    <f:selectItems value="#{rhBean.offres}" var="o" itemValue="#{o.id}" itemLabel="#{o.titre} (#{o.statut})"/>
+                    <p:ajax update="@form :formCandidatures"/>
+                </p:selectOneMenu>
+            </h:form>
+            <a href="candidatures-kanban.xhtml"
+               style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;
+                      background:#7c3aed;color:#fff;border:none;border-radius:7px;
+                      font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap;">
+                <i class="pi pi-th-large"/> Vue Kanban
+            </a>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- TABLEAU CANDIDATURES                                          -->
+        <!-- ============================================================ -->
+        <div class="section-card">
+            <div class="section-header">
+                <div class="section-title">
+                    <div class="section-title-dot" style="background:#8b5cf6;"></div>
+                    Candidatures
+                </div>
+            </div>
+
+            <h:form id="formCandidatures">
+
+                <h:panelGroup rendered="#{rhBean.offreSelectionneeCandidature == null}">
+                    <p style="color:#94a3b8;font-size:13px;padding:16px;">← Choisissez une offre ci-dessus pour afficher ses candidatures.</p>
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{rhBean.offreSelectionneeCandidature != null}">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 16px 0;">
+                    <div style="font-weight:700;font-size:14px;color:#0f172a;">#{rhBean.offreSelectionneeCandidature.titre}</div>
+                    <p:commandButton value="&#8592; Changer d'offre" action="#{rhBean.retourListeOffresCandidature}"
+                                      update="@form :formSelectOffreCandidature" styleClass="btn btn-secondary btn-sm"/>
+                </div>
+
+                <!-- Filtre par statut : la table reste masquée tant qu'aucun bouton n'est choisi -->
+                <div style="display:flex;gap:8px;flex-wrap:wrap;padding:16px 16px 0;">
+                    <p:commandButton value="Toutes (#{rhBean.nbCandidaturesOffreSelectionnee})"
+                        action="#{rhBean.toggleFiltreStatutCandidature('TOUTES')}"
+                        update="@form"
+                        style="background:#{rhBean.filtreStatutCandidature == 'TOUTES' ? '#0f172a' : '#f1f5f9'};color:#{rhBean.filtreStatutCandidature == 'TOUTES' ? '#fff' : '#475569'};border:none;padding:6px 14px;font-size:12px;font-weight:700;border-radius:20px;"/>
+                    <p:commandButton value="Reçue (#{rhBean.getNbCandidaturesParStatut('RECUE')})"
+                        action="#{rhBean.toggleFiltreStatutCandidature('RECUE')}"
+                        update="@form"
+                        style="background:#{rhBean.filtreStatutCandidature == 'RECUE' ? '#2563eb' : '#f1f5f9'};color:#{rhBean.filtreStatutCandidature == 'RECUE' ? '#fff' : '#475569'};border:none;padding:6px 14px;font-size:12px;font-weight:700;border-radius:20px;"/>
+                    <p:commandButton value="En cours (#{rhBean.getNbCandidaturesParStatut('EN_COURS')})"
+                        action="#{rhBean.toggleFiltreStatutCandidature('EN_COURS')}"
+                        update="@form"
+                        style="background:#{rhBean.filtreStatutCandidature == 'EN_COURS' ? '#8b5cf6' : '#f1f5f9'};color:#{rhBean.filtreStatutCandidature == 'EN_COURS' ? '#fff' : '#475569'};border:none;padding:6px 14px;font-size:12px;font-weight:700;border-radius:20px;"/>
+                    <p:commandButton value="Entretien (#{rhBean.getNbCandidaturesParStatut('ENTRETIEN')})"
+                        action="#{rhBean.toggleFiltreStatutCandidature('ENTRETIEN')}"
+                        update="@form"
+                        style="background:#{rhBean.filtreStatutCandidature == 'ENTRETIEN' ? '#d97706' : '#f1f5f9'};color:#{rhBean.filtreStatutCandidature == 'ENTRETIEN' ? '#fff' : '#475569'};border:none;padding:6px 14px;font-size:12px;font-weight:700;border-radius:20px;"/>
+                    <p:commandButton value="Retenue (#{rhBean.getNbCandidaturesParStatut('RETENUE')})"
+                        action="#{rhBean.toggleFiltreStatutCandidature('RETENUE')}"
+                        update="@form"
+                        style="background:#{rhBean.filtreStatutCandidature == 'RETENUE' ? '#16a34a' : '#f1f5f9'};color:#{rhBean.filtreStatutCandidature == 'RETENUE' ? '#fff' : '#475569'};border:none;padding:6px 14px;font-size:12px;font-weight:700;border-radius:20px;"/>
+                    <p:commandButton value="Recrutée (#{rhBean.getNbCandidaturesParStatut('RECRUTEE')})"
+                        action="#{rhBean.toggleFiltreStatutCandidature('RECRUTEE')}"
+                        update="@form"
+                        style="background:#{rhBean.filtreStatutCandidature == 'RECRUTEE' ? '#0ea5e9' : '#f1f5f9'};color:#{rhBean.filtreStatutCandidature == 'RECRUTEE' ? '#fff' : '#475569'};border:none;padding:6px 14px;font-size:12px;font-weight:700;border-radius:20px;"/>
+                    <p:commandButton value="Refusée (#{rhBean.getNbCandidaturesParStatut('REFUSEE')})"
+                        action="#{rhBean.toggleFiltreStatutCandidature('REFUSEE')}"
+                        update="@form"
+                        style="background:#{rhBean.filtreStatutCandidature == 'REFUSEE' ? '#dc2626' : '#f1f5f9'};color:#{rhBean.filtreStatutCandidature == 'REFUSEE' ? '#fff' : '#475569'};border:none;padding:6px 14px;font-size:12px;font-weight:700;border-radius:20px;"/>
+                </div>
+
+                <p style="color:#94a3b8;font-size:13px;padding:16px;"
+                   rendered="#{rhBean.filtreStatutCandidature == null}">
+                    ← Choisissez un statut ci-dessus pour afficher les candidatures correspondantes.
+                </p>
+
+                <p:dataTable id="dtCandidatures"
+                             value="#{rhBean.candidaturesFiltrees}" var="c"
+                             rendered="#{rhBean.filtreStatutCandidature != null}"
+                             rows="12" paginator="true" paginatorPosition="bottom"
+                             paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink}"
+                             emptyMessage="Aucune candidature pour ce statut."
+                             styleClass="cand-tbl">
+
+                    <p:column headerText="Candidat" style="width:18%;"
+                              filterBy="#{c.nomPrenomCandidat}" filterMatchMode="contains">
+                        <div style="font-weight:700; font-size:13px;">
+                            #{c.nomPrenomCandidat}
+                        </div>
+                        <div style="font-size:11px; color:#64748b;">#{c.emailCandidat}</div>
+                        <div style="font-size:11px; color:#94a3b8;">#{c.telephoneCandidat}</div>
+                    </p:column>
+
+                    <p:column headerText="Date" style="width:8%;">
+                        <h:outputText value="#{c.dateCandidature}">
+                            <f:convertDateTime pattern="dd/MM/yyyy" type="localDateTime"/>
+                        </h:outputText>
+                    </p:column>
+
+                    <!-- Indicateurs documents : CV + nombre de documents supplementaires fournis -->
+                    <p:column headerText="Docs" style="width:6%; text-align:center;">
+                        <span title="CV"
+                              style="font-size:15px; #{c.cvUrl != null ? 'color:#16a34a;' : 'color:#d1d5db;'}">
+                            &#128196;
+                        </span>
+                        <span title="Documents supplementaires fournis"
+                              style="font-size:11px;font-weight:700;
+                                     color:#{c.documentsSoumis.size() gt 0 ? '#2563eb' : '#d1d5db'};">
+                            +#{c.documentsSoumis.size()}
+                        </span>
+                    </p:column>
+
+                    <p:column headerText="Points" style="width:7%; text-align:center;">
+                        <h:outputText rendered="#{rhBean.getPointsCandidature(c) != null}"
+                                      value="#{rhBean.getPointsCandidature(c)}/#{rhBean.getPointsMaxCandidature(c)}"
+                                      style="font-weight:700;color:#2563eb;"/>
+                        <h:outputText value="—" styleClass="dl-none" style="color:#cbd5e1;" rendered="#{rhBean.getPointsCandidature(c) == null}"/>
+                    </p:column>
+
+                    <p:column headerText="Statut" style="width:10%;">
+                        <span class="badge badge-#{c.statut}">#{c.statut}</span>
+                    </p:column>
+
+                    <p:column headerText="Actions" style="width:30%; text-align:right; white-space:normal;">
+
+                        <!-- Voir dossier complet + documents -->
+                        <p:commandButton value="Dossier" icon="pi pi-folder-open"
+                            action="#{rhBean.voirCandidature(c)}"
+                            update="formDetail"
+                            oncomplete="PF('dlgDetail').show()"
+                            style="background:#6366f1;color:#fff;border:none;margin:2px;padding:0 10px;height:28px;font-size:11px;line-height:1;border-radius:5px;"
+                            styleClass="abtn"/>
+
+                        <!-- Planifier entretien (statut RECUE) -->
+                        <p:commandButton value="Entretien" icon="pi pi-calendar"
+                            rendered="#{c.statut == 'RECUE'}"
+                            action="#{rhBean.preparerEditionCandidature(c)}"
+                            update="formEntretien"
+                            oncomplete="PF('dlgEntretien').show()"
+                            style="background:#d97706;color:#fff;border:none;margin:2px;padding:0 10px;height:28px;font-size:11px;line-height:1;border-radius:5px;"
+                            styleClass="abtn"/>
+
+                        <!-- Retenir (statut ENTRETIEN) -->
+                        <p:commandButton value="Retenir" icon="pi pi-check"
+                            rendered="#{c.statut == 'ENTRETIEN'}"
+                            action="#{rhBean.accepterCandidature(c.id)}"
+                            update="formCandidatures growl"
+                            style="background:#16a34a;color:#fff;border:none;margin:2px;padding:0 10px;height:28px;font-size:11px;line-height:1;border-radius:5px;"
+                            styleClass="abtn"/>
+
+                        <!-- Recruter (statut RETENUE) — crée l'employé + envoie email -->
+                        <p:commandButton value="Recruter" icon="pi pi-user-plus"
+                            rendered="#{c.statut == 'RETENUE'}"
+                            action="#{rhBean.recruterCandidat(c.id)}"
+                            update="formCandidatures growl"
+                            onclick="return confirm('Confirmer le recrutement de #{c.prenomCandidat} #{c.nomCandidat} ? Un dossier employé sera créé et un email de bienvenue envoyé.');"
+                            style="background:#0ea5e9;color:#fff;border:none;margin:2px;padding:0 10px;height:28px;font-size:11px;line-height:1;border-radius:5px;"
+                            styleClass="abtn"/>
+
+                        <!-- Refuser avec motif -->
+                        <p:commandButton value="Refuser" icon="pi pi-times"
+                            rendered="#{c.statut != 'RECRUTEE' and c.statut != 'REFUSEE'}"
+                            action="#{rhBean.preparerRefus(c)}"
+                            update="formRefus"
+                            oncomplete="PF('dlgRefus').show()"
+                            style="background:#dc2626;color:#fff;border:none;margin:2px;padding:0 10px;height:28px;font-size:11px;line-height:1;border-radius:5px;"
+                            styleClass="abtn"/>
+
+                    </p:column>
+                </p:dataTable>
+                </h:panelGroup>
+            </h:form>
+        </div>
+    </ui:define>
+
+    <ui:define name="dialogs">
+        <!-- ============================================================ -->
+        <!-- DIALOG : DOSSIER COMPLET + DOCUMENTS                         -->
+        <!-- ============================================================ -->
+
+        <div id="docViewer" class="dv-overlay" style="display:none;" onclick="fermerDocCand()">
+            <div class="dv-box" onclick="event.stopPropagation();">
+                <div class="dv-head">
+                    <span id="docViewerTitre"></span>
+                    <button type="button" class="dv-close" onclick="fermerDocCand()">Fermer</button>
+                </div>
+                <iframe id="docViewerFrame" class="dv-frame" src="about:blank"></iframe>
+            </div>
+        </div>
+
+        <script>
+            function ouvrirDocCand(el) {
+                document.getElementById('docViewerTitre').textContent = el.getAttribute('data-titre');
+                document.getElementById('docViewerFrame').src = el.getAttribute('data-url');
+                document.getElementById('docViewer').style.display = 'flex';
+            }
+            function fermerDocCand() {
+                document.getElementById('docViewer').style.display = 'none';
+                document.getElementById('docViewerFrame').src = 'about:blank';
+            }
+        </script>
+
+        <h:form id="formDetail">
+        <p:dialog header="Dossier candidat" widgetVar="dlgDetail"
+                  modal="true" width="680" dynamic="true"
+                  style="max-height:90vh;">
+            <div style="padding:20px; max-height:78vh; overflow-y:auto;">
+
+                <p:outputPanel rendered="#{rhBean.candidature != null}">
+
+                    <!-- Bandeau offre -->
+                    <div style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);
+                                border-radius:10px; padding:16px 20px; color:#fff; margin-bottom:20px;">
+                        <div style="font-size:16px; font-weight:800;">
+                            #{rhBean.candidature.offre.titre}
+                        </div>
+                        <div style="font-size:12px; opacity:.85; margin-top:4px;">
+                            #{rhBean.candidature.offre.typeContrat}
+                            &#183;
+                            #{rhBean.candidature.offre.localisation}
+                            &#183;
+                            <h:outputText value="#{rhBean.candidature.dateCandidature}">
+                                <f:convertDateTime pattern="dd/MM/yyyy 'a' HH:mm" type="localDateTime"/>
+                            </h:outputText>
+                        </div>
+                        <div style="margin-top:10px;">
+                            <span class="badge badge-#{rhBean.candidature.statut}"
+                                  style="background:rgba(255,255,255,.25); color:#fff;">
+                                #{rhBean.candidature.statut}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Avancement dans le concours -->
+                    <div class="dl-sect">
+                        <div class="dl-sect-title">Avancement dans le concours</div>
+                        <h:panelGroup rendered="#{empty rhBean.avancementCandidature}">
+                            <p style="color:#94a3b8;font-size:13px;margin:0;">Aucune phase lancée pour cette offre.</p>
+                        </h:panelGroup>
+                        <ui:repeat value="#{rhBean.avancementCandidature}" var="a">
+                            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px;">
+                                <div>
+                                    <div style="font-weight:600;color:#0f172a;">#{a.phase}</div>
+                                    <div style="font-size:11.5px;color:#94a3b8;">
+                                        Phase #{a.statutPhase} &#183; #{a.nbNotes} note(s) saisie(s)
+                                    </div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <h:panelGroup rendered="#{a.points != null}">
+                                        <span style="font-weight:700;">#{a.points} pts</span>
+                                        <span style="color:#64748b;"> &#183; rang #{a.rang}</span>
+                                        <span class="badge badge-#{a.statutResultat}" style="margin-left:6px;">#{a.statutResultat}</span>
+                                    </h:panelGroup>
+                                    <h:panelGroup rendered="#{a.points == null}">
+                                        <span style="color:#94a3b8;font-style:italic;">En attente de classement</span>
+                                    </h:panelGroup>
+                                </div>
+                            </div>
+                        </ui:repeat>
+                    </div>
+
+                    <!-- Coordonnees candidat -->
+                    <div class="dl-sect">
+                        <div class="dl-sect-title">Coordonnees du candidat</div>
+                        <div class="dl-grid">
+                            <div class="dl-item">
+                                <label>Nom complet</label>
+                                <span>#{rhBean.candidature.nomPrenomCandidat}</span>
+                            </div>
+                            <div class="dl-item">
+                                <label>Email</label>
+                                <span>#{rhBean.candidature.emailCandidat}</span>
+                            </div>
+                            <div class="dl-item">
+                                <label>Telephone</label>
+                                <span>
+                                    #{rhBean.candidature.telephoneCandidat != null
+                                      ? rhBean.candidature.telephoneCandidat : '—'}
+                                </span>
+                            </div>
+                            <div class="dl-item">
+                                <label>Entretien prevu</label>
+                                <span>
+                                    <h:outputText value="#{rhBean.candidature.dateEntretien}"
+                                                  rendered="#{rhBean.candidature.dateEntretien != null}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                                    </h:outputText>
+                                    <h:outputText value="Non planifie"
+                                                  rendered="#{rhBean.candidature.dateEntretien == null}"
+                                                  style="color:#94a3b8;"/>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lettre motivation texte -->
+                    <h:panelGroup
+                        rendered="#{rhBean.candidature.lettreMotivation != null
+                                     and not empty rhBean.candidature.lettreMotivation}">
+                        <div class="dl-sect">
+                            <div class="dl-sect-title">Lettre de motivation</div>
+                            <div class="lettre-box">#{rhBean.candidature.lettreMotivation}</div>
+                        </div>
+                    </h:panelGroup>
+
+                    <!-- Documents joints -->
+                    <div class="dl-sect">
+                        <div class="dl-sect-title">Documents joints</div>
+
+                        <!-- CV -->
+                        <div class="doc-row">
+                            <div>
+                                <div class="doc-name">CV (Curriculum Vitae)</div>
+                                <div class="doc-sub">Document principal — Obligatoire</div>
+                            </div>
+                            <h:panelGroup rendered="#{rhBean.candidature.cvUrl != null}">
+                                <a href="javascript:void(0)" class="dl-link"
+                                   data-url="#{request.contextPath}/uploads/candidatures/#{rhBean.candidature.cvUrl}"
+                                   data-titre="CV — #{rhBean.candidature.nomPrenomCandidat}"
+                                   onclick="ouvrirDocCand(this); return false;">Ouvrir</a>
+                            </h:panelGroup>
+                            <h:panelGroup rendered="#{rhBean.candidature.cvUrl == null}">
+                                <span class="dl-none">Non fourni</span>
+                            </h:panelGroup>
+                        </div>
+
+                        <!-- Documents exiges par l'offre (liste librement enumeree par le RH) -->
+                        <ui:repeat value="#{rhBean.candidature.documentsSoumis}" var="doc">
+                            <div class="doc-row">
+                                <div>
+                                    <div class="doc-name">#{doc.libelle}</div>
+                                    <div class="doc-sub">Exige pour cette offre</div>
+                                </div>
+                                <a href="javascript:void(0)" class="dl-link"
+                                   data-url="#{request.contextPath}/uploads/candidatures/#{doc.url}"
+                                   data-titre="#{doc.libelle}"
+                                   onclick="ouvrirDocCand(this); return false;">Ouvrir</a>
+                            </div>
+                        </ui:repeat>
+
+                        <!-- Autres documents -->
+                        <div class="doc-row">
+                            <div>
+                                <div class="doc-name">Autres documents</div>
+                                <div class="doc-sub">Portfolio, certifications — Optionnel</div>
+                            </div>
+                            <ui:repeat value="#{rhBean.candidature.documentsSupplementaires}" var="ds">
+                                <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px;">
+                                    <div>
+                                        <div style="font-weight:600;color:#0f172a;">#{ds.libelle}</div>
+                                        <div style="font-size:11.5px;color:#94a3b8;">Document supplémentaire</div>
+                                    </div>
+                                    <a href="javascript:void(0)"
+                                       data-url="#{request.contextPath}/uploads/candidatures/#{ds.url}"
+                                       data-titre="#{ds.libelle}"
+                                       onclick="ouvrirDocCand(this); return false;"
+                                       style="color:#2563eb;font-weight:600;font-size:12.5px;text-decoration:none;white-space:nowrap;cursor:pointer;">Ouvrir</a>
+                                </div>
+                            </ui:repeat>
+                                                        <h:panelGroup rendered="#{rhBean.candidature.autresDocumentsUrl != null}">
+                                <a href="javascript:void(0)" class="dl-link"
+                                   data-url="#{request.contextPath}/uploads/candidatures/#{rhBean.candidature.autresDocumentsUrl}"
+                                   data-titre="Autres documents"
+                                   onclick="ouvrirDocCand(this); return false;">Ouvrir</a>
+                            </h:panelGroup>
+                            <h:panelGroup rendered="#{rhBean.candidature.autresDocumentsUrl == null}">
+                                <span class="dl-none">Non fourni</span>
+                            </h:panelGroup>
+                        </div>
+
+                    </div><!-- dl-sect documents -->
+
+                    <!-- Motif RH si deja refuse -->
+                    <h:panelGroup
+                        rendered="#{rhBean.candidature.commentaireRH != null
+                                     and not empty rhBean.candidature.commentaireRH}">
+                        <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:8px;
+                                    padding:12px 14px; margin-bottom:16px;">
+                            <div style="font-size:11px; font-weight:700; color:#92400e; margin-bottom:4px;">
+                                MOTIF DE DECISION RH
+                            </div>
+                            <div style="font-size:13px; color:#9a3412; font-style:italic;">
+                                #{rhBean.candidature.commentaireRH}
+                            </div>
+                        </div>
+                    </h:panelGroup>
+
+                    <!-- Boutons footer du dialog dossier -->
+                    <div style="display:flex; justify-content:flex-end; gap:8px;
+                                padding-top:14px; border-top:1px solid #f1f5f9; flex-wrap:wrap;">
+
+                        <!-- Planifier entretien si RECUE -->
+                        <p:commandButton value="Planifier entretien"
+                            styleClass="dbtn dbtn-entretien"
+                            rendered="#{rhBean.candidature.statut == 'RECUE'}"
+                            action="#{rhBean.preparerEditionCandidature(rhBean.candidature)}"
+                            update="formEntretien"
+                            oncomplete="PF('dlgDetail').hide(); PF('dlgEntretien').show();"/>
+
+                        <!-- Retenir si ENTRETIEN -->
+                        <p:commandButton value="Retenir le candidat"
+                            styleClass="dbtn dbtn-retenir"
+                            rendered="#{rhBean.candidature.statut == 'ENTRETIEN'}"
+                            action="#{rhBean.accepterCandidature(rhBean.candidature.id)}"
+                            update="formCandidatures growl"
+                            oncomplete="PF('dlgDetail').hide();"/>
+
+                        <!-- Recruter si RETENUE — crée employé + email -->
+                        <p:commandButton value="Recruter (créer dossier employé)"
+                            styleClass="dbtn dbtn-recruter"
+                            rendered="#{rhBean.candidature.statut == 'RETENUE'}"
+                            action="#{rhBean.recruterCandidat(rhBean.candidature.id)}"
+                            update="formCandidatures growl"
+                            onclick="return confirm('Créer le dossier employé pour ce candidat ?');"
+                            oncomplete="PF('dlgDetail').hide();"/>
+
+                        <!-- Refuser avec motif -->
+                        <p:commandButton value="Refuser avec motif"
+                            styleClass="dbtn dbtn-refuser"
+                            rendered="#{rhBean.candidature.statut != 'RECRUTEE'
+                                        and rhBean.candidature.statut != 'REFUSEE'}"
+                            action="#{rhBean.preparerRefus(rhBean.candidature)}"
+                            update="formRefus"
+                            oncomplete="PF('dlgDetail').hide(); PF('dlgRefus').show();"/>
+
+                        <!-- Fermer -->
+                        <p:commandButton value="Fermer" type="button"
+                            onclick="PF('dlgDetail').hide()"
+                            styleClass="ui-button-secondary"
+                            style="padding:8px 14px; font-size:12px;"/>
+                    </div>
+
+                </p:outputPanel>
+            </div>
+        </p:dialog>
+        </h:form>
+
+        <!-- ============================================================ -->
+        <!-- DIALOG : REFUS AVEC MOTIF OBLIGATOIRE                        -->
+        <!-- ============================================================ -->
+        <h:form id="formRefus">
+        <p:dialog header="Refuser la candidature" widgetVar="dlgRefus"
+                  modal="true" width="460" dynamic="true">
+            <div style="padding:24px;">
+                <p:outputPanel rendered="#{rhBean.candidature != null}">
+
+                    <!-- Rappel identite candidat -->
+                    <div class="refus-header">
+                        <div style="font-weight:700; font-size:14px; color:#be123c;">
+                            #{rhBean.candidature.nomPrenomCandidat}
+                        </div>
+                        <div style="font-size:12px; color:#9f1239; margin-top:3px;">
+                            Poste : #{rhBean.candidature.offre.titre}
+                        </div>
+                    </div>
+
+                    <p:messages id="msgsRefus" showDetail="true" closable="true"
+                                style="margin-bottom:12px;"/>
+
+                    <!-- Champ motif -->
+                    <div style="margin-bottom:18px;">
+                        <label style="font-size:13px; font-weight:700; color:#334155;
+                                       display:block; margin-bottom:8px;">
+                            Motif du refus
+                            <span style="color:#dc2626;"> *</span>
+                        </label>
+                        <p:inputTextarea id="champMotif"
+                            value="#{rhBean.commentaireRefus}"
+                            rows="5" style="width:100%; border-radius:8px; font-size:13px;"
+                            placeholder="Ex : Profil ne correspondant pas aux exigences du poste. Niveau d'experience insuffisant..."
+                            required="true"
+                            requiredMessage="Le motif de refus est obligatoire."/>
+                        <div style="font-size:11px; color:#94a3b8; margin-top:5px;">
+                            Ce motif sera enregistre dans le dossier du candidat.
+                        </div>
+                    </div>
+
+                    <!-- Boutons -->
+                    <div style="display:flex; justify-content:flex-end; gap:10px;
+                                padding-top:12px; border-top:1px solid #f1f5f9;">
+                        <p:commandButton value="Annuler" type="button"
+                            onclick="PF('dlgRefus').hide()"
+                            styleClass="ui-button-secondary"
+                            style="padding:8px 16px;"/>
+                        <p:commandButton value="Confirmer le refus"
+                            action="#{rhBean.refuserAvecMotif}"
+                            update="formCandidatures growl msgsRefus"
+                            oncomplete="if(!args.validationFailed) PF('dlgRefus').hide();"
+                            style="padding:8px 18px; background:#dc2626; color:#fff;
+                                   border:none; border-radius:6px; font-weight:700; cursor:pointer;"/>
+                    </div>
+
+                </p:outputPanel>
+            </div>
+        </p:dialog>
+        </h:form>
+
+        <!-- ============================================================ -->
+        <!-- DIALOG : PLANIFIER ENTRETIEN                                  -->
+        <!-- ============================================================ -->
+        <h:form id="formEntretien">
+        <p:dialog header="Planifier un entretien" widgetVar="dlgEntretien"
+                  modal="true" width="500" dynamic="true">
+            <div style="padding:20px;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+                    <div>
+                        <label style="font-size:12px; font-weight:600; color:#64748b;
+                                       display:block; margin-bottom:4px;">
+                            Date de l'entretien
+                        </label>
+                        <p:datePicker value="#{rhBean.candidature.dateEntretien}"
+                                      pattern="dd/MM/yyyy" style="width:100%;"/>
+                    </div>
+                    <div>
+                        <label style="font-size:12px; font-weight:600; color:#64748b;
+                                       display:block; margin-bottom:4px;">
+                            Type d'entretien
+                        </label>
+                        <p:selectOneMenu value="#{rhBean.candidature.typeEntretien}" style="width:100%;">
+                            <f:selectItem itemLabel="Presentiel"     itemValue="PRESENTIEL"/>
+                            <f:selectItem itemLabel="Visioconference" itemValue="VISIO"/>
+                            <f:selectItem itemLabel="Telephonique"   itemValue="TELEPHONIQUE"/>
+                        </p:selectOneMenu>
+                    </div>
+                </div>
+                <div style="margin-bottom:14px;">
+                    <label style="font-size:12px; font-weight:600; color:#64748b;
+                                   display:block; margin-bottom:4px;">
+                        Notes / Observations
+                    </label>
+                    <p:inputTextarea value="#{rhBean.candidature.notesEntretien}"
+                                     rows="3" style="width:100%;"/>
+                </div>
+                <div style="margin-bottom:14px;">
+                    <label style="font-size:12px; font-weight:600; color:#64748b;
+                                   display:block; margin-bottom:4px;">
+                        Note de l'entretien (/20)
+                    </label>
+                    <p:inputNumber value="#{rhBean.candidature.noteEntretien}"
+                                   min="0" max="20" style="width:160px;"/>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:8px;
+                            padding-top:12px; border-top:1px solid #f1f5f9;">
+                    <p:commandButton value="Annuler" type="button"
+                        onclick="PF('dlgEntretien').hide()"
+                        styleClass="ui-button-secondary"/>
+                    <p:commandButton value="Planifier l'entretien"
+                        action="#{rhBean.planifierEntretien}"
+                        update="formCandidatures growl"
+                        oncomplete="if(!args.validationFailed) PF('dlgEntretien').hide();"
+                        style="padding:8px 16px; background:#d97706; color:#fff;
+                               border:none; border-radius:6px; font-weight:700; cursor:pointer;"/>
+                </div>
+            </div>
+        </p:dialog>
+        </h:form>
+    </ui:define>
+
+</ui:composition>

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<!--
+    FRAGMENT DE GARDE — institution-guard.xhtml
+    ===========================================
+    À inclure en HAUT de chaque page admin qui requiert une institution :
+
+        <ui:include src="/WEB-INF/includes/institution-guard.xhtml"/>
+        <h:panelGroup rendered="#{not sessionBean.isSuperAdmin() or adminBean.institutionFiltreId != null}">
+            ... contenu de la page ...
+        </h:panelGroup>
+
+    Comportement :
+      - Si l'utilisateur N'EST PAS super-admin → rien affiché (il a déjà son institution)
+      - Si super-admin AVEC institution sélectionnée → rien affiché (tout va bien)
+      - Si super-admin SANS institution → affiche un écran de sélection bloquant
+
+    Pages exemptées (pas besoin de ce fragment) :
+      - dashboard.xhtml  (gère lui-même le bandeau superadmin)
+      - institutions.xhtml
+      - parametres.xhtml
+      - logs.xhtml / audit.xhtml / roles.xhtml
+-->
+
+<ui:composition>
+    <p:outputPanel rendered="#{sessionBean.isSuperAdmin() and adminBean.institutionFiltreId == null}"
+                   style="display:block;">
+        <div style="
+            min-height: 60vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        ">
+            <div style="
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 16px;
+                padding: 2.5rem 3rem;
+                max-width: 520px;
+                width: 100%;
+                text-align: center;
+                box-shadow: 0 4px 24px rgba(0,0,0,.06);
+            ">
+                <!-- Icône -->
+                <div style="
+                    width: 64px; height: 64px;
+                    background: linear-gradient(135deg, #b58a3a, #f0c97a);
+                    border-radius: 16px;
+                    display: flex; align-items: center; justify-content: center;
+                    margin: 0 auto 1.25rem;
+                    font-size: 28px; color: #0f172a;
+                ">
+                    <i class="fas fa-university"/>
+                </div>
+
+                <h2 style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:.5rem;">
+                    Sélectionnez une institution
+                </h2>
+                <p style="font-size:13px;color:#64748b;margin-bottom:1.5rem;line-height:1.6;">
+                    En tant que super-administrateur, vous devez choisir une institution
+                    pour accéder à cette section. Les données sont isolées par institution.
+                </p>
+
+                <!-- Sélecteur -->
+                <h:form id="guardForm" style="margin-bottom:1rem;">
+                    <p:selectOneMenu value="#{adminBean.institutionFiltreId}"
+                                     style="width:100%;font-size:13px;font-weight:600;
+                                            border:1.5px solid #7c3aed;border-radius:8px;
+                                            padding:10px 12px;background:#faf5ff;">
+                        <f:selectItem itemValue="" itemLabel="— Choisir une institution —"/>
+                        <f:selectItems value="#{adminBean.toutesInstitutions}"
+                                       var="inst"
+                                       itemValue="#{inst.id}"
+                                       itemLabel="#{inst.code} — #{inst.nom}"/>
+                        <p:ajax update="@form"
+                                listener="#{adminBean.filtrerParInstitution}"
+                                oncomplete="if('#{adminBean.institutionFiltreId}' != '') window.location.reload();"/>
+                    </p:selectOneMenu>
+                </h:form>
+
+                <!-- Liste rapide des institutions -->
+                <div style="text-align:left;margin-top:1rem;">
+                    <p style="font-size:11px;color:#94a3b8;text-transform:uppercase;
+                               letter-spacing:.08em;margin-bottom:.6rem;">
+                        Accès rapide
+                    </p>
+                    <ui:repeat value="#{adminBean.toutesInstitutions}" var="inst">
+                        <h:form style="display:inline-block;margin:3px;">
+                            <p:commandButton
+                                value="#{inst.nom}"
+                                style="font-size:12px;background:#f1f5f9;color:#1e293b;
+                                       border:1px solid #e2e8f0;border-radius:20px;
+                                       padding:5px 12px;cursor:pointer;font-family:inherit;"
+                                action="#{adminBean.selectionnerInstitution(inst.id)}"
+                                ajax="false"/>
+                        </h:form>
+                    </ui:repeat>
+                </div>
+
+                <!-- Lien retour dashboard -->
+                <div style="margin-top:1.5rem;border-top:1px solid #e2e8f0;padding-top:1rem;">
+                    <h:link value="← Retour au tableau de bord global"
+                            outcome="/Administrateur/dashboard"
+                            style="font-size:12px;color:#7c3aed;text-decoration:none;font-weight:600;"/>
+                </div>
+            </div>
+        </div>
+    </p:outputPanel>
+</ui:composition>
+
+</html>

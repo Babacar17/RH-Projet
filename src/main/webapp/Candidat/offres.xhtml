@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:a="http://xmlns.jcp.org/jsf/passthrough"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+    <title>Offres d'emploi — Espace Candidat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <h:outputStylesheet library="css" name="candidat.css"/>
+    <!-- Styles propres à cette page (chargés après candidat.css) -->
+    <h:outputStylesheet library="css" name="candidat-offres.css"/>
+    <script type="text/javascript">
+    //<![CDATA[
+    /* Clic sur la carte = ouvre la fiche PDF, sauf si on clique sur un bouton ou un lien */
+    function ouvrirFichePdf(e, card) {
+        if (e.target.closest('button, a')) { return; }
+        var btn = card.querySelector('.card-pdf-trigger');
+        if (btn) { btn.click(); }
+    }
+    //]]>
+    </script>
+</h:head>
+
+<h:body>
+    <div class="layout-wrapper">
+        <ui:include src="sidebar-candidat.xhtml"/>
+
+        <div class="layout-main">
+
+            <!-- ── Barre du haut ───────────────────────────── -->
+            <div class="layout-topbar">
+                <h2 class="page-title">
+                    <i class="pi pi-briefcase"></i> Offres d'emploi disponibles
+                </h2>
+                <p:outputPanel id="compteur" layout="inline">
+                    <span class="count-badge">
+                        #{empty candidatBean.offresFiltrees ? 0 : candidatBean.offresFiltrees.size()} offre(s)
+                    </span>
+                </p:outputPanel>
+            </div>
+
+            <div class="layout-content offres-page">
+                <p:messages id="msgs" showDetail="true" closable="true" autoUpdate="true"/>
+
+                <!-- ── Barre de recherche ──────────────────── -->
+                <div class="card filtre-card">
+                    <h:form id="filtreForm">
+                        <!-- Touche Entrée = Rechercher -->
+                        <p:defaultCommand target="btnRechercher"/>
+
+                        <div class="filtre-bar">
+                            <p:inputText id="filtrePoste"
+                                         value="#{candidatBean.filtrePoste}"
+                                         placeholder="Rechercher un poste, un mot-clé..."
+                                         a:aria-label="Rechercher une offre"
+                                         styleClass="filtre-input"/>
+
+                            <p:commandButton id="btnRechercher" value="Rechercher" icon="pi pi-search"
+                                             action="#{candidatBean.filtrerOffres}"
+                                             update=":listeOffres :compteur :filtreForm"
+                                             styleClass="ui-button-info"/>
+
+                            <p:commandButton id="btnReinit" value="Réinitialiser" icon="pi pi-refresh"
+                                             action="#{candidatBean.reinitialiserFiltres}"
+                                             process="@this"
+                                             update=":listeOffres :compteur :filtreForm"
+                                             styleClass="ui-button-secondary"/>
+                        </div>
+                    </h:form>
+                </div>
+
+                <!-- ── Liste des offres ────────────────────── -->
+                <p:outputPanel id="listeOffres" layout="block">
+
+                    <!-- Rappel du filtre actif -->
+                    <p:outputPanel layout="block" styleClass="filtre-actif"
+                                   rendered="#{not empty candidatBean.filtrePoste}">
+                        <i class="pi pi-filter"></i> Résultats pour
+                        « <h:outputText value="#{candidatBean.filtrePoste}"/> »
+                    </p:outputPanel>
+
+                    <h:form id="offresForm">
+                        <div class="offres-grid">
+                        <ui:repeat value="#{candidatBean.offresFiltrees}" var="offre">
+                            <article class="offre-card" onclick="ouvrirFichePdf(event, this)">
+
+                                <div class="offre-card-head">
+                                    <span class="offre-card-titre" title="#{offre.titre}">#{offre.titre}</span>
+                                    <span class="offre-badge #{offre.ouverte ? 'is-open' : 'is-closed'}">
+                                        #{offre.ouverte ? 'Ouverte' : 'Clôturée'}
+                                    </span>
+                                </div>
+
+                                <ul class="offre-meta">
+                                    <li>
+                                        <i class="pi pi-map-marker"></i>
+                                        #{empty offre.localisation ? 'Lieu non précisé' : offre.localisation}
+                                    </li>
+                                    <li>
+                                        <i class="pi pi-briefcase"></i>
+                                        #{empty offre.typeContrat ? 'Contrat non précisé' : offre.typeContrat}
+                                    </li>
+                                    <li>
+                                        <i class="pi pi-users"></i>
+                                        #{offre.nombrePostes != null ? offre.nombrePostes : 1} poste(s)
+                                    </li>
+                                    <li>
+                                        <i class="pi pi-calendar"></i> Clôture :
+                                        <h:outputText value="#{offre.dateLimiteFermeture}"
+                                                      rendered="#{offre.dateLimiteFermeture != null}">
+                                            <f:convertDateTime pattern="dd/MM/yyyy HH:mm" type="localDateTime"/>
+                                        </h:outputText>
+                                        <h:outputText value="—" rendered="#{offre.dateLimiteFermeture == null}"/>
+                                    </li>
+                                </ul>
+
+                                <h:panelGroup rendered="#{offre.salaireMin != null or offre.salaireMax != null}">
+                                    <span class="offre-card-salaire">
+                                        <i class="pi pi-money-bill"></i>
+                                        <h:outputText value="#{offre.salaireMin}" rendered="#{offre.salaireMin != null}">
+                                            <f:convertNumber groupingUsed="true" minFractionDigits="0"/>
+                                        </h:outputText>
+                                        <h:outputText value=" — " rendered="#{offre.salaireMin != null and offre.salaireMax != null}"/>
+                                        <h:outputText value="#{offre.salaireMax}" rendered="#{offre.salaireMax != null}">
+                                            <f:convertNumber groupingUsed="true" minFractionDigits="0"/>
+                                        </h:outputText>
+                                        FCFA
+                                    </span>
+                                </h:panelGroup>
+
+                                <p class="offre-card-desc">
+                                    #{empty offre.description ? 'Aucune description.' : offre.description}
+                                </p>
+
+                                <div class="offre-card-actions">
+                                    <!-- Fiche PDF complète (profil, avantages, modalités...) -->
+                                    <p:commandButton
+                                        icon="pi pi-file-pdf" title="Voir la fiche PDF complète"
+                                        a:aria-label="Voir la fiche PDF de l'offre #{offre.titre}"
+                                        action="#{candidatBean.voirOffrePdf(offre.id)}"
+                                        ajax="false" target="_blank"
+                                        styleClass="card-pdf-trigger btn-pdf"/>
+
+                                    <h:panelGroup layout="block" styleClass="offre-action-main"
+                                                  rendered="#{!candidatBean.peutPostuler(offre)}">
+                                        <span class="badge-postule">
+                                            <i class="pi pi-check"></i> Déjà postulé
+                                        </span>
+                                    </h:panelGroup>
+
+                                    <h:panelGroup layout="block" styleClass="offre-action-main"
+                                                  rendered="#{candidatBean.peutPostuler(offre)}">
+                                        <p:commandButton
+                                            value="#{offre.ouverte ? 'Postuler' : 'Clôturée'}"
+                                            icon="pi pi-send"
+                                            action="#{candidatBean.allerPostuler(offre)}"
+                                            ajax="false"
+                                            disabled="#{not offre.ouverte}"
+                                            title="#{not offre.ouverte ? 'Offre clôturée' : 'Envoyer ma candidature'}"
+                                            styleClass="btn-postuler #{offre.ouverte ? 'ui-button-success' : 'ui-button-secondary'}"/>
+                                    </h:panelGroup>
+                                </div>
+
+                            </article>
+                        </ui:repeat>
+                        </div>
+
+                        <!-- ── Aucun résultat ──────────────── -->
+                        <p:outputPanel layout="block" styleClass="card empty-state"
+                                       rendered="#{empty candidatBean.offresFiltrees}">
+                            <i class="pi pi-inbox"></i>
+                            <div class="empty-title">
+                                #{empty candidatBean.filtrePoste ? 'Aucune offre disponible' : 'Aucune offre ne correspond à votre recherche'}
+                            </div>
+                            <div class="empty-text">
+                                #{empty candidatBean.filtrePoste ? 'Revenez prochainement pour découvrir de nouvelles offres.' : 'Essayez avec un autre mot-clé ou réinitialisez la recherche.'}
+                            </div>
+                            <p:commandButton value="Réinitialiser la recherche" icon="pi pi-refresh"
+                                             rendered="#{not empty candidatBean.filtrePoste}"
+                                             action="#{candidatBean.reinitialiserFiltres}"
+                                             process="@this"
+                                             update=":listeOffres :compteur :filtreForm"
+                                             styleClass="ui-button-secondary"/>
+                        </p:outputPanel>
+                    </h:form>
+                </p:outputPanel><!-- /listeOffres -->
+
+                <!-- Indicateur de chargement pendant la recherche -->
+                <p:blockUI block="listeOffres" trigger="filtreForm:btnRechercher filtreForm:btnReinit">
+                    <i class="pi pi-spin pi-spinner" style="font-size:2rem"></i>
+                </p:blockUI>
+
+            </div><!-- /layout-content -->
+        </div><!-- /layout-main -->
+    </div><!-- /layout-wrapper -->
+</h:body>
+</html>

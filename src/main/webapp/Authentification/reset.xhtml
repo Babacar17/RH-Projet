@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:p="http://primefaces.org/ui">
+
+<f:metadata>
+    <f:viewParam name="token" value="#{resetPasswordBean.token}"/>
+    <f:viewAction action="#{resetPasswordBean.chargerToken}"/>
+</f:metadata>
+
+<h:head>
+    <title>Réinitialiser le mot de passe</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <style>
+        body { font-family:'Segoe UI',Arial,sans-serif; margin:0; min-height:100vh;
+               display:flex; align-items:center; justify-content:center;
+               background:linear-gradient(135deg,#1F4E79 0%,#2E74B5 100%); }
+        .card { background:#fff; border-radius:14px; padding:40px;
+                box-shadow:0 12px 40px rgba(0,0,0,.18); width:420px; max-width:92%; }
+        h2   { margin:0 0 6px; color:#1F4E79; font-size:22px; }
+        .lead{ color:#64748b; font-size:13px; margin-bottom:24px; }
+        .field { margin-bottom:14px; }
+        .field label { display:block; font-size:12px; font-weight:700;
+                       color:#334155; margin-bottom:6px; }
+        .btn-primary { width:100%; background:#1F4E79; color:#fff; border:none;
+                       border-radius:8px; padding:11px; font-size:14px;
+                       font-weight:600; cursor:pointer; }
+        .btn-primary:hover { background:#163d5f; }
+        .ui-inputfield { width:100% !important; }
+        .invalide { background:#fef2f2; border-left:4px solid #dc2626; padding:14px;
+                    border-radius:6px; color:#991b1b; }
+        .invalide a { color:#1F4E79; font-weight:600; }
+    </style>
+</h:head>
+
+<h:body>
+<div class="card">
+    <h:panelGroup rendered="#{resetPasswordBean.tokenValide}">
+        <h2><i class="fas fa-key"/> Nouveau mot de passe</h2>
+        <div class="lead">
+            Bonjour <strong>#{resetPasswordBean.utilisateurAffiche}</strong>,
+            choisissez un nouveau mot de passe pour votre compte.
+        </div>
+
+        <p:growl id="messages" showDetail="true"/>
+
+        <h:form id="formReset">
+            <div class="field">
+                <label>Nouveau mot de passe (8 caractères min.)</label>
+                <p:password value="#{resetPasswordBean.nouveauMdp}"
+                            feedback="true" toggleMask="true"
+                            required="true" requiredMessage="Mot de passe requis"/>
+            </div>
+            <div class="field">
+                <label>Confirmation</label>
+                <p:password value="#{resetPasswordBean.confirmationMdp}"
+                            feedback="false" toggleMask="true"
+                            required="true" requiredMessage="Confirmation requise"/>
+            </div>
+            <p:commandButton value="Définir le nouveau mot de passe"
+                             action="#{resetPasswordBean.definirNouveauMdp}"
+                             ajax="false"
+                             styleClass="btn-primary"/>
+        </h:form>
+    </h:panelGroup>
+
+    <h:panelGroup rendered="#{not resetPasswordBean.tokenValide}">
+        <h2><i class="fas fa-exclamation-triangle" style="color:#dc2626;"/> Lien invalide</h2>
+        <div class="lead">
+            Ce lien de réinitialisation est invalide ou a expiré.
+            Les liens sont valides 1 heure après leur envoi.
+        </div>
+        <div class="invalide">
+            Pour relancer la procédure,
+            <a href="#{request.contextPath}/Authentification/login.xhtml">retournez à la connexion</a>
+            et cliquez sur « Mot de passe oublié ».
+        </div>
+    </h:panelGroup>
+</div>
+</h:body>
+</html>

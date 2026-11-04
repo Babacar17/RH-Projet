@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+<ui:composition template="/Principal/template.xhtml">
+<ui:param name="active" value="reformes"/>
+<ui:define name="title">Réformes</ui:define>
+<ui:define name="content">
+
+<div class="page-banner">
+    <div class="breadcrumb"><a href="@P@/index.xhtml">Accueil</a><span>/</span>Réformes</div>
+    <h1>Priorités et réformes</h1>
+    <p>Les chantiers qui modernisent la gestion des finances publiques.</p>
+    <div class="anchor-nav">
+        <a href="#budget-programme">Budget-Programme</a>
+        <a href="#srmt">SRMT</a>
+        <a href="#pse">Plan Sénégal Émergent</a>
+        <a href="#reforme-fiscale">Réforme fiscale 2026</a>
+        <a href="#modernisation-douaniere">Modernisation douanière</a>
+    </div>
+</div>
+
+<div class="section alt">
+  <div class="container">
+
+    <div class="reform-card" id="budget-programme">
+        <h3>Budget-Programme</h3>
+        <p>Gestion du budget de l'État par programmes, pour suivre l'exécution et les résultats avec plus de transparence.</p>
+        <div class="links">
+            <a href="@P@/statistiques.xhtml">Indicateurs budgétaires</a>
+            <a href="@P@/publications.xhtml">Rapports de suivi budgétaire</a>
+        </div>
+    </div>
+
+    <div class="reform-card" id="srmt">
+        <h3>SRMT – Stratégie de recettes à moyen terme</h3>
+        <p>Stratégie de mobilisation des recettes publiques sur plusieurs années, en appui à la Stratégie nationale de financement 2026–2030.</p>
+        <!-- À vérifier : intitulé exact de l'acronyme SRMT -->
+        <div class="links">
+            <a href="@P@/publications.xhtml">Stratégie nationale de financement</a>
+        </div>
+    </div>
+
+    <div class="reform-card" id="pse">
+        <h3>Plan Sénégal Émergent</h3>
+        <p>Le Ministre a reçu des délégations de l'Union européenne et de la BAD pour mobiliser les ressources du Plan Sénégal Émergent 2.0.</p>
+        <div class="links">
+            <a href="@P@/actualites.xhtml#cooperation">Actualités de coopération</a>
+            <a href="@P@/investisseurs.xhtml">Espace investisseurs</a>
+        </div>
+    </div>
+
+    <div class="reform-card" id="reforme-fiscale">
+        <h3>Réforme fiscale 2026</h3>
+        <p>La modernisation de l'administration fiscale a permis aux recettes fiscales de dépasser les prévisions de 8% au T4 2025. La déclaration et le paiement des impôts se font en ligne.</p>
+        <div class="links">
+            <a href="@P@/services.xhtml#entreprises">Démarches fiscales</a>
+            <a href="@P@/agenda.xhtml">Conférence sur la fiscalité numérique</a>
+        </div>
+    </div>
+
+    <div class="reform-card" id="modernisation-douaniere">
+        <h3>Modernisation douanière</h3>
+        <p>Modernisation de la Direction Générale des Douanes, dans un contexte de forte hausse des exportations (+155%) et de baisse des importations (-23.6%).</p>
+        <div class="links">
+            <a href="@P@/ministere.xhtml#directions">Directions rattachées</a>
+            <a href="@P@/statistiques.xhtml">Commerce extérieur</a>
+        </div>
+    </div>
+
+  </div>
+</div>
+
+</ui:define>
+</ui:composition>
+</html>

@@ -1,0 +1,634 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+    <title>Employés — Administration SIRH</title>
+    <h:outputStylesheet library="css" name="admin-style.css"/>
+    <style>
+        .badge-ACTIF      { background:#dcfce7; color:#15803d; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; }
+        .badge-INACTIF    { background:#fee2e2; color:#b91c1c; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; }
+        .badge-SUSPENDU   { background:#fef3c7; color:#92400e; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; }
+        .badge-DIRECTEUR  { background:#ede9fe; color:#7c3aed; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; }
+        .badge-CHEF_DIV   { background:#dbeafe; color:#1d4ed8; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; }
+        .badge-CHEF_SERVICE { background:#dcfce7; color:#16a34a; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; }
+        .badge-CHEF_BUREAU  { background:#fef9c3; color:#b45309; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; }
+        .badge-EMPLOYE    { background:#f1f5f9; color:#475569; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; }
+        /* Séparateurs de section dans le dialog */
+        .dlg-section { font-size:10px; font-weight:700; color:#6d28d9; text-transform:uppercase;
+                       letter-spacing:1px; padding:10px 0 6px; border-top:1px solid #f1f5f9;
+                       margin-top:4px; margin-bottom:2px; }
+        .dlg-section:first-child { border-top:none; padding-top:0; margin-top:0; }
+    </style>
+</h:head>
+
+<h:body>
+    <ui:include src="sidebar-admin.xhtml"/>
+    <!-- ══ GARDE INSTITUTION — super-admin doit sélectionner une institution ══ -->
+    <p:outputPanel rendered="#{sessionBean.isSuperAdmin() and adminBean.institutionFiltreId == null}"
+                   style="display:block;">
+        <div style="min-height:60vh;display:flex;align-items:center;justify-content:center;padding:2rem;">
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:2.5rem 3rem;
+                        max-width:520px;width:100%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.06);">
+                <div style="width:64px;height:64px;background:linear-gradient(135deg,#b58a3a,#f0c97a);
+                             border-radius:16px;display:flex;align-items:center;justify-content:center;
+                             margin:0 auto 1.25rem;font-size:28px;color:#0f172a;">
+                    <i class="fas fa-university"/>
+                </div>
+                <h2 style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:.5rem;">
+                    Sélectionnez une institution
+                </h2>
+                <p style="font-size:13px;color:#64748b;margin-bottom:1.5rem;line-height:1.6;">
+                    En tant que super-administrateur, vous devez choisir une institution
+                    avant d'accéder à cette section.
+                </p>
+                <h:form id="guardForm">
+                    <p:selectOneMenu value="#{adminBean.institutionFiltreId}"
+                                     style="width:100%;font-size:13px;font-weight:600;
+                                            border:1.5px solid #7c3aed;border-radius:8px;
+                                            padding:10px 12px;background:#faf5ff;">
+                        <f:selectItem itemValue="" itemLabel="— Choisir une institution —"/>
+                        <f:selectItems value="#{adminBean.toutesInstitutions}"
+                                       var="inst"
+                                       itemValue="#{inst.id}"
+                                       itemLabel="#{inst.code} — #{inst.nom}"/>
+                        <p:ajax update="@form" listener="#{adminBean.filtrerParInstitution}"/>
+                    </p:selectOneMenu>
+                </h:form>
+                <div style="margin-top:1.5rem;border-top:1px solid #e2e8f0;padding-top:1rem;">
+                    <h:link value="← Retour au tableau de bord global"
+                            outcome="/Administrateur/dashboard"
+                            style="font-size:12px;color:#7c3aed;font-weight:600;"/>
+                </div>
+            </div>
+        </div>
+    </p:outputPanel>
+    <!-- ══ FIN GARDE ══ -->
+
+    <p:outputPanel rendered="#{not sessionBean.isSuperAdmin() or adminBean.institutionFiltreId != null}"
+                   style="display:block;">
+
+
+    <div class="main-content">
+
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Gestion des employés</h1>
+                <p class="page-subtitle">Administration &gt; Fiches employés — Toutes les données</p>
+            </div>
+            <h:form id="formBtnNewEmp">
+                <p:commandButton value="+ Nouvel employé"
+                    action="#{adminEmployeBean.preparerNouvel}"
+                    oncomplete="PF('dlgEmp').show()"
+                    update="formDlgEmp"
+                    styleClass="btn btn-primary"/>
+            </h:form>
+        </div>
+
+        <p:growl id="growl" showDetail="true" life="4000"/>
+
+        <!-- Stats -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+            <div class="stat-card" style="display:flex;align-items:center;gap:14px;">
+                <div style="width:40px;height:40px;background:#ede9fe;border-radius:9px;display:flex;align-items:center;justify-content:center;">
+                    <i class="pi pi-users" style="color:#6d28d9;font-size:18px;"></i>
+                </div>
+                <div>
+                    <div style="font-size:22px;font-weight:800;">#{adminEmployeBean.totalEmployes}</div>
+                    <div style="font-size:11px;color:#64748b;">Total employés</div>
+                </div>
+            </div>
+            <div class="stat-card" style="display:flex;align-items:center;gap:14px;">
+                <div style="width:40px;height:40px;background:#dcfce7;border-radius:9px;display:flex;align-items:center;justify-content:center;">
+                    <i class="pi pi-check-circle" style="color:#10b981;font-size:18px;"></i>
+                </div>
+                <div>
+                    <div style="font-size:22px;font-weight:800;color:#10b981;">#{adminEmployeBean.totalActifs}</div>
+                    <div style="font-size:11px;color:#64748b;">Actifs</div>
+                </div>
+            </div>
+            <div class="stat-card" style="display:flex;align-items:center;gap:14px;">
+                <div style="width:40px;height:40px;background:#fef3c7;border-radius:9px;display:flex;align-items:center;justify-content:center;">
+                    <i class="pi pi-sitemap" style="color:#f59e0b;font-size:18px;"></i>
+                </div>
+                <div>
+                    <div style="font-size:22px;font-weight:800;color:#f59e0b;">#{adminEmployeBean.totalChefs}</div>
+                    <div style="font-size:11px;color:#64748b;">Chefs de structure</div>
+                </div>
+            </div>
+            <div class="stat-card" style="display:flex;align-items:center;gap:14px;">
+                <div style="width:40px;height:40px;background:#ede9fe;border-radius:9px;display:flex;align-items:center;justify-content:center;">
+                    <i class="pi pi-star" style="color:#6d28d9;font-size:18px;"></i>
+                </div>
+                <div>
+                    <div style="font-size:22px;font-weight:800;color:#6d28d9;">#{adminEmployeBean.totalDirecteurs}</div>
+                    <div style="font-size:11px;color:#64748b;">Directeurs</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau -->
+        <div class="section-card">
+            <h:form id="formTableEmp">
+                <!-- Barre de recherche + exports -->
+                <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+                    <p:inputText value="#{adminEmployeBean.recherche}"
+                                 placeholder="Rechercher par nom, prénom, matricule, email..."
+                                 style="flex:1;min-width:200px;"/>
+                    <p:commandButton value="Rechercher"
+                        action="#{adminEmployeBean.rechercher}"
+                        update="formTableEmp"
+                        styleClass="btn btn-primary"/>
+                    <p:commandButton value="Réinitialiser"
+                        action="#{adminEmployeBean.reinitialiser}"
+                        update="formTableEmp"
+                        styleClass="btn btn-secondary"/>
+                    <!-- Export Excel (PDF retiré : incompatibilité OpenPDF/PrimeFaces) -->
+                    <!-- Masqué tant que le tableau (tableEmp) n'est pas rendu, sinon dataExporter ne le trouve pas -->
+                    <p:commandButton value="⬇ Excel" ajax="false"
+                        title="Exporter en Excel"
+                        rendered="#{adminEmployeBean.filtreStatutEmploye != null}"
+                        style="padding:0 12px;height:34px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">
+                        <p:dataExporter type="xls" target="tableEmp" fileName="employes"/>
+                    </p:commandButton>
+                </div>
+
+                <!-- Filtre par statut : le tableau reste masqué tant qu'aucun onglet n'est choisi -->
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+                    <p:commandButton value="Tous (#{adminEmployeBean.totalEmployes})"
+                        action="#{adminEmployeBean.setFiltreStatutEmploye('TOUTES')}"
+                        update="formTableEmp"
+                        style="background:#{adminEmployeBean.filtreStatutEmploye == 'TOUTES' ? '#0f172a' : '#f1f5f9'};color:#{adminEmployeBean.filtreStatutEmploye == 'TOUTES' ? '#fff' : '#475569'};border:none;padding:6px 14px;font-size:12px;font-weight:700;border-radius:20px;"/>
+                    <p:commandButton value="Actifs (#{adminEmployeBean.getNbEmployesParStatut('ACTIF')})"
+                        action="#{adminEmployeBean.setFiltreStatutEmploye('ACTIF')}"
+                        update="formTableEmp"
+                        style="background:#{adminEmployeBean.filtreStatutEmploye == 'ACTIF' ? '#16a34a' : '#f1f5f9'};color:#{adminEmployeBean.filtreStatutEmploye == 'ACTIF' ? '#fff' : '#475569'};border:none;padding:6px 14px;font-size:12px;font-weight:700;border-radius:20px;"/>
+                    <p:commandButton value="Inactifs (#{adminEmployeBean.getNbEmployesParStatut('INACTIF')})"
+                        action="#{adminEmployeBean.setFiltreStatutEmploye('INACTIF')}"
+                        update="formTableEmp"
+                        style="background:#{adminEmployeBean.filtreStatutEmploye == 'INACTIF' ? '#dc2626' : '#f1f5f9'};color:#{adminEmployeBean.filtreStatutEmploye == 'INACTIF' ? '#fff' : '#475569'};border:none;padding:6px 14px;font-size:12px;font-weight:700;border-radius:20px;"/>
+                    <p:commandButton value="Suspendus (#{adminEmployeBean.getNbEmployesParStatut('SUSPENDU')})"
+                        action="#{adminEmployeBean.setFiltreStatutEmploye('SUSPENDU')}"
+                        update="formTableEmp"
+                        style="background:#{adminEmployeBean.filtreStatutEmploye == 'SUSPENDU' ? '#b45309' : '#f1f5f9'};color:#{adminEmployeBean.filtreStatutEmploye == 'SUSPENDU' ? '#fff' : '#475569'};border:none;padding:6px 14px;font-size:12px;font-weight:700;border-radius:20px;"/>
+                </div>
+
+                <p style="color:#94a3b8;font-size:13px;"
+                   rendered="#{adminEmployeBean.filtreStatutEmploye == null}">
+                    ← Choisissez un statut ci-dessus pour afficher les employés correspondants.
+                </p>
+
+                <p:dataTable id="tableEmp" value="#{adminEmployeBean.employesFiltres}" var="e"
+                             rendered="#{adminEmployeBean.filtreStatutEmploye != null}"
+                             rows="15" paginator="true"
+                             paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowsPerPageTemplate="15,30,50"
+                             emptyMessage="Aucun employé trouvé."
+                             style="border:none;">
+
+                    <p:column headerText="Employé" style="min-width:200px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6d28d9,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">
+                                #{e.prenom != null and e.prenom.length() > 0 ? e.prenom.substring(0,1) : ''}#{e.nom != null and e.nom.length() > 0 ? e.nom.substring(0,1) : ''}
+                            </div>
+                            <div>
+                                <div style="font-weight:600;font-size:13px;">#{e.nomComplet}</div>
+                                <div style="font-size:11px;color:#94a3b8;">#{e.email}</div>
+                            </div>
+                        </div>
+                    </p:column>
+
+                    <p:column headerText="Matricule" style="width:130px;">
+                        <span style="font-family:monospace;font-size:12px;color:#6d28d9;background:#ede9fe;padding:3px 9px;border-radius:6px;">
+                            #{e.matricule}
+                        </span>
+                    </p:column>
+
+                    <p:column headerText="Poste / Niveau" style="width:170px;">
+                        <div style="font-size:12px;margin-bottom:3px;">#{e.intiutePoste}</div>
+                        <span class="badge-#{e.niveauHierarchique}">#{e.getLabelNiveau()}</span>
+                    </p:column>
+
+                    <p:column headerText="Structure" style="width:170px;">
+                        <div style="font-size:12px;font-weight:600;">#{e.nomService}</div>
+                        <div style="font-size:11px;color:#94a3b8;">#{e.nomDirection}</div>
+                    </p:column>
+
+                    <p:column headerText="Données perso" style="width:150px;">
+                        <div style="font-size:11px;color:#64748b;">
+                            Né(e) :
+                            <h:outputText value="#{e.dateNaissance}" rendered="#{e.dateNaissance != null}"/>
+                            <h:outputText value="—" rendered="#{e.dateNaissance == null}"/>
+                        </div>
+                        <div style="font-size:11px;color:#64748b;">
+                            CIN :
+                            <h:outputText value="#{e.cin}" rendered="#{not empty e.cin}"/>
+                            <h:outputText value="—" rendered="#{empty e.cin}"/>
+                        </div>
+                    </p:column>
+
+                    <p:column headerText="Statut" style="width:90px;">
+                        <span class="badge-#{e.statut}">#{e.statut}</span>
+                    </p:column>
+
+                    <p:column headerText="Actions" style="width:110px;">
+                        <div style="display:flex;gap:5px;justify-content:flex-end;">
+                            <p:commandButton value="✏"
+                                title="Modifier la fiche"
+                                action="#{adminEmployeBean.preparerEdition(e)}"
+                                oncomplete="PF('dlgEmp').show()"
+                                update="formDlgEmp"
+                                style="width:30px;height:28px;padding:0;background:#eff6ff;color:#3b82f6;border:1px solid #bfdbfe;border-radius:6px;font-size:13px;cursor:pointer;"/>
+                            <!-- AJOUT : bouton Mutation / Mouvement de carrière -->
+                            <p:commandButton value="🔀"
+                                title="Mutation / Mouvement de carrière"
+                                action="#{adminEmployeBean.preparerMutation(e)}"
+                                oncomplete="PF('dlgMutation').show()"
+                                update="formDlgMutation"
+                                style="width:30px;height:28px;padding:0;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;border-radius:6px;font-size:13px;cursor:pointer;"/>
+                            <!-- Bouton suppression : stocke l'employé puis ouvre la dialog de confirmation -->
+                            <p:commandButton value="🗑"
+                                title="Supprimer"
+                                update="formConfirmDeleteEmp"
+                                oncomplete="PF('dlgConfirmDeleteEmp').show()"
+                                style="width:30px;height:28px;padding:0;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:6px;font-size:13px;cursor:pointer;">
+                                <f:setPropertyActionListener
+                                    target="#{adminEmployeBean.employe}"
+                                    value="#{e}"/>
+                            </p:commandButton>
+                        </div>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </div>
+
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- DIALOG Créer / Modifier un employé                    -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <h:form id="formDlgEmp">
+        <p:dialog header="#{adminEmployeBean.modeEdition ? 'Modifier la fiche employé' : 'Nouvel employé'}"
+                  widgetVar="dlgEmp" modal="true" width="740" height="600" scrollable="true"
+                  resizable="false" closeOnEscape="true">
+            <div style="padding:24px;max-height:82vh;overflow-y:auto;">
+
+                <!-- En-tête fiche en mode édition -->
+                <h:panelGroup rendered="#{adminEmployeBean.modeEdition and adminEmployeBean.employe != null}">
+                    <div style="display:flex;align-items:center;gap:14px;padding:14px;background:#f8fafc;border-radius:10px;margin-bottom:20px;">
+                        <div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#6d28d9,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0;">
+                            #{not empty adminEmployeBean.employe.prenom ? adminEmployeBean.employe.prenom.substring(0,1) : ''}#{not empty adminEmployeBean.employe.nom ? adminEmployeBean.employe.nom.substring(0,1) : ''}
+                        </div>
+                        <div>
+                            <div style="font-size:15px;font-weight:700;">#{adminEmployeBean.employe.nomComplet}</div>
+                            <div style="font-size:11px;color:#64748b;margin-top:2px;">
+                                #{adminEmployeBean.employe.matricule} — #{adminEmployeBean.employe.intiutePoste}
+                            </div>
+                        </div>
+                    </div>
+                </h:panelGroup>
+
+                <!-- ── IDENTITÉ ── -->
+                <div class="dlg-section">🪪 Identité</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                    <div class="form-group">
+                        <label class="form-label">Nom *</label>
+                        <p:inputText value="#{adminEmployeBean.employe.nom}" style="width:100%;" required="true"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Prénom *</label>
+                        <p:inputText value="#{adminEmployeBean.employe.prenom}" style="width:100%;" required="true"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date de naissance</label>
+                        <p:datePicker value="#{adminEmployeBean.employe.dateNaissance}"
+                                      pattern="dd/MM/yyyy" style="width:100%;" showIcon="true"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Sexe</label>
+                        <p:selectOneMenu value="#{adminEmployeBean.employe.sexe}" style="width:100%;">
+                            <f:selectItem itemLabel="— Sélectionner —" itemValue=""/>
+                            <f:selectItem itemLabel="Masculin (M)" itemValue="M"/>
+                            <f:selectItem itemLabel="Féminin (F)"  itemValue="F"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Numéro CIN</label>
+                        <p:inputText value="#{adminEmployeBean.employe.cin}" style="width:100%;"/>
+                    </div>
+                </div>
+
+                <!-- ── COORDONNÉES ── -->
+                <div class="dlg-section">📞 Coordonnées</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                    <div class="form-group">
+                        <label class="form-label">Email *</label>
+                        <p:inputText value="#{adminEmployeBean.employe.email}" style="width:100%;"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Téléphone</label>
+                        <p:inputText value="#{adminEmployeBean.employe.telephone}" style="width:100%;"/>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Adresse</label>
+                        <p:inputTextarea value="#{adminEmployeBean.employe.adresse}" rows="2" style="width:100%;"/>
+                    </div>
+                </div>
+
+                <!-- ── POSTE ── -->
+                <div class="dlg-section">💼 Poste et Carrière</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                    <div class="form-group">
+                        <label class="form-label">Matricule</label>
+                        <p:inputText value="#{adminEmployeBean.employe.matricule}" style="width:100%;"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Intitulé du poste</label>
+                        <p:inputText value="#{adminEmployeBean.employe.intiutePoste}" style="width:100%;"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Niveau hiérarchique</label>
+                        <p:selectOneMenu value="#{adminEmployeBean.employe.niveauHierarchique}" style="width:100%;">
+                            <f:selectItem itemLabel="Employé"          itemValue="EMPLOYE"/>
+                            <f:selectItem itemLabel="Chef de Bureau"   itemValue="CHEF_BUREAU"/>
+                            <f:selectItem itemLabel="Chef de Service"  itemValue="CHEF_SERVICE"/>
+                            <f:selectItem itemLabel="Chef de Division" itemValue="CHEF_DIV"/>
+                            <f:selectItem itemLabel="Directeur"        itemValue="DIRECTEUR"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Type de contrat</label>
+                        <p:selectOneMenu value="#{adminEmployeBean.employe.typeContrat}" style="width:100%;">
+                            <f:selectItem itemLabel="CDI"        itemValue="CDI"/>
+                            <f:selectItem itemLabel="CDD"        itemValue="CDD"/>
+                            <f:selectItem itemLabel="Stage"      itemValue="STAGE"/>
+                            <f:selectItem itemLabel="Consultant" itemValue="CONSULTANT"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Statut</label>
+                        <p:selectOneMenu value="#{adminEmployeBean.employe.statut}" style="width:100%;">
+                            <f:selectItem itemLabel="Actif"    itemValue="ACTIF"/>
+                            <f:selectItem itemLabel="Inactif"  itemValue="INACTIF"/>
+                            <f:selectItem itemLabel="Suspendu" itemValue="SUSPENDU"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Grade / Échelon</label>
+                        <p:inputText value="#{adminEmployeBean.employe.gradeEchelon}" style="width:100%;"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date d'embauche</label>
+                        <p:datePicker value="#{adminEmployeBean.employe.dateEmbauche}"
+                                      pattern="dd/MM/yyyy" style="width:100%;" showIcon="true"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Salaire de base (FCFA)</label>
+                        <p:inputNumber value="#{adminEmployeBean.employe.salaireBase}"
+                                       decimalSeparator="." thousandSeparator=" " style="width:100%;"/>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Service organisationnel</label>
+                        <p:selectOneMenu value="#{adminEmployeBean.serviceId}" style="width:100%;">
+                            <f:selectItem itemLabel="— Sélectionner —" itemValue="#{null}"/>
+                            <f:selectItems value="#{adminEmployeBean.tousServices}"
+                                           var="srv" itemLabel="#{srv.nom} (#{srv.code})" itemValue="#{srv.id}"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Rattachement direct (si pas de service) — un seul choix</label>
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+                            <p:selectOneMenu value="#{adminEmployeBean.departementOrgId}" style="width:100%;">
+                                <f:selectItem itemLabel="Département…" itemValue="#{null}"/>
+                                <f:selectItems value="#{adminEmployeBean.tousDepartements}" var="dpt" itemLabel="#{dpt.nomComplet}" itemValue="#{dpt.id}"/>
+                            </p:selectOneMenu>
+                            <p:selectOneMenu value="#{adminEmployeBean.divisionOrgId}" style="width:100%;">
+                                <f:selectItem itemLabel="Division…" itemValue="#{null}"/>
+                                <f:selectItems value="#{adminEmployeBean.toutesDivisions}" var="dvs" itemLabel="#{dvs.nomComplet}" itemValue="#{dvs.id}"/>
+                            </p:selectOneMenu>
+                            <p:selectOneMenu value="#{adminEmployeBean.directionOrgId}" style="width:100%;">
+                                <f:selectItem itemLabel="Direction…" itemValue="#{null}"/>
+                                <f:selectItems value="#{adminEmployeBean.toutesDirections}" var="drn" itemLabel="#{drn.nom}" itemValue="#{drn.id}"/>
+                            </p:selectOneMenu>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Boutons -->
+                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid #f1f5f9;">
+                    <p:commandButton value="Annuler"
+                        onclick="PF('dlgEmp').hide(); return false;"
+                        styleClass="btn btn-secondary"/>
+                    <p:commandButton
+                        value="#{adminEmployeBean.modeEdition ? 'Enregistrer les modifications' : 'Créer l\'employé'}"
+                        action="#{adminEmployeBean.sauvegarder}"
+                        update="formTableEmp growl"
+                        oncomplete="if(!args.validationFailed) PF('dlgEmp').hide();"
+                        styleClass="btn btn-primary"/>
+                </div>
+
+            </div>
+        </p:dialog>
+    </h:form>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- DIALOG MUTATION / MOUVEMENT DE CARRIÈRE                           -->
+    <!-- Ajouté pour couvrir les mutations internes et inter-institutions   -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <h:form id="formDlgMutation">
+        <p:dialog header="Mutation / Mouvement de carrière"
+                  widgetVar="dlgMutation"
+                  modal="true"
+                  width="600"
+                  responsive="true"
+                  styleClass="dlg-employe">
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px;">
+
+                <!-- Employé concerné (lecture seule) -->
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label class="form-label">Employé concerné</label>
+                    <p:outputLabel value="#{adminEmployeBean.mouvement.employe.nomComplet}"
+                                   style="font-weight:600;color:#1e40af;"/>
+                </div>
+
+                <!-- Type de mouvement -->
+                <div class="form-group">
+                    <label class="form-label">Type de mouvement *</label>
+                    <p:selectOneMenu value="#{adminEmployeBean.mouvement.typeMouvement}"
+                                     styleClass="form-input" required="true">
+                        <f:selectItem itemLabel="-- Sélectionner --" itemValue="#{null}"/>
+                        <f:selectItem itemLabel="Promotion"          itemValue="PROMOTION"/>
+                        <f:selectItem itemLabel="Mutation"           itemValue="MUTATION"/>
+                        <f:selectItem itemLabel="Mobilité"           itemValue="MOBILITE"/>
+                        <f:selectItem itemLabel="Détachement"        itemValue="DETACHEMENT"/>
+                        <f:selectItem itemLabel="Retraite"           itemValue="RETRAITE"/>
+                        <f:selectItem itemLabel="Démission"          itemValue="DEMISSION"/>
+                        <f:selectItem itemLabel="Licenciement"       itemValue="LICENCIEMENT"/>
+                    </p:selectOneMenu>
+                </div>
+
+                <!-- Date d'effet -->
+                <div class="form-group">
+                    <label class="form-label">Date d'effet *</label>
+                    <p:datePicker value="#{adminEmployeBean.mouvement.dateEffet}"
+                                  pattern="dd/MM/yyyy"
+                                  styleClass="form-input"
+                                  required="true"/>
+                </div>
+
+                <!-- Séparateur AVANT -->
+                <div style="grid-column:1/-1;font-size:11px;font-weight:700;
+                            color:#7c3aed;text-transform:uppercase;
+                            border-bottom:1px solid #ede9fe;padding-bottom:4px;">
+                    Situation actuelle
+                </div>
+
+                <!-- Ancien poste -->
+                <div class="form-group">
+                    <label class="form-label">Ancien poste</label>
+                    <p:inputText value="#{adminEmployeBean.mouvement.ancienPoste}"
+                                 styleClass="form-input" readonly="true"/>
+                </div>
+
+                <!-- Ancien grade -->
+                <div class="form-group">
+                    <label class="form-label">Ancien grade</label>
+                    <p:inputText value="#{adminEmployeBean.mouvement.ancienGrade}"
+                                 styleClass="form-input" readonly="true"/>
+                </div>
+
+                <!-- Ancien salaire -->
+                <div class="form-group">
+                    <label class="form-label">Ancien salaire (FCFA)</label>
+                    <p:inputNumber value="#{adminEmployeBean.mouvement.ancienSalaire}"
+                                   styleClass="form-input" readonly="true"/>
+                </div>
+
+                <!-- Séparateur APRÈS -->
+                <div style="grid-column:1/-1;font-size:11px;font-weight:700;
+                            color:#7c3aed;text-transform:uppercase;
+                            border-bottom:1px solid #ede9fe;padding-bottom:4px;">
+                    Nouvelle situation
+                </div>
+
+                <!-- Nouveau poste -->
+                <div class="form-group">
+                    <label class="form-label">Nouveau poste</label>
+                    <p:inputText value="#{adminEmployeBean.mouvement.nouveauPoste}"
+                                 styleClass="form-input"
+                                 placeholder="Intitulé exact du poste"/>
+                </div>
+
+                <!-- Nouveau grade -->
+                <div class="form-group">
+                    <label class="form-label">Nouveau grade</label>
+                    <p:inputText value="#{adminEmployeBean.mouvement.nouveauGrade}"
+                                 styleClass="form-input"/>
+                </div>
+
+                <!-- Nouveau salaire -->
+                <div class="form-group">
+                    <label class="form-label">Nouveau salaire (FCFA)</label>
+                    <p:inputNumber value="#{adminEmployeBean.mouvement.nouveauSalaire}"
+                                   styleClass="form-input"
+                                   minValue="0"/>
+                </div>
+
+                <!-- ══════════════════════════════════════════════════════ -->
+                <!-- INSTITUTION DE DESTINATION (mutation inter-inst.)     -->
+                <!-- Visible uniquement pour MUTATION / MOBILITE / DETACH. -->
+                <!-- ══════════════════════════════════════════════════════ -->
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label class="form-label">
+                        Institution de destination
+                        <span style="color:#6b7280;font-size:11px;">
+                            (laisser vide pour une mutation interne)
+                        </span>
+                    </label>
+                    <p:selectOneMenu value="#{adminEmployeBean.nouvelleInstitutionId}"
+                                     styleClass="form-input">
+                        <f:selectItem itemLabel="-- Même institution (mutation interne) --"
+                                      itemValue="#{null}"/>
+                        <f:selectItems value="#{adminEmployeBean.toutesInstitutions}"
+                                       var="inst"
+                                       itemLabel="#{inst.nom} (#{inst.code})"
+                                       itemValue="#{inst.id}"/>
+                    </p:selectOneMenu>
+                </div>
+
+                <!-- Motif -->
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label class="form-label">Motif *</label>
+                    <p:inputTextarea value="#{adminEmployeBean.mouvement.motif}"
+                                     rows="3"
+                                     styleClass="form-input"
+                                     required="true"
+                                     placeholder="Décrivez le motif du mouvement..."/>
+                </div>
+
+            </div>
+
+            <!-- Actions -->
+            <div style="display:flex;justify-content:flex-end;gap:10px;
+                        padding:12px 16px;border-top:1px solid #e5e7eb;">
+                <p:commandButton value="Annuler"
+                                 onclick="PF('dlgMutation').hide(); return false;"
+                                 styleClass="btn btn-secondary"
+                                 type="button"/>
+                <p:commandButton value="Enregistrer le mouvement"
+                                 action="#{adminEmployeBean.enregistrerMutation}"
+                                 update="formTableEmp formDlgMutation growl"
+                                 oncomplete="if(!args.validationFailed) PF('dlgMutation').hide();"
+                                 styleClass="btn btn-primary"/>
+            </div>
+
+        </p:dialog>
+    </h:form>
+
+
+    </p:outputPanel>
+    <!-- ══ FIN CONTENU CONDITIONNEL ══ -->
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- DIALOG CONFIRMATION SUPPRESSION EMPLOYÉ               -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <h:form id="formConfirmDeleteEmp">
+        <p:confirmDialog id="dlgConfirmDeleteEmp"
+                         widgetVar="dlgConfirmDeleteEmp"
+                         header="Confirmer la suppression"
+                         severity="alert"
+                         modal="true"
+                         width="420">
+            <f:facet name="message">
+                <div style="padding:8px 0;">
+                    <div style="font-weight:600;font-size:14px;color:#0f172a;margin-bottom:6px;">
+                        Supprimer cet employé ?
+                    </div>
+                    <div style="font-size:13px;color:#64748b;">
+                        <strong>#{adminEmployeBean.employe.nomComplet}</strong>
+                        sera définitivement supprimé(e). Cette action est irréversible.
+                    </div>
+                </div>
+            </f:facet>
+            <p:commandButton value="Oui, supprimer"
+                             action="#{adminEmployeBean.supprimer(adminEmployeBean.employe.id)}"
+                             update="formTableEmp :growl"
+                             oncomplete="PF('dlgConfirmDeleteEmp').hide();"
+                             style="background:#ef4444;color:#fff;border:none;border-radius:6px;
+                                    padding:8px 16px;font-weight:700;cursor:pointer;"/>
+            &#160;
+            <p:commandButton value="Annuler"
+                             onclick="PF('dlgConfirmDeleteEmp').hide(); return false;"
+                             style="background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;
+                                    border-radius:6px;padding:8px 16px;font-weight:600;cursor:pointer;"/>
+        </p:confirmDialog>
+    </h:form>
+
+</h:body>
+</html>

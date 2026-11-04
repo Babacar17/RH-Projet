@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+    <title>Mon compte — Espace Candidat</title>
+    <h:outputStylesheet library="css" name="candidat.css"/>
+</h:head>
+
+<h:body>
+    <div class="layout-wrapper">
+        <ui:include src="sidebar-candidat.xhtml"/>
+
+        <div class="layout-main">
+
+            <div class="layout-topbar">
+                <div>
+                    <h2 class="page-title">Mon compte</h2>
+                    <p class="page-subtitle">Vos informations, votre identifiant et votre sécurité</p>
+                </div>
+            </div>
+
+            <div class="layout-content">
+                <p:growl id="growl" showDetail="true" life="5000"/>
+
+                <!-- ── En-tête + statistiques rapides ─────────────────── -->
+                <div class="card" style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:20px;">
+                    <div style="width:64px;height:64px;border-radius:50%;
+                                background:linear-gradient(135deg,#0ea5e9,#38bdf8);
+                                display:flex;align-items:center;justify-content:center;
+                                font-size:24px;font-weight:800;color:#fff;flex-shrink:0;">
+                        #{not empty monCompteBean.prenom ? monCompteBean.prenom.substring(0,1) : '?'}#{not empty monCompteBean.nom ? monCompteBean.nom.substring(0,1) : '?'}
+                    </div>
+                    <div style="flex:1;min-width:180px;">
+                        <div style="font-size:18px;font-weight:700;color:#0f172a;">
+                            #{monCompteBean.prenom} #{monCompteBean.nom}
+                        </div>
+                        <div style="font-size:13px;color:#64748b;">@#{monCompteBean.userCourant.username}</div>
+                        <ui:repeat value="#{monCompteBean.userCourant.roles}" var="r">
+                            <span class="badge-postule" style="margin-top:4px;display:inline-block;">#{r.nom}</span>
+                        </ui:repeat>
+                    </div>
+                    <div style="display:flex;gap:10px;">
+                        <div style="text-align:center;padding:10px 16px;background:#f0f9ff;border-radius:8px;">
+                            <div style="font-size:20px;font-weight:800;color:#0ea5e9;">#{candidatBean.mesCandidatures.size()}</div>
+                            <div style="font-size:10px;color:#64748b;">Candidatures</div>
+                        </div>
+                        <div style="text-align:center;padding:10px 16px;background:#f0fdf4;border-radius:8px;">
+                            <div style="font-size:20px;font-weight:800;color:#10b981;">#{candidatBean.nbRetenues}</div>
+                            <div style="font-size:10px;color:#64748b;">Retenues</div>
+                        </div>
+                        <div style="text-align:center;padding:10px 16px;background:#fffbeb;border-radius:8px;">
+                            <div style="font-size:20px;font-weight:800;color:#f59e0b;">#{candidatBean.nbEnAttente}</div>
+                            <div style="font-size:10px;color:#64748b;">En attente</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+                    <div>
+                        <!-- ── Informations personnelles ──────────────── -->
+                        <div class="card" style="margin-bottom:20px;">
+                            <div class="section-title">Informations personnelles</div>
+                            <h:form id="fInfos">
+                                <div class="form-grid-2">
+                                    <div class="form-group">
+                                        <label class="form-label">Nom *</label>
+                                        <p:inputText value="#{monCompteBean.nom}" style="width:100%;"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Prénom *</label>
+                                        <p:inputText value="#{monCompteBean.prenom}" style="width:100%;"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Email *</label>
+                                        <p:inputText value="#{monCompteBean.email}" style="width:100%;"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Téléphone</label>
+                                        <p:inputText value="#{monCompteBean.telephone}" style="width:100%;"
+                                                     placeholder="+221 77 XXX XX XX"/>
+                                    </div>
+                                </div>
+                                <div style="text-align:right;margin-top:16px;">
+                                    <p:commandButton value="Enregistrer" icon="pi pi-check"
+                                        action="#{monCompteBean.sauvegarderInfos}"
+                                        update="fInfos growl" styleClass="btn-submit"/>
+                                </div>
+                            </h:form>
+                        </div>
+
+                        <!-- ── Infos du compte (lecture seule) ────────── -->
+                        <div class="card">
+                            <div class="section-title">Informations du compte</div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                <div style="background:#f8fafc;border-radius:8px;padding:12px 16px;">
+                                    <div style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Identifiant</div>
+                                    <div style="font-family:monospace;font-size:14px;font-weight:700;color:#0ea5e9;">
+                                        #{monCompteBean.userCourant.username}
+                                    </div>
+                                </div>
+                                <div style="background:#f8fafc;border-radius:8px;padding:12px 16px;">
+                                    <div style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Statut</div>
+                                    <span style="background:#dcfce7;color:#15803d;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700;">
+                                        #{monCompteBean.userCourant.actif ? 'Actif' : 'Inactif'}
+                                    </span>
+                                </div>
+                                <div style="background:#f8fafc;border-radius:8px;padding:12px 16px;grid-column:span 2;">
+                                    <div style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Dernière connexion</div>
+                                    <div style="font-size:13px;font-weight:600;">
+                                        <h:outputText value="#{monCompteBean.userCourant.derniereConnexion}"
+                                                      rendered="#{monCompteBean.userCourant.derniereConnexion != null}">
+                                            <f:convertDateTime pattern="dd/MM/yyyy à HH:mm" type="localDateTime"/>
+                                        </h:outputText>
+                                        <h:outputText value="—"
+                                                      rendered="#{monCompteBean.userCourant.derniereConnexion == null}"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <!-- ── Nom d'utilisateur ───────────────────────── -->
+                        <div class="card" style="margin-bottom:20px;">
+                            <div class="section-title">Nom d'utilisateur</div>
+                            <div class="info-box">
+                                Votre identifiant actuel est
+                                <strong style="margin:0 4px;font-family:monospace;">#{monCompteBean.userCourant.username}</strong>.
+                                Après modification, utilisez le nouvel identifiant pour vous reconnecter.
+                            </div>
+                            <h:form id="fUsername">
+                                <div class="form-group">
+                                    <label class="form-label">Nouveau nom d'utilisateur *</label>
+                                    <p:inputText value="#{monCompteBean.nouveauUsername}" style="width:100%;"
+                                                 placeholder="Ex: jean.dupont"/>
+                                    <div style="font-size:11px;color:#94a3b8;margin-top:4px;">
+                                        Lettres minuscules, chiffres et points uniquement. Min. 3 caractères.
+                                    </div>
+                                </div>
+                                <div style="text-align:right;margin-top:16px;">
+                                    <p:commandButton value="Changer l'identifiant" icon="pi pi-user-edit"
+                                        action="#{monCompteBean.changerUsername}"
+                                        update="fUsername growl" styleClass="btn-submit"/>
+                                </div>
+                            </h:form>
+                        </div>
+
+                        <!-- ── Mot de passe ─────────────────────────────── -->
+                        <div class="card">
+                            <div class="section-title">🔒 Changer le mot de passe</div>
+                            <h:form id="fPassword">
+                                <div class="form-group" style="margin-bottom:14px;">
+                                    <label class="form-label">Mot de passe actuel *</label>
+                                    <p:password value="#{monCompteBean.ancienMotDePasse}"
+                                                feedback="false" style="width:100%;"/>
+                                </div>
+                                <div class="form-group" style="margin-bottom:14px;">
+                                    <label class="form-label">Nouveau mot de passe *</label>
+                                    <p:password value="#{monCompteBean.nouveauMotDePasse}"
+                                                feedback="true" promptLabel="Entrez un mot de passe"
+                                                weakLabel="Faible" goodLabel="Correct" strongLabel="Fort"
+                                                style="width:100%;"/>
+                                    <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Minimum 6 caractères.</div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Confirmer le nouveau mot de passe *</label>
+                                    <p:password value="#{monCompteBean.confirmMotDePasse}"
+                                                feedback="false" style="width:100%;"/>
+                                </div>
+                                <div style="text-align:right;margin-top:16px;">
+                                    <p:commandButton value="Mettre à jour le mot de passe" icon="pi pi-lock"
+                                        action="#{monCompteBean.changerMotDePasse}"
+                                        update="fPassword growl" styleClass="btn-submit"/>
+                                </div>
+                            </h:form>
+                        </div>
+                    </div>
+
+                </div>
+            </div><!-- /layout-content -->
+        </div><!-- /layout-main -->
+    </div><!-- /layout-wrapper -->
+</h:body>
+</html>

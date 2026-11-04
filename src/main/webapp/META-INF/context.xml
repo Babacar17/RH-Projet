@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context>
+    <Loader delegate="true"/>
+    <Resources>
+        <PostResources
+            className="org.apache.catalina.webresources.DirResourceSet"
+            webAppMount="/uploads"
+            base="${catalina.home}/webapps/uploads"
+            internalPath="/"
+            readOnly="true"/>
+    </Resources>
+</Context>

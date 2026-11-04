@@ -1,0 +1,482 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <f:metadata>
+        <f:viewParam name="id" value="#{rhBean.offreFormId}"/>
+        <f:viewAction action="#{rhBean.chargerOffreForm}"/>
+    </f:metadata>
+
+    <ui:param name="page" value="offres"/>
+    <ui:define name="title">#{rhBean.modeEdition ? 'Modifier l offre' : 'Nouvelle offre'} — SIRH</ui:define>
+    <ui:define name="pageTitle">#{rhBean.modeEdition ? 'Modifier l offre' : 'Nouvelle offre de poste'}</ui:define>
+    <ui:define name="breadcrumb">
+        <a href="offres.xhtml" style="color:#64748b;text-decoration:none;">Recrutement › Offres</a>
+        › #{rhBean.modeEdition ? 'Modifier' : 'Nouvelle offre'}
+    </ui:define>
+
+    <ui:define name="styles">
+        <link rel="preconnect" href="https://fonts.googleapis.com"/>
+        <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+        <style>
+            :root{
+                --ofp-ink:#1B2A3A;
+                --ofp-ink-soft:#4C5A6A;
+                --ofp-ink-faint:#8A93A0;
+                --ofp-paper:#F5F4F0;
+                --ofp-surface:#FFFFFF;
+                --ofp-line:#DCD8CE;
+                --ofp-line-strong:#C3BDAE;
+                --ofp-bronze:#9C7A3C;
+                --ofp-bronze-soft:#F1E9D8;
+                --ofp-error:#A5432F;
+                --ofp-radius:3px;
+            }
+            .ofp-wrap{
+                background:var(--ofp-paper);
+                margin:-24px;
+                padding:36px 28px 60px;
+                font-family:'Inter',sans-serif;
+                color:var(--ofp-ink);
+            }
+            .ofp-stepper{
+                display:flex; align-items:flex-start;
+                max-width:760px; margin:0 auto 36px;
+            }
+            .ofp-step{
+                position:relative; flex:1; display:flex; flex-direction:column; align-items:center;
+                text-align:center; padding:0 6px; cursor:pointer;
+            }
+            .ofp-step:not(:last-child)::after{
+                content:''; position:absolute; top:13px; left:50%; width:100%; height:1px;
+                background:var(--ofp-line-strong); z-index:0;
+            }
+            .ofp-step-dot{
+                position:relative; z-index:1; width:26px; height:26px; margin-bottom:8px;
+                border-radius:50%; border:1.5px solid var(--ofp-line-strong); background:var(--ofp-surface);
+                display:flex; align-items:center; justify-content:center;
+                font-size:12px; font-weight:600; color:var(--ofp-ink-faint);
+            }
+            .ofp-step.is-active .ofp-step-dot{
+                border-color:var(--ofp-bronze); background:var(--ofp-bronze); color:#fff;
+                box-shadow:0 0 0 3px var(--ofp-bronze-soft);
+            }
+            .ofp-step-label{font-size:12.5px; font-weight:500; color:var(--ofp-ink-faint); line-height:1.3;}
+            .ofp-step.is-active .ofp-step-label{color:var(--ofp-ink); font-weight:600;}
+            .ofp-step-note{display:none;}
+
+            .ofp-form{display:flex; flex-direction:column;}
+            .ofp-section{padding:24px 0; border-bottom:1px solid var(--ofp-line);}
+            .ofp-section:first-child{padding-top:0;}
+            .ofp-section-heading{
+                font-family:'Source Serif 4', serif; font-size:17px; font-weight:600; margin:0 0 4px; color:var(--ofp-ink);
+            }
+            .ofp-section-desc{font-size:12.5px; color:var(--ofp-ink-faint); margin:0 0 18px;}
+            .ofp-row{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:16px;}
+            .ofp-row.thirds{grid-template-columns:1fr 1fr 1fr;}
+            .ofp-row.quarters{grid-template-columns:1fr 1fr 1fr 1fr; gap:12px;}
+            .ofp-row:last-child{margin-bottom:0;}
+            @media (max-width:760px){
+                .ofp-row, .ofp-row.thirds, .ofp-row.quarters{grid-template-columns:1fr;}
+            }
+            .ofp-field label{
+                display:block; font-size:12.5px; font-weight:500; color:var(--ofp-ink-soft); margin-bottom:6px;
+            }
+            .ofp-field label .req{color:var(--ofp-error); margin-left:2px;}
+            .ofp-field label .opt{color:var(--ofp-ink-faint); font-weight:400; font-size:11.5px; margin-left:5px;}
+            .ofp-field .ui-inputtext, .ofp-field .ui-selectonemenu, .ofp-field .ui-inputtextarea,
+            .ofp-field .ui-inputnumber-input, .ofp-field input[type=date]{
+                width:100% !important;
+                font-family:'Inter',sans-serif;
+                font-size:14px;
+                border:1px solid var(--ofp-line-strong) !important;
+                border-radius:var(--ofp-radius) !important;
+                background:var(--ofp-surface);
+                color:var(--ofp-ink);
+            }
+            .ofp-field .ui-selectonemenu{padding:0 !important;}
+            .ofp-field .ui-selectonemenu-label{padding:9px 11px !important;}
+            .ofp-field textarea{padding:9px 11px; line-height:1.5;}
+            .ofp-field .ui-selectonemenu.ui-state-disabled{background:#FAF9F6 !important; color:var(--ofp-ink-faint) !important;}
+            .ofp-hint{font-size:11.5px; color:var(--ofp-ink-faint); margin-top:5px;}
+
+            .ofp-org-breadcrumb{
+                font-size:12.5px; color:var(--ofp-ink-soft); background:#FAF9F6;
+                border:1px solid var(--ofp-line); border-radius:var(--ofp-radius);
+                padding:10px 13px; margin-top:14px; line-height:1.6;
+            }
+            .ofp-org-breadcrumb.is-complete{background:var(--ofp-bronze-soft); border-color:#E4D6B5; color:#6E5426;}
+
+            .ofp-type-toggle .ui-selectonebutton .ui-button{
+                font-family:'Inter',sans-serif; font-size:13.5px; font-weight:500;
+                padding:9px 22px; border:1px solid var(--ofp-line-strong); background:var(--ofp-surface);
+                color:var(--ofp-ink-soft); border-radius:0;
+            }
+            .ofp-type-toggle .ui-selectonebutton .ui-button:first-child{border-radius:var(--ofp-radius) 0 0 var(--ofp-radius);}
+            .ofp-type-toggle .ui-selectonebutton .ui-button:last-child{border-radius:0 var(--ofp-radius) var(--ofp-radius) 0; border-left:none;}
+            .ofp-type-toggle .ui-selectonebutton .ui-state-active{background:var(--ofp-ink) !important; border-color:var(--ofp-ink) !important; color:#fff !important;}
+
+            .ofp-doc-add{display:flex; gap:8px; margin-bottom:14px; align-items:center;}
+            .ofp-doc-add .ui-inputtext{flex:1;}
+            .ofp-doc-list{list-style:none; margin:0; padding:0; border:1px solid var(--ofp-line); border-radius:var(--ofp-radius); overflow:hidden;}
+            .ofp-doc-list li{
+                display:flex; align-items:center; justify-content:space-between;
+                padding:9px 12px; background:var(--ofp-surface); font-size:13.5px; border-top:1px solid var(--ofp-line);
+            }
+            .ofp-doc-list li:first-child{border-top:none;}
+            .ofp-doc-list li:nth-child(even){background:#FAF9F6;}
+            .ofp-doc-num{color:var(--ofp-ink-faint); font-size:12px; margin-right:9px; font-variant-numeric:tabular-nums;}
+            .ofp-doc-tag{font-size:11px; color:var(--ofp-ink-faint); margin-left:8px;}
+            .ofp-doc-empty{font-size:12.5px; color:var(--ofp-ink-faint); padding:10px 2px;}
+
+            .ofp-actions{display:flex; justify-content:space-between; align-items:center; padding-top:24px;}
+            .ofp-actions-left{font-size:12px; color:var(--ofp-ink-faint);}
+            .ofp-actions-right{display:flex; gap:10px;}
+            .ofp-btn.ui-button{
+                font-family:'Inter',sans-serif !important; font-size:13.5px !important; font-weight:500 !important;
+                padding:10px 18px !important; border-radius:var(--ofp-radius) !important;
+                border:1px solid var(--ofp-line-strong) !important;
+                background:var(--ofp-surface) !important; color:var(--ofp-ink) !important;
+                box-shadow:none !important; text-shadow:none !important;
+            }
+            .ofp-btn.ui-button:enabled:hover, .ofp-btn.ui-button:hover{background:#F0EEE7 !important;}
+            .ofp-btn-primary.ui-button{background:var(--ofp-ink) !important; border-color:var(--ofp-ink) !important; color:#fff !important;}
+            .ofp-btn-primary.ui-button:enabled:hover, .ofp-btn-primary.ui-button:hover{background:#0f1c29 !important; color:#fff !important;}
+
+            .ofp-step{cursor:pointer;}
+            .ofp-step-num{
+                position:absolute; left:0; top:0; width:13px; height:13px; line-height:13px;
+                font-size:9px; text-align:center; color:var(--ofp-ink-faint);
+            }
+            .ofp-phase{display:none;}
+            .ofp-phase.is-active{display:block;}
+            .ofp-phase-nav{display:flex; justify-content:flex-end; gap:10px; padding-top:20px;}
+        </style>
+    </ui:define>
+
+    <ui:define name="content">
+    <div class="ofp-wrap">
+
+        <div class="ofp-stepper" id="ofpStepper">
+            <div class="ofp-step is-active" data-phase="1" onclick="ofpGoToPhase(1)">
+                <div class="ofp-step-dot">1</div>
+                <div class="ofp-step-label">Nature &amp; poste</div>
+            </div>
+            <div class="ofp-step" data-phase="2" onclick="ofpGoToPhase(2)">
+                <div class="ofp-step-dot">2</div>
+                <div class="ofp-step-label">Modalités</div>
+            </div>
+            <div class="ofp-step" data-phase="3" onclick="ofpGoToPhase(3)">
+                <div class="ofp-step-dot">3</div>
+                <div class="ofp-step-label">Description</div>
+            </div>
+            <div class="ofp-step" data-phase="4" onclick="ofpGoToPhase(4)">
+                <div class="ofp-step-dot">4</div>
+                <div class="ofp-step-label">Documents requis</div>
+            </div>
+            <div class="ofp-step" data-phase="5" onclick="ofpGoToPhase(5)">
+                <div class="ofp-step-dot">5</div>
+                <div class="ofp-step-label">Rémunération</div>
+            </div>
+        </div>
+
+        <h:form id="formOffreEdit" class="ofp-form">
+
+            <div class="ofp-phase is-active" data-phase="1">
+            <div class="ofp-section">
+                <h2 class="ofp-section-heading">Nature de l'offre</h2>
+                <p class="ofp-section-desc">Précisez s'il s'agit d'un poste en emploi ou d'un stage.</p>
+
+                <div class="ofp-field" style="margin-bottom:20px;">
+                    <label>Type d'offre<span class="req">*</span></label>
+                    <div class="ofp-type-toggle">
+                        <p:selectOneButton value="#{rhBean.offre.typeOffre}">
+                            <f:selectItem itemLabel="Emploi" itemValue="EMPLOI"/>
+                            <f:selectItem itemLabel="Stage" itemValue="STAGE"/>
+                            <p:ajax listener="#{rhBean.onTypeOffreChange}" update="contratField remunHeading remunLabel"/>
+                        </p:selectOneButton>
+                    </div>
+                </div>
+
+                <div class="ofp-row" style="grid-template-columns:1fr;">
+                    <div class="ofp-field">
+                        <label>Intitulé du poste<span class="req">*</span></label>
+                        <p:inputText value="#{rhBean.offre.titre}" placeholder="Ex. : Ingénieur réseaux et sécurité"/>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ofp-section">
+                <h2 class="ofp-section-heading">Rattachement organisationnel</h2>
+                <p class="ofp-section-desc">
+                    Sélectionnez le poste du référentiel puis, si votre institution s'organise en directions/divisions,
+                    descendez jusqu'au bureau d'affectation : le reste de la hiérarchie en découle automatiquement.
+                </p>
+
+                <div class="ofp-row" style="margin-bottom:16px;">
+                    <div class="ofp-field">
+                        <label>Poste du référentiel<span class="req">*</span></label>
+                        <p:selectOneMenu id="posteOffre" value="#{rhBean.posteSelectionneId}" converter="jakarta.faces.Long"
+                                          required="true" requiredMessage="Le poste du referentiel est obligatoire."
+                                          filter="true">
+                            <f:selectItem itemLabel="— Sélectionner… —" itemValue="#{null}"/>
+                            <f:selectItems value="#{rhBean.postesInstitution}" var="p" itemValue="#{p.id}" itemLabel="#{p.intitule} (#{p.code})"/>
+                        </p:selectOneMenu>
+                        <p:message for="posteOffre" display="text" style="color:var(--ofp-error);font-size:11px;"/>
+                    </div>
+                </div>
+
+                <h:panelGroup id="cascadeOrg">
+                    <div class="ofp-row">
+                        <div class="ofp-field">
+                            <label>Service<span class="req">*</span></label>
+                            <p:selectOneMenu id="selService" value="#{rhBean.serviceSelectionneId}" converter="jakarta.faces.Long"
+                                              filter="true">
+                                <f:selectItem itemLabel="— Sélectionner… —" itemValue="#{null}"/>
+                                <f:selectItems value="#{rhBean.servicesInstitution}" var="s" itemValue="#{s.id}" itemLabel="#{s.nomComplet}"/>
+                                <p:ajax listener="#{rhBean.onServiceOffreChange}" update="cascadeOrg orgBreadcrumb"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="ofp-field">
+                            <label>Bureau<span class="opt">optionnel, plus précis</span></label>
+                            <p:selectOneMenu id="selBureau" value="#{rhBean.bureauSelectionneId}" converter="jakarta.faces.Long"
+                                              disabled="#{empty rhBean.bureauxInstitution}" filter="true">
+                                <f:selectItem itemLabel="—" itemValue="#{null}"/>
+                                <f:selectItems value="#{rhBean.bureauxInstitution}" var="b" itemValue="#{b.id}" itemLabel="#{b.nom}"/>
+                                <p:ajax update="orgBreadcrumb"/>
+                            </p:selectOneMenu>
+                        </div>
+                    </div>
+                </h:panelGroup>
+
+                <h:panelGroup id="orgBreadcrumb" layout="block">
+                    <div class="ofp-org-breadcrumb#{rhBean.offre.bureau != null or rhBean.offre.service != null ? ' is-complete' : ''}">
+                        <h:outputText value="#{rhBean.offre.bureau != null ? rhBean.offre.bureau.nomComplet : rhBean.offre.service.nomComplet}"
+                                      rendered="#{rhBean.offre.bureau != null or rhBean.offre.service != null}"/>
+                        <h:outputText value="Sélectionnez au moins un service pour situer ce poste dans l'organigramme."
+                                      rendered="#{rhBean.offre.bureau == null and rhBean.offre.service == null}"/>
+                    </div>
+                </h:panelGroup>
+
+                <div class="ofp-row" style="margin-top:20px;">
+                    <div class="ofp-field">
+                        <label>Niveau hiérarchique<span class="req">*</span></label>
+                        <p:selectOneMenu value="#{rhBean.offre.niveauHierarchique}">
+                            <f:selectItem itemLabel="— Sélectionner… —" itemValue="#{null}"/>
+                            <f:selectItem itemLabel="Cadre de direction" itemValue="Cadre de direction"/>
+                            <f:selectItem itemLabel="Cadre" itemValue="Cadre"/>
+                            <f:selectItem itemLabel="Agent de maîtrise" itemValue="Agent de maîtrise"/>
+                            <f:selectItem itemLabel="Employé" itemValue="Employé"/>
+                            <f:selectItem itemLabel="Stagiaire" itemValue="Stagiaire"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <h:panelGroup id="contratField" layout="block" styleClass="ofp-field">
+                        <label>Type de #{rhBean.offre.typeOffre == 'STAGE' ? 'stage' : 'contrat'}<span class="req">*</span></label>
+                        <p:selectOneMenu value="#{rhBean.offre.typeContrat}">
+                            <f:selectItem itemLabel="— Sélectionner… —" itemValue="#{null}"/>
+                            <f:selectItems value="#{rhBean.typesContratDisponibles}"/>
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                </div>
+            </div>
+            <div class="ofp-phase-nav">
+                <p:commandButton value="Suivant : Modalités" type="button" onclick="ofpGoToPhase(2)" styleClass="ofp-btn ofp-btn-primary"/>
+            </div>
+            </div>
+
+            <div class="ofp-phase" data-phase="2">
+            <div class="ofp-section">
+                <h2 class="ofp-section-heading">Modalités</h2>
+
+                <div class="ofp-row thirds">
+                    <div class="ofp-field">
+                        <label>Lieu d'affectation<span class="req">*</span></label>
+                        <p:inputText value="#{rhBean.offre.localisation}" placeholder="Ex. : Dakar, Plateau"/>
+                    </div>
+                    <div class="ofp-field">
+                        <label>Nombre de postes<span class="req">*</span></label>
+                        <p:inputNumber value="#{rhBean.offre.nombrePostes}" decimalPlaces="0" minValue="1"/>
+                    </div>
+                    <div class="ofp-field">
+                        <label>Date de prise de poste<span class="opt">optionnel</span></label>
+                        <p:datePicker value="#{rhBean.offre.datePriseDePoste}" pattern="dd/MM/yyyy"/>
+                    </div>
+                </div>
+
+                <div class="ofp-row">
+                    <div class="ofp-field">
+                        <label>Date d'ouverture</label>
+                        <p:datePicker value="#{rhBean.offre.datePublication}" pattern="dd/MM/yyyy"/>
+                    </div>
+                    <div class="ofp-field">
+                        <label>Date limite de candidature<span class="req">*</span></label>
+                        <p:datePicker id="dateFermeture" value="#{rhBean.offre.dateLimiteFermeture}"
+                                      pattern="dd/MM/yyyy HH:mm" showTime="true" hourFormat="24" showButtonBar="true"
+                                      mindate="#{rhBean.demainDate}"
+                                      required="true" requiredMessage="La date de fermeture est obligatoire."/>
+                        <p:message for="dateFermeture" display="text" style="color:var(--ofp-error);font-size:11px;"/>
+                    </div>
+                </div>
+                <div class="ofp-row" style="grid-template-columns:1fr;">
+                    <div class="ofp-field">
+                        <label>Seuil de recrutement automatique (% du score maximum)<span class="opt">optionnel</span></label>
+                        <p:inputNumber value="#{rhBean.offre.seuilRecrutementAutoPct}" decimalPlaces="0" minValue="0" maxValue="100" suffix="%"/>
+                        <small style="color:var(--ofp-ink-faint);font-size:11.5px;">
+                            Exprimé en % du score maximum atteignable sur le référentiel de cette offre — pas en points
+                            bruts, car ce maximum varie selon le nombre de critères. Au classement final, un candidat
+                            atteignant ce pourcentage sera signalé comme éligible ; le RH garde la main sur la décision.
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="ofp-phase-nav">
+                <p:commandButton value="Précédent" type="button" onclick="ofpGoToPhase(1)" styleClass="ofp-btn"/>
+                <p:commandButton value="Suivant : Description" type="button" onclick="ofpGoToPhase(3)" styleClass="ofp-btn ofp-btn-primary"/>
+            </div>
+            </div>
+
+            <div class="ofp-phase" data-phase="3">
+            <div class="ofp-section">
+                <h2 class="ofp-section-heading">Description</h2>
+
+                <div class="ofp-row" style="grid-template-columns:1fr;">
+                    <div class="ofp-field">
+                        <label>Missions du poste<span class="req">*</span></label>
+                        <p:inputTextarea value="#{rhBean.offre.description}" rows="4"
+                                          placeholder="Décrivez les principales responsabilités et missions rattachées à ce poste…"/>
+                    </div>
+                </div>
+                <div class="ofp-row" style="grid-template-columns:1fr; margin-top:4px;">
+                    <div class="ofp-field">
+                        <label>Profil recherché<span class="req">*</span></label>
+                        <p:inputTextarea value="#{rhBean.offre.profil}" rows="4"
+                                          placeholder="Compétences techniques, savoir-être, expérience requise…"/>
+                    </div>
+                </div>
+                <div class="ofp-row" style="grid-template-columns:1fr; margin-top:4px;">
+                    <div class="ofp-field">
+                        <label>Motif du recrutement</label>
+                        <p:inputTextarea value="#{rhBean.offre.motifRecrutement}" rows="2"
+                                          placeholder="Création de poste, remplacement, renfort… (repris automatiquement dans le rapport de recrutement)"/>
+                    </div>
+                </div>
+                <div class="ofp-row" style="margin-top:4px;">
+                    <div class="ofp-field">
+                        <label>Niveau d'études requis</label>
+                        <p:selectOneMenu value="#{rhBean.offre.niveauEtudes}">
+                            <f:selectItem itemLabel="— Sélectionner… —" itemValue="#{null}"/>
+                            <f:selectItem itemLabel="Bac +2" itemValue="Bac +2"/>
+                            <f:selectItem itemLabel="Licence (Bac +3)" itemValue="Licence (Bac +3)"/>
+                            <f:selectItem itemLabel="Master (Bac +5)" itemValue="Master (Bac +5)"/>
+                            <f:selectItem itemLabel="Doctorat" itemValue="Doctorat"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="ofp-field">
+                        <label>Filière / Spécialité<span class="opt">optionnel</span></label>
+                        <p:inputText value="#{rhBean.offre.filiereSpecialite}" placeholder="Ex. : Systèmes d'information et réseaux"/>
+                    </div>
+                </div>
+            </div>
+            <div class="ofp-phase-nav">
+                <p:commandButton value="Précédent" type="button" onclick="ofpGoToPhase(2)" styleClass="ofp-btn"/>
+                <p:commandButton value="Suivant : Documents requis" type="button" onclick="ofpGoToPhase(4)" styleClass="ofp-btn ofp-btn-primary"/>
+            </div>
+            </div>
+
+            <div class="ofp-phase" data-phase="4">
+            <div class="ofp-section">
+                <h2 class="ofp-section-heading">Documents requis</h2>
+                <p class="ofp-section-desc">Le CV est toujours obligatoire. Énumérez les autres pièces exigées du candidat.</p>
+
+                <h:panelGroup id="docsRequisListe" layout="block">
+                    <div class="ofp-doc-add">
+                        <p:inputText id="nouveauDocLibelle" value="#{rhBean.nouveauDocumentRequisLibelle}" placeholder="Ex. : Copie du diplôme le plus élevé"/>
+                        <span style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ofp-ink-soft);white-space:nowrap;">
+                            <p:selectBooleanCheckbox id="nouveauDocObligatoire" value="#{rhBean.nouveauDocumentRequisObligatoire}"/>
+                            Obligatoire
+                        </span>
+                        <p:commandButton value="Ajouter" action="#{rhBean.ajouterDocumentRequis}"
+                                          process="@this nouveauDocLibelle nouveauDocObligatoire"
+                                          update="docsRequisListe" styleClass="ofp-btn"/>
+                    </div>
+
+                    <ul class="ofp-doc-list">
+                        <ui:repeat value="#{rhBean.offre.documentsRequis}" var="doc" varStatus="st">
+                            <li>
+                                <span><span class="ofp-doc-num">#{st.index + 1}.</span>#{doc.libelle}
+                                    <span class="ofp-doc-tag">(#{doc.obligatoire ? 'obligatoire' : 'optionnel'})</span>
+                                </span>
+                                <p:commandButton icon="pi pi-times" action="#{rhBean.retirerDocumentRequis(doc)}"
+                                                  process="@this" update="docsRequisListe"
+                                                  style="width:20px;height:20px;padding:0;border-radius:50%;background:none;border:none;color:var(--ofp-ink-faint);"/>
+                            </li>
+                        </ui:repeat>
+                    </ul>
+                    <p class="ofp-doc-empty" style="#{empty rhBean.offre.documentsRequis ? '' : 'display:none;'}">
+                        Aucun document ajouté pour le moment.
+                    </p>
+                </h:panelGroup>
+            </div>
+
+            <div class="ofp-phase-nav">
+                <p:commandButton value="Précédent" type="button" onclick="ofpGoToPhase(3)" styleClass="ofp-btn"/>
+                <p:commandButton value="Suivant : Rémunération" type="button" onclick="ofpGoToPhase(5)" styleClass="ofp-btn ofp-btn-primary"/>
+            </div>
+            </div>
+
+            <div class="ofp-phase" data-phase="5">
+            <div class="ofp-section" style="border-bottom:none;">
+                <h2 class="ofp-section-heading" id="remunHeadingTxt">
+                    <h:outputText id="remunHeading" value="#{rhBean.offre.typeOffre == 'STAGE' ? 'Indemnité de stage' : 'Rémunération'}"/>
+                </h2>
+                <div class="ofp-row thirds">
+                    <div class="ofp-field">
+                        <label>Salaire min (FCFA)<span class="opt">optionnel</span></label>
+                        <p:inputNumber value="#{rhBean.offre.salaireMin}" decimalPlaces="0"/>
+                    </div>
+                    <div class="ofp-field">
+                        <h:panelGroup id="remunLabel" layout="block">
+                            <label>#{rhBean.offre.typeOffre == 'STAGE' ? 'Indemnite max (FCFA)' : 'Salaire max (FCFA)'}<span class="opt">optionnel</span></label>
+                        </h:panelGroup>
+                        <p:inputNumber value="#{rhBean.offre.salaireMax}" decimalPlaces="0"/>
+                    </div>
+                    <div class="ofp-field">
+                        <label>Avantages<span class="opt">optionnel</span></label>
+                        <p:inputText value="#{rhBean.offre.avantages}" placeholder="Ex. : Transport, restauration"/>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ofp-actions">
+                <div class="ofp-actions-left">Les champs marqués <span style="color:var(--ofp-error);">*</span> sont obligatoires.</div>
+                <div class="ofp-actions-right">
+                    <p:commandButton value="Précédent" type="button" onclick="ofpGoToPhase(4)" styleClass="ofp-btn"/>
+                    <p:commandButton value="Annuler" action="#{rhBean.annulerOffreForm}" ajax="false" styleClass="ofp-btn"/>
+                    <p:commandButton value="Enregistrer le brouillon" action="#{rhBean.sauvegarderOffre}" update="@form growl" styleClass="ofp-btn"/>
+                    <p:commandButton value="Publier l'offre" action="#{rhBean.publierOffreEtRetour}" update="@form growl" styleClass="ofp-btn ofp-btn-primary"/>
+                </div>
+            </div>
+            </div>
+
+        </h:form>
+    </div>
+    </ui:define>
+
+    <ui:define name="scripts">
+        <script>
+            function ofpGoToPhase(n) {
+                document.querySelectorAll('.ofp-phase').forEach(function(el) {
+                    el.classList.toggle('is-active', el.dataset.phase === String(n));
+                });
+                document.querySelectorAll('#ofpStepper .ofp-step').forEach(function(el) {
+                    el.classList.toggle('is-active', el.dataset.phase === String(n));
+                });
+                window.scrollTo({top: 0, behavior: 'smooth'});
+            }
+        </script>
+    </ui:define>
+
+</ui:composition>

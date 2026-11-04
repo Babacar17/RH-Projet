@@ -1,0 +1,173 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <ui:param name="page" value="carrieres"/>
+    <ui:define name="title">Carrieres — SIRH</ui:define>
+    <ui:define name="pageTitle">Gestion des Carrieres</ui:define>
+    <ui:define name="breadcrumb">Gestion RH &gt; Promotions, Mutations, Mobilite</ui:define>
+
+    <ui:define name="content">
+        <div class="section-card">
+            <div class="section-header">
+                <div class="section-title">
+                    <div class="section-title-dot" style="background:#d4a017;"></div>
+                    Mouvements de carriere
+                </div>
+                <p:commandButton value="+ Nouveau mouvement"
+                    action="#{rhBean.preparerNouveauMouvement}"
+                    oncomplete="PF('dlgCarriere').show()"
+                    update="formCarriere"
+                    styleClass="btn btn-gold"/>
+            </div>
+
+            <h:form id="formTableMouvements">
+                <p:dataTable value="#{rhBean.mouvements}" var="m"
+                             rows="15" paginator="true"
+                             paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink}"
+                             emptyMessage="Aucun mouvement de carriere." style="border:none;">
+
+                    <p:column headerText="Employe" style="padding:12px 16px;">
+                        <div style="font-weight:600;font-size:13px;">#{m.employe.nomComplet}</div>
+                        <div style="font-size:11px;color:#64748b;">#{m.employe.matricule}</div>
+                    </p:column>
+
+                    <p:column headerText="Mouvement" style="padding:12px 16px;width:120px;">
+                        <span class="badge badge-#{m.typeMouvement}">#{m.typeMouvement}</span>
+                    </p:column>
+
+                    <p:column headerText="Avant" style="padding:12px 16px;">
+                        <div style="font-size:12px;color:#64748b;">
+                            <span>#{m.ancienPoste}</span>
+                            <h:panelGroup rendered="#{m.ancienDepartement != null}">
+                                <span> — #{m.ancienDepartement}</span>
+                            </h:panelGroup>
+                        </div>
+                    </p:column>
+
+                    <p:column headerText="Apres" style="padding:12px 16px;">
+                        <div style="font-size:12px;font-weight:600;color:#1e293b;">
+                            <span>#{m.nouveauPoste}</span>
+                            <h:panelGroup rendered="#{m.nouveauDepartement != null}">
+                                <span> — #{m.nouveauDepartement}</span>
+                            </h:panelGroup>
+                        </div>
+                    </p:column>
+
+                    <p:column headerText="Date d'effet" style="padding:12px 16px;width:120px;">
+                        <h:outputText value="#{m.dateEffet}">
+                            <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="Statut" style="padding:12px 16px;width:110px;">
+                        <span class="badge badge-#{m.statut}">#{m.statut}</span>
+                    </p:column>
+
+                    <p:column style="padding:12px 16px;width:140px;text-align:right;">
+                        <p:commandButton value="Approuver"
+                            action="#{rhBean.approuverMouvement(m.id)}"
+                            update="formTableMouvements growl"
+                            rendered="#{m.statut == 'EN_ATTENTE'}"
+                            styleClass="btn btn-sm btn-success"
+                            onclick="return confirm('Approuver et appliquer ce mouvement ?')"/>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </div>
+
+        <!-- DIALOG Mouvement carriere -->
+        <h:form id="formCarriere">
+            <p:dialog header="Enregistrer un mouvement de carriere"
+                      widgetVar="dlgCarriere" modal="true" width="720" resizable="false">
+                <div style="padding:20px;">
+                    <div class="form-row col-2" style="margin-bottom:16px;">
+                        <div class="form-group">
+                            <label class="form-label">Type de mouvement *</label>
+                            <p:selectOneMenu value="#{rhBean.mouvement.typeMouvement}" style="width:100%;">
+                                <f:selectItem itemLabel="-- Choisir --" itemValue=""/>
+                                <f:selectItem itemLabel="Promotion" itemValue="PROMOTION"/>
+                                <f:selectItem itemLabel="Mutation" itemValue="MUTATION"/>
+                                <f:selectItem itemLabel="Mobilite interne" itemValue="MOBILITE"/>
+                                <f:selectItem itemLabel="Depart a la retraite" itemValue="RETRAITE"/>
+                                <f:selectItem itemLabel="Demission" itemValue="DEMISSION"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Date d'effet *</label>
+                            <p:datePicker value="#{rhBean.mouvement.dateEffet}" pattern="dd/MM/yyyy" style="width:100%;"/>
+                        </div>
+                    </div>
+
+                    <!-- Situation actuelle -->
+                    <div style="background:#f8fafc;border-radius:8px;padding:14px;margin-bottom:16px;">
+                        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:10px;">Situation actuelle</div>
+                        <div class="form-row col-3">
+                            <div class="form-group">
+                                <label class="form-label">Ancien poste</label>
+                                <p:inputText value="#{rhBean.mouvement.ancienPoste}" style="width:100%;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Ancien departement</label>
+                                <p:inputText value="#{rhBean.mouvement.ancienDepartement}" style="width:100%;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Ancien salaire (FCFA)</label>
+                                <p:inputNumber value="#{rhBean.mouvement.ancienSalaire}" style="width:100%;"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nouvelle situation -->
+                    <div style="background:#f0fdf4;border-radius:8px;padding:14px;margin-bottom:16px;border:1px solid #bbf7d0;">
+                        <div style="font-size:11px;font-weight:700;color:#15803d;text-transform:uppercase;margin-bottom:10px;">Nouvelle situation</div>
+                        <div class="form-row col-3">
+                            <div class="form-group">
+                                <label class="form-label">Nouveau poste</label>
+                                <p:inputText value="#{rhBean.mouvement.nouveauPoste}" style="width:100%;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Nouveau departement</label>
+                                <p:inputText value="#{rhBean.mouvement.nouveauDepartement}" style="width:100%;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Nouveau salaire (FCFA)</label>
+                                <p:inputNumber value="#{rhBean.mouvement.nouveauSalaire}" style="width:100%;"/>
+                            </div>
+                        </div>
+                        <div class="form-row col-2" style="margin-top:10px;">
+                            <div class="form-group">
+                                <label class="form-label">Nouveau grade / Echelon</label>
+                                <p:inputText value="#{rhBean.mouvement.nouveauGrade}" style="width:100%;"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Motif / Justification</label>
+                        <p:inputTextarea value="#{rhBean.mouvement.motif}" rows="2" style="width:100%;"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Observations</label>
+                        <p:inputTextarea value="#{rhBean.mouvement.observations}" rows="2" style="width:100%;"/>
+                    </div>
+
+                    <div style="text-align:right;padding-top:16px;border-top:1px solid #f1f5f9;">
+                        <p:commandButton value="Annuler"
+                            oncomplete="PF('dlgCarriere').hide()"
+                            styleClass="btn btn-secondary" style="margin-right:8px;" ajax="false"/>
+                        <p:commandButton value="Enregistrer le mouvement"
+                            action="#{rhBean.sauvegarderMouvement}"
+                            update="formTableMouvements growl"
+                            oncomplete="if(!args.validationFailed) PF('dlgCarriere').hide();"
+                            styleClass="btn btn-gold"/>
+                    </div>
+                </div>
+            </p:dialog>
+        </h:form>
+    </ui:define>
+
+</ui:composition>

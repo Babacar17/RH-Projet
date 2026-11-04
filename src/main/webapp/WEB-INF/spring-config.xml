@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- Scan des composants Spring (@Component, @Service, ...) -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <context:component-scan base-package="com.soutenance"/>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- Identifiants DB externalisés (fichier non versionné)  -->
+    <!-- Copier db.properties.example → db.properties           -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <context:property-placeholder location="/WEB-INF/db.properties"/>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- Scope JSF "view" — nécessaire pour @Scope("view")     -->
+    <!-- ViewScope.java : com.soutenance.configuration          -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <bean class="org.springframework.beans.factory.config.CustomScopeConfigurer">
+        <property name="scopes">
+            <map>
+                <entry key="view">
+                    <bean class="com.soutenance.configuration.ViewScope"/>
+                </entry>
+            </map>
+        </property>
+    </bean>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- DataSource PostgreSQL                                  -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <bean id="dataSource"
+          class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="org.postgresql.Driver"/>
+        <property name="url"             value="${db.url}"/>
+        <property name="username"        value="${db.username}"/>
+        <property name="password"        value="${db.password}"/>
+    </bean>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SessionFactory Hibernate 6                             -->
+    <!-- NOTE : Spring 6 utilise ENCORE le package             -->
+    <!-- org.springframework.orm.hibernate5 pour Hibernate 6  -->
+    <!-- C'est NORMAL, il n'existe pas de "hibernate6" package -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <bean id="sessionFactory"
+          class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+
+        <property name="dataSource" ref="dataSource"/>
+        <property name="packagesToScan" value="com.soutenance.entity"/>
+
+        <property name="hibernateProperties">
+            <props>
+                <!-- Dialecte PostgreSQL pour Hibernate 6 -->
+                <prop key="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</prop>
+
+                <!-- update : crée/modifie les tables automatiquement -->
+                <prop key="hibernate.hbm2ddl.auto">update</prop>
+
+                <!-- SQL en console : à réactiver uniquement pour déboguer -->
+                <prop key="hibernate.show_sql">false</prop>
+                <prop key="hibernate.format_sql">false</prop>
+
+                <!-- Contexte de session géré par Spring -->
+                <prop key="hibernate.current_session_context_class">
+                    org.springframework.orm.hibernate5.SpringSessionContext
+                </prop>
+
+                <!-- Désactiver la validation Bean Validation au démarrage -->
+                <prop key="jakarta.persistence.validation.mode">none</prop>
+            </props>
+        </property>
+    </bean>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- Gestionnaire de transactions                           -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <bean id="transactionManager"
+          class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+
+    <!-- Active @Transactional sur les beans Spring -->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+</beans>

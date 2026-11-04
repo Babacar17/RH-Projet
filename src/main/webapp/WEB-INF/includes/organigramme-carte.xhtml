@@ -1,0 +1,28 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html">
+    <div class="org-card org-#{noeud.type} #{noeud.contientMoi ? 'org-parent-moi' : ''} #{noeud.moi ? 'org-moi' : ''}">
+        <div class="org-type">#{noeud.libelleType}</div>
+        <div class="org-nom">#{noeud.nom}</div>
+        <ui:fragment rendered="#{not empty noeud.code}">
+            <div class="org-code">#{noeud.code}</div>
+        </ui:fragment>
+        <ui:fragment rendered="#{not empty noeud.chefNom}">
+            <div class="org-chef"><i class="pi pi-user"/> #{noeud.chefNom}</div>
+        </ui:fragment>
+        <div class="org-count">#{noeud.totalEmployes} agent(s)</div>
+        <ui:fragment rendered="#{not empty noeud.membres}">
+            <details class="org-membres">
+                <summary>Agents (#{noeud.membres.size()})</summary>
+                <ul class="org-membres-list">
+                    <ui:repeat value="#{noeud.membres}" var="mb">
+                        <li>
+                            <span class="#{mb.moi ? 'm-moi' : ''}">#{mb.nom}#{mb.chef ? ' ★' : ''}#{mb.moi ? ' (moi)' : ''}</span>
+                            <span class="m-poste">#{mb.poste}</span>
+                        </li>
+                    </ui:repeat>
+                </ul>
+            </details>
+        </ui:fragment>
+    </div>
+</ui:composition>

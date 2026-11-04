@@ -1,0 +1,103 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <ui:param name="page" value="roles"/>
+    <ui:define name="title">Rôles &amp; Permissions — SIRH</ui:define>
+    <ui:define name="pageTitle">Rôles &amp; Permissions</ui:define>
+    <ui:define name="breadcrumb">Accès &amp; Sécurité &gt; Consultation des rôles — #{sessionBean.institutionCourante.nom}</ui:define>
+
+    <ui:define name="styles">
+        <style>
+            .role-pill-lg {
+                display:inline-block;padding:4px 12px;border-radius:14px;
+                font-size:12px;font-weight:800;letter-spacing:.3px;
+            }
+            .role-RH       { background:#dbeafe;color:#1d4ed8; }
+            .role-MANAGER  { background:#fef3c7;color:#b45309; }
+            .role-EMPLOYE  { background:#dcfce7;color:#15803d; }
+            .role-CANDIDAT { background:#fdf4ff;color:#7e22ce; }
+            .role-item {
+                display:flex;justify-content:space-between;align-items:center;
+                padding:12px 14px;border-radius:8px;border:1px solid #e2e8f0;
+                margin-bottom:8px;cursor:pointer;transition:background .15s,border-color .15s;
+            }
+            .role-item:hover { background:#f8fafc; }
+            .role-item.active { background:#eff6ff;border-color:#93c5fd; }
+            .perm-module-title {
+                font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;
+                letter-spacing:.5px;margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid #f1f5f9;
+            }
+            .perm-item {
+                display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:13px;color:#1e293b;
+            }
+        </style>
+    </ui:define>
+
+    <ui:define name="content">
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;
+                    padding:12px 16px;margin-bottom:20px;font-size:12px;color:#1d4ed8;
+                    display:flex;align-items:center;gap:8px;">
+            <i class="pi pi-info-circle"/>
+            Consultation seule : la création de rôles et la modification des permissions sont
+            réservées à l'administrateur (les rôles ne sont pas propres à une institution).
+        </div>
+
+        <div class="form-row col-2" style="grid-template-columns:320px 1fr;align-items:start;">
+
+            <!-- Liste des rôles assignables -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-title"><div class="section-title-dot" style="background:#2563eb;"></div>Rôles assignables</div>
+                </div>
+                <h:form id="formRoles" style="padding:4px 16px 16px;">
+                    <ui:repeat value="#{rhRoleBean.roles}" var="r">
+                        <p:commandLink action="#{rhRoleBean.selectionnerRole(r)}"
+                                       update=":formPermissions"
+                                       styleClass="role-item #{rhRoleBean.roleSelectionne != null and rhRoleBean.roleSelectionne.id == r.id ? 'active' : ''}">
+                            <span class="role-pill-lg role-#{r.nom}">#{r.nom}</span>
+                            <span style="font-size:11px;color:#94a3b8;">#{r.permissions.size()} permission(s)</span>
+                        </p:commandLink>
+                    </ui:repeat>
+                </h:form>
+            </div>
+
+            <!-- Permissions du rôle sélectionné -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-title">
+                        <div class="section-title-dot" style="background:#7c3aed;"></div>
+                        Permissions
+                        <h:outputText value=" — #{rhRoleBean.roleSelectionne.nom}" rendered="#{rhRoleBean.roleSelectionne != null}"/>
+                        (#{rhRoleBean.totalPermissionsRole})
+                    </div>
+                </div>
+                <h:form id="formPermissions" style="padding:4px 20px 20px;">
+                    <h:panelGroup rendered="#{rhRoleBean.roleSelectionne == null}">
+                        <p style="color:#94a3b8;font-size:13px;">Aucun rôle sélectionné.</p>
+                    </h:panelGroup>
+
+                    <h:panelGroup rendered="#{rhRoleBean.roleSelectionne != null and rhRoleBean.totalPermissionsRole == 0}">
+                        <p style="color:#94a3b8;font-size:13px;">Ce rôle n'a aucune permission attribuée.</p>
+                    </h:panelGroup>
+
+                    <ui:repeat value="#{rhRoleBean.permissionsParModule.entrySet().toArray()}" var="entry">
+                        <div class="perm-module-title">#{entry.key}</div>
+                        <ui:repeat value="#{entry.value}" var="p">
+                            <div class="perm-item">
+                                <i class="pi pi-check-circle" style="color:#16a34a;"/>
+                                <span>#{p.libelle}</span>
+                                <span style="margin-left:auto;font-size:10px;color:#94a3b8;font-family:monospace;">#{p.code}</span>
+                            </div>
+                        </ui:repeat>
+                    </ui:repeat>
+                </h:form>
+            </div>
+
+        </div>
+    </ui:define>
+
+</ui:composition>

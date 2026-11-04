@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Espace employé — Tableau de bord</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&amp;family=Source+Serif+4:wght@600;700&amp;display=swap"/>
+
+    <!-- Chargé après PrimeFaces pour écraser son thème blanc -->
+    <h:outputStylesheet library="css" name="employe-style.css" target="head"/>
+
+    <style>
+        .e3{
+            --e3-bg:#f5f8ff; --e3-surface:#fff; --e3-line:#dde6f7; --e3-ink:#0f2350; --e3-muted:#566684;
+            --e3-blue:#1f5eea; --e3-blue-soft:#e8f0ff;
+            --e3-stat2:#5b8def; --e3-stat2-soft:#d6e3ff; --e3-stat3:#0b3a9e;
+            font-family:"Public Sans",system-ui,sans-serif; color:var(--e3-ink);
+        }
+        .e3 h1,.e3 h2{ font-family:"Source Serif 4",Georgia,serif; font-weight:700; letter-spacing:-.01em; }
+
+        /* Barre du haut */
+        .e3 .topbar{
+            position:sticky; top:0; z-index:5; display:flex; flex-direction:column; gap:14px;
+            margin:-28px -32px 34px; padding:14px 32px 18px; background:#fff; border-bottom:1px solid var(--e3-line);
+        }
+        .e3 .topbar-row{ display:flex; align-items:center; gap:16px; }
+        .e3 .tools{ margin-left:auto; display:flex; align-items:center; gap:14px; }
+        .e3 .today{ color:var(--e3-muted); font-size:13px; }
+        .e3 .icon-btn{
+            position:relative; width:38px; height:38px; border-radius:8px; border:1px solid var(--e3-line);
+            background:#fff; display:flex; align-items:center; justify-content:center; color:var(--e3-ink);
+            text-decoration:none !important;
+        }
+        .e3 .icon-btn:hover{ background:var(--e3-blue-soft); }
+        .e3 .icon-btn i.dotcount{
+            position:absolute; top:4px; right:5px; min-width:8px; height:8px; padding:0;
+            border-radius:50%; background:var(--e3-blue); border:2px solid #fff;
+        }
+        .e3 .topuser{ display:flex; align-items:center; gap:10px; padding-left:14px; border-left:1px solid var(--e3-line); font-weight:500; font-size:14px; }
+        .e3 .av{ width:34px; height:34px; border-radius:50%; background:var(--e3-blue); color:#fff; font-size:12px;
+                 font-weight:600; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+        /* En-tête */
+        .e3 .hero{ display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
+        .e3 .hero h1{ font-size:24px; line-height:1.15; }
+        .e3 .hero p{ color:var(--e3-muted); margin-top:4px; }
+        .e3 .btn{
+            display:inline-flex; align-items:center; gap:8px; border:0; background:var(--e3-blue); color:#fff !important;
+            padding:10px 18px; border-radius:8px; font-weight:600; font-size:14px; text-decoration:none !important;
+        }
+        .e3 .btn:hover{ filter:brightness(1.08); }
+        .e3 .btn.ghost{ background:transparent; color:var(--e3-blue) !important; border:1px solid var(--e3-blue); }
+
+        /* Stats */
+        .e3 .stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:16px; }
+        .e3 .stat{ background:var(--e3-surface); border:1px solid var(--e3-line); border-radius:10px; padding:16px 18px; border-left:4px solid var(--e3-blue); }
+        .e3 .stat.w{ border-left-color:var(--e3-stat2); }
+        .e3 .stat.t{ border-left-color:var(--e3-stat3); }
+        .e3 .stat small{ color:var(--e3-muted); font-size:13px; }
+        .e3 .stat strong{ display:block; font-size:26px; font-weight:600; line-height:1.2; margin-top:2px; }
+        .e3 .stat strong span{ font-size:14px; color:var(--e3-muted); font-weight:400; }
+
+        /* Grille principale */
+        .e3 .grid{ display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:16px; align-items:start; }
+        .e3 .col{ display:grid; gap:16px; }
+        .e3 .card{ background:var(--e3-surface); border:1px solid var(--e3-line); border-radius:10px; padding:20px 22px; }
+        .e3 .row{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:14px; }
+        .e3 .row a{ color:var(--e3-blue); font-size:13px; font-weight:500; text-decoration:none; }
+        .e3 .row a:hover{ text-decoration:underline; }
+
+        /* Barre des 30 jours */
+        .e3 .bar{ display:grid; grid-template-columns:repeat(15,1fr); gap:3px; margin:6px 0 12px; }
+        .e3 .bar i{ display:block; height:22px; border-radius:3px; background:var(--e3-blue-soft); border:1px solid #c7d7fb; }
+        .e3 .bar i.attente{ background:var(--e3-stat2-soft); border-color:var(--e3-stat2); }
+        .e3 .bar i.pris{ background:var(--e3-blue); border-color:var(--e3-blue); }
+        .e3 .legend{ display:flex; gap:20px; flex-wrap:wrap; color:var(--e3-muted); font-size:13px; }
+        .e3 .legend span{ display:flex; align-items:center; gap:6px; }
+        .e3 .legend i{ width:10px; height:10px; border-radius:2px; background:var(--e3-blue-soft); border:1px solid var(--e3-blue); }
+        .e3 .legend .p i{ background:var(--e3-stat2-soft); border-color:var(--e3-stat2); }
+        .e3 .legend .t i{ background:var(--e3-blue); border-color:var(--e3-blue); }
+
+        /* Onglets */
+        .e3 .tabs{ display:flex; gap:4px; border-bottom:1px solid var(--e3-line); margin:-4px 0 16px; }
+        .e3 .tabs button{
+            background:none; border:0; padding:10px 14px; color:var(--e3-muted); font-weight:500;
+            border-bottom:2px solid transparent; margin-bottom:-1px; display:flex; gap:8px; align-items:center;
+            font-family:inherit; cursor:pointer; font-size:14px;
+        }
+        .e3 .tabs button.on{ color:var(--e3-ink); border-color:var(--e3-blue); }
+        .e3 .tabs em{ font-style:normal; font-size:12px; background:var(--e3-bg); border:1px solid var(--e3-line); border-radius:10px; padding:0 7px; }
+        .e3 .empty{ border:1px dashed var(--e3-line); border-radius:10px; padding:28px; text-align:center; color:var(--e3-muted); }
+        .e3 .empty p{ margin-bottom:14px; }
+        .e3 .scroll{ overflow-x:auto; }
+        .e3 table{ width:100%; border-collapse:collapse; }
+        .e3 th{ text-align:left; font-size:12.5px; font-weight:700; color:var(--e3-muted); padding:8px 10px; border-bottom:1px solid var(--e3-line); }
+        .e3 td{ padding:11px 10px; border-bottom:1px solid var(--e3-line); font-size:.88rem; }
+        .e3 tr:last-child td{ border-bottom:0; }
+
+        /* Notifications */
+        .e3 .notif{ list-style:none; padding:0; margin:0; display:grid; gap:8px; }
+        .e3 .notif li{ padding:0; border-radius:8px; border:1px solid var(--e3-line); overflow:hidden; }
+        .e3 .notif li.new{ background:var(--e3-blue-soft); border-color:transparent; }
+        .e3 .notif a{ display:block; padding:12px 14px; text-decoration:none; color:inherit; cursor:pointer; }
+        .e3 .notif b{ font-weight:600; font-size:14px; display:flex; align-items:center; gap:8px; }
+        .e3 .notif li.new b::before{ content:''; width:7px; height:7px; border-radius:50%; background:var(--e3-blue); flex-shrink:0; }
+        .e3 .notif span{ color:var(--e3-muted); font-size:13px; display:block; margin-top:2px; }
+        .e3 .badge3{ background:var(--e3-stat2-soft); color:var(--e3-stat3); border-radius:10px; font:600 12px/1 "Public Sans"; padding:4px 8px; margin-left:8px; vertical-align:middle; }
+
+        @media (max-width:1024px){ .e3 .grid{ grid-template-columns:1fr; } }
+        @media (max-width:760px){
+            .e3 .topbar{ margin:-16px -16px 20px; padding:10px 16px; }
+            .e3 .today{ display:none; }
+            .e3 .topuser span{ display:none; }
+            .e3 .topuser{ padding-left:0; border:0; }
+            .e3 .hero{ flex-direction:column; }
+            .e3 .stats{ grid-template-columns:1fr; }
+            .e3 .bar{ grid-template-columns:repeat(10,1fr); }
+        }
+    </style>
+</h:head>
+<h:body>
+<div class="emp-layout">
+
+    <ui:include src="sidebar-employe.xhtml"/>
+
+    <main class="emp-main e3">
+
+        <div class="topbar">
+            <div class="topbar-row">
+                <div class="tools">
+                    <span class="today" id="e3Today"/>
+                    <a href="#{request.contextPath}/Employes/notifications.xhtml" class="icon-btn" aria-label="Notifications">
+                        <i class="pi pi-bell"/>
+                        <h:panelGroup rendered="#{notificationBean.compteurNonLues gt 0}">
+                            <i class="dotcount"/>
+                        </h:panelGroup>
+                    </a>
+                    <div class="topuser">
+                        <div class="av">
+                            #{employeBean.employe != null and employeBean.employe.prenom != null ? employeBean.employe.prenom.substring(0,1) : 'E'}#{employeBean.employe != null and employeBean.employe.nom != null ? employeBean.employe.nom.substring(0,1) : ''}
+                        </div>
+                        <span>
+                            <h:outputText value="#{employeBean.employe.prenom} #{employeBean.employe.nom}"
+                                          rendered="#{employeBean.employe != null and employeBean.employe.prenom != null}"/>
+                            <h:outputText value="Employé" rendered="#{employeBean.employe == null or employeBean.employe.prenom == null}"/>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <header class="hero">
+                <div>
+                    <h1>Bonjour,
+                        <h:outputText value="#{employeBean.employe.prenom}"
+                                      rendered="#{employeBean.employe != null and employeBean.employe.prenom != null}"/>
+                        <h:outputText value="Employé"
+                                      rendered="#{employeBean.employe == null or employeBean.employe.prenom == null}"/>.
+                    </h1>
+                    <p>
+                        <h:outputText value="#{employeBean.employe.intiutePoste}"
+                                      rendered="#{employeBean.employe != null and employeBean.employe.poste != null}"/>
+                        <h:outputText value=", #{employeBean.employe.nomDirection}"
+                                      rendered="#{employeBean.employe != null and employeBean.employe.nomDirection != null}"/>
+                    </p>
+                </div>
+                <a href="#{request.contextPath}/Employes/nouvelle-demande.xhtml" class="btn">
+                    <i class="pi pi-plus"/> Demander un congé
+                </a>
+            </header>
+        </div>
+
+        <p:messages autoUpdate="true" showDetail="true"/>
+
+        <section class="stats">
+            <div class="stat">
+                <small>Jours disponibles</small>
+                <strong>#{employeBean.soldeRestant} <span>sur #{employeBean.soldeCongesAnnuels}</span></strong>
+            </div>
+            <div class="stat w">
+                <small>En attente de validation</small>
+                <strong>#{employeBean.congesEnAttente} <span>jour(s)</span></strong>
+            </div>
+            <div class="stat t">
+                <small>Jours pris</small>
+                <strong>#{employeBean.congesPris} <span>jour(s)</span></strong>
+            </div>
+        </section>
+
+        <div class="grid">
+            <div class="col">
+
+                <section class="card">
+                    <div class="row">
+                        <h2>Mes congés de l'année</h2>
+                        <a href="#{request.contextPath}/Employes/mes-conges.xhtml">Voir le détail</a>
+                    </div>
+                    <div class="bar">
+                        <ui:repeat value="#{employeBean.casesConges}" var="c">
+                            <i class="#{c}"/>
+                        </ui:repeat>
+                    </div>
+                    <div class="legend">
+                        <span>Libres : #{employeBean.soldeRestant}</span>
+                        <span class="p">En attente : #{employeBean.congesEnAttente}</span>
+                        <span class="t">Pris : #{employeBean.congesPris}</span>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <div class="tabs" role="tablist">
+                        <button type="button" role="tab" class="on" onclick="e3SwitchTab(this,'d')">
+                            Mes demandes <em>#{employeBean.mesDemandesConge.size()}</em>
+                        </button>
+                        <button type="button" role="tab" onclick="e3SwitchTab(this,'e')">
+                            Mes évaluations <em>#{employeBean.mesEvaluations.size()}</em>
+                        </button>
+                    </div>
+
+                    <div id="e3-d" class="e3-panel">
+                        <h:panelGroup rendered="#{empty employeBean.mesDemandesConge}">
+                            <div class="empty">
+                                <p>Vous n'avez fait aucune demande de congé.</p>
+                                <a href="#{request.contextPath}/Employes/nouvelle-demande.xhtml" class="btn ghost">Faire une demande</a>
+                            </div>
+                        </h:panelGroup>
+                        <h:panelGroup rendered="#{not empty employeBean.mesDemandesConge}">
+                            <div class="scroll">
+                                <table>
+                                    <thead><tr><th>Période</th><th>Jours</th><th>Statut</th></tr></thead>
+                                    <tbody>
+                                        <ui:repeat value="#{employeBean.mesDemandesConge}" var="dc" end="6">
+                                            <tr>
+                                                <td>
+                                                    <h:outputText value="#{dc.dateDebut}"/>
+                                                    <span style="color:var(--e3-muted);"> → </span>
+                                                    <h:outputText value="#{dc.dateFin}"/>
+                                                </td>
+                                                <td>#{dc.nombreJours} j</td>
+                                                <td>
+                                                    <span class="emp-badge #{employeBean.getBadgeStatutConge(dc.statut)}">
+                                                        #{employeBean.getLabelStatutConge(dc.statut)}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </ui:repeat>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </h:panelGroup>
+                    </div>
+
+                    <div id="e3-e" class="e3-panel" style="display:none;">
+                        <h:panelGroup rendered="#{empty employeBean.mesEvaluations}">
+                            <div class="empty">
+                                <p>Aucune évaluation disponible pour le moment.</p>
+                            </div>
+                        </h:panelGroup>
+                        <h:panelGroup rendered="#{not empty employeBean.mesEvaluations}">
+                            <div class="scroll">
+                                <table>
+                                    <thead><tr><th>Période</th><th>Type</th><th>Note</th><th>Mention</th></tr></thead>
+                                    <tbody>
+                                        <ui:repeat value="#{employeBean.mesEvaluations}" var="ev" end="6">
+                                            <tr>
+                                                <td>#{ev.periode}</td>
+                                                <td>#{ev.typeEvaluation}</td>
+                                                <td>#{ev.noteGlobale} / 5</td>
+                                                <td><span class="#{employeBean.getMentionClass(ev.mentionGlobale)}">#{ev.mentionGlobale}</span></td>
+                                            </tr>
+                                        </ui:repeat>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </h:panelGroup>
+                    </div>
+                </section>
+
+            </div>
+
+            <div class="col">
+                <section class="card">
+                    <div class="row">
+                        <h2>Notifications
+                            <h:panelGroup rendered="#{notificationBean.compteurNonLues gt 0}">
+                                <span class="badge3">#{notificationBean.compteurNonLues} nouvelle(s)</span>
+                            </h:panelGroup>
+                        </h2>
+                        <a href="#{request.contextPath}/Employes/notifications.xhtml">Voir tout</a>
+                    </div>
+                    <h:form id="formNotifDashboard">
+                        <h:panelGroup rendered="#{empty notificationBean.recentes}">
+                            <p style="color:var(--e3-muted);font-size:13px;">Vous êtes à jour.</p>
+                        </h:panelGroup>
+                        <ul class="notif">
+                            <ui:repeat value="#{notificationBean.recentes}" var="notif" end="4">
+                                <li class="#{notif.estLue ? '' : 'new'}">
+                                    <p:commandLink action="#{notificationBean.marquerLue(notif.id)}"
+                                                   update="formNotifDashboard"
+                                                   oncomplete="if (#{not empty notif.lienAction}) { window.location='#{request.contextPath}#{notif.lienAction}#{not empty notif.entiteLieeId ? '?entiteId=' : ''}#{notif.entiteLieeId}'; }">
+                                        <b>#{notif.titre}</b>
+                                        <span>#{notif.message}</span>
+                                    </p:commandLink>
+                                </li>
+                            </ui:repeat>
+                        </ul>
+                    </h:form>
+                </section>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+//<![CDATA[
+(function() {
+    var d = new Date().toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    var el = document.getElementById('e3Today');
+    if (el) el.textContent = d.charAt(0).toUpperCase() + d.slice(1);
+})();
+
+function e3SwitchTab(btn, key) {
+    var tabs = btn.closest('.tabs');
+    tabs.querySelectorAll('button').forEach(function(b) { b.classList.remove('on'); });
+    btn.classList.add('on');
+    var card = tabs.closest('.card');
+    card.querySelectorAll('.e3-panel').forEach(function(p) { p.style.display = 'none'; });
+    var panel = document.getElementById('e3-' + key);
+    if (panel) panel.style.display = 'block';
+}
+//]]>
+</script>
+</h:body>
+</html>

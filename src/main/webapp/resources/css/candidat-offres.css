@@ -1,0 +1,92 @@
+/* ===== Page « Offres d'emploi » – Espace Candidat =====
+   À placer dans webapp/resources/css/ (chargé après candidat.css). */
+
+.count-badge {
+    display: inline-block; background: #dcfce7; color: #15803d;
+    padding: 5px 14px; border-radius: 12px; font-size: 12px; font-weight: 700;
+}
+
+/* Barre de recherche */
+.offres-page .filtre-card { margin-bottom: 16px; }
+.offres-page .filtre-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.offres-page .filtre-input { flex: 1; min-width: 220px; }
+.offres-page .filtre-actif { margin-bottom: 14px; font-size: 13px; color: #475569; }
+.offres-page .filtre-actif i { margin-right: 4px; color: #2563eb; }
+
+/* Grille responsive */
+.offres-page .offres-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+}
+
+/* Carte d'offre */
+.offres-page .offre-card {
+    display: flex; flex-direction: column; gap: 10px;
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+    padding: 18px; cursor: pointer;
+    transition: box-shadow .2s, transform .2s, border-color .2s;
+}
+.offres-page .offre-card:hover {
+    border-color: #93c5fd; transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(15, 23, 42, .08);
+}
+.offres-page .offre-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.offres-page .offre-card-titre {
+    font-size: 16px; font-weight: 700; line-height: 1.35; color: #0f172a;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.offres-page .offre-badge {
+    flex-shrink: 0; padding: 3px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+}
+.offres-page .offre-badge.is-open   { background: #dcfce7; color: #15803d; }
+.offres-page .offre-badge.is-closed { background: #f1f5f9; color: #64748b; }
+
+/* Infos (lieu, contrat, postes, clôture) */
+.offres-page .offre-meta {
+    list-style: none; margin: 0; padding: 0;
+    display: flex; flex-wrap: wrap; gap: 6px 14px;
+    font-size: 12.5px; color: #64748b;
+}
+.offres-page .offre-meta i { margin-right: 4px; color: #94a3b8; }
+
+.offres-page .offre-card-salaire {
+    display: inline-block; font-size: 13px; font-weight: 700; color: #0f766e;
+    background: #f0fdfa; padding: 4px 10px; border-radius: 8px;
+}
+.offres-page .offre-card-desc {
+    margin: 0; font-size: 13.5px; line-height: 1.55; color: #475569; flex: 1;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* Actions */
+.offres-page .offre-card-actions { display: flex; align-items: center; gap: 8px; margin-top: auto; }
+.offres-page .offre-action-main { flex: 1; }
+.offres-page .btn-postuler.ui-button { width: 100%; font-weight: 700; }
+.offres-page .btn-pdf.ui-button {
+    width: 38px; height: 38px; padding: 0; flex-shrink: 0;
+    background: #dc2626; border: none; color: #fff; border-radius: 8px;
+}
+.offres-page .btn-pdf.ui-button:hover { background: #b91c1c; }
+.offres-page .badge-postule {
+    display: block; text-align: center; padding: 9px;
+    background: #eff6ff; color: #1d4ed8; border-radius: 8px;
+    font-size: 13px; font-weight: 700;
+}
+
+/* Aucun résultat */
+.offres-page .empty-state { text-align: center; padding: 50px 20px; color: #94a3b8; }
+.offres-page .empty-state > i { font-size: 3em; display: block; margin-bottom: 12px; }
+.offres-page .empty-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; color: #64748b; }
+.offres-page .empty-text { font-size: 13px; margin-bottom: 16px; }
+
+@media (max-width: 600px) {
+    .offres-page .offres-grid { grid-template-columns: 1fr; }
+    .offres-page .filtre-bar { flex-direction: column; align-items: stretch; }
+    .offres-page .filtre-input { min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .offres-page .offre-card { transition: none; }
+    .offres-page .offre-card:hover { transform: none; }
+}

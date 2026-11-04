@@ -1,0 +1,396 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <ui:param name="page" value="formations"/>
+    <ui:define name="title">Formations — SIRH</ui:define>
+    <ui:define name="pageTitle">Formations</ui:define>
+    <ui:define name="breadcrumb">Developpement &gt; Formations</ui:define>
+
+    <!-- ═══════════════ STYLES DE LA PAGE ═══════════════ -->
+    <ui:define name="styles">
+        <style>
+            /* ── Badges de statut (mêmes que Candidatures) ── */
+            .badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; white-space:nowrap; }
+            .badge-PLANIFIEE { background:#dbeafe; color:#1d4ed8; }
+            .badge-EN_COURS  { background:#fef9c3; color:#854d0e; }
+            .badge-TERMINEE  { background:#dcfce7; color:#15803d; }
+            .badge-ANNULEE   { background:#fee2e2; color:#b91c1c; }
+
+            /* ── Tableau : identique à .cand-tbl, contenu dans sa carte ── */
+            .fm-table-wrap { width:100%; max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+            .cand-tbl .ui-datatable table { width:100%; table-layout:auto; }
+            .cand-tbl .ui-datatable th {
+                background:#f8fafc; color:#64748b; font-size:11px; font-weight:700;
+                text-transform:uppercase; letter-spacing:.5px; padding:10px 14px;
+                border-bottom:2px solid #e2e8f0; vertical-align:top;
+            }
+            .cand-tbl .ui-datatable td { padding:10px 14px; border-bottom:1px solid #f1f5f9; vertical-align:middle; overflow-wrap:anywhere; }
+            .cand-tbl .ui-datatable tr:hover td { background:#f8fafc; }
+
+            /* En-tête + filtre par colonne */
+            .cand-tbl .ui-datatable th .ui-column-title { display:block; margin-bottom:8px; text-transform:uppercase; letter-spacing:.5px; }
+            .cand-tbl .ui-datatable th .ui-column-filter {
+                width:100%; box-sizing:border-box; padding:5px 8px; font-size:11px;
+                font-weight:400; text-transform:none; letter-spacing:normal;
+                border:1px solid #e2e8f0; border-radius:5px; background:#fff;
+            }
+            .cand-tbl .ui-datatable th .ui-selectonemenu { width:100% !important; font-size:11px; font-weight:400; text-transform:none; letter-spacing:normal; }
+            .cand-tbl .ui-datatable th:not(:has(.ui-column-filter)) { padding-bottom:10px; }
+            .fm-nowrap { white-space:nowrap; }
+
+            /* ── Pastilles de filtre par statut ── */
+            .fm-pills { display:flex; gap:8px; flex-wrap:wrap; padding:16px 16px 0; }
+            .fm-pill { border:none; padding:6px 14px; font-size:12px; font-weight:700; border-radius:20px;
+                       background:#f1f5f9; color:#475569; cursor:pointer; transition:background .15s, color .15s; }
+            .fm-pill:hover { background:#e2e8f0; }
+            .fm-pill.active { color:#fff; }
+            .fm-pill.active.p-all  { background:#0f172a; }
+            .fm-pill.active.p-plan { background:#2563eb; }
+            .fm-pill.active.p-cours{ background:#d97706; }
+            .fm-pill.active.p-fin  { background:#16a34a; }
+            .fm-pill.active.p-ann  { background:#dc2626; }
+
+            /* ── Boutons d'action : même style que Candidatures ── */
+            .fm-actions { display:flex; flex-wrap:wrap; gap:4px; justify-content:flex-end; }
+            .abtn { padding:5px 10px; border-radius:5px; font-size:11px; font-weight:700; }
+
+            /* ── Participants : compteur + mini barre ── */
+            .fm-part { min-width:90px; }
+            .fm-part-count { font-weight:700; font-size:15px; color:#2563eb; }
+            .fm-part-max   { font-size:11px; color:#94a3b8; }
+            .fm-bar { height:4px; background:#e2e8f0; border-radius:2px; margin-top:4px; overflow:hidden; }
+            .fm-bar > span { display:block; height:100%; background:#2563eb; max-width:100%; }
+
+            /* ── Dialogs ── */
+            .fm-dialog-body { padding:20px; max-height:calc(100vh - 150px); overflow-y:auto; overflow-x:hidden; }
+            .fm-grid { display:grid; gap:14px 16px; margin-bottom:14px; }
+            .fm-grid.c2 { grid-template-columns:repeat(2, minmax(0,1fr)); }
+            .fm-grid.c3 { grid-template-columns:repeat(3, minmax(0,1fr)); }
+            .fm-field { min-width:0; margin-bottom:14px; }
+            .fm-grid .fm-field { margin-bottom:0; }
+            .fm-label { display:block; font-size:12px; font-weight:700; color:#475569; margin-bottom:5px; }
+
+            .fm-dialog .ui-inputfield,
+            .fm-dialog .ui-inputnumber,
+            .fm-dialog .ui-inputnumber input,
+            .fm-dialog .ui-selectonemenu,
+            .fm-dialog .ui-datepicker,
+            .fm-dialog .ui-calendar,
+            .fm-dialog textarea { width:100% !important; max-width:100%; min-width:0; box-sizing:border-box; }
+
+            .fm-dialog-actions { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:10px;
+                                 padding-top:14px; margin-top:6px; border-top:1px solid #e2e8f0; }
+
+            .fm-info { background:#f8fafc; border-radius:8px; padding:12px 14px; margin-bottom:18px; }
+            .fm-info-lbl { font-size:11px; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
+            .fm-info-title { font-size:15px; font-weight:700; color:#0f172a; }
+            .fm-info-sub { font-size:12px; color:#64748b; margin-top:4px; }
+
+            .fm-list { max-height:160px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:6px; padding:6px; }
+            .fm-list-item { padding:6px 10px; border-bottom:1px solid #f1f5f9; font-size:12px;
+                            display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+            .fm-list-empty { padding:14px; text-align:center; color:#94a3b8; font-size:12px; }
+
+            @media (max-width: 640px) {
+                .fm-grid.c2, .fm-grid.c3 { grid-template-columns:minmax(0,1fr); }
+                .fm-actions { justify-content:flex-start; }
+            }
+        </style>
+    </ui:define>
+
+    <!-- ═══════════════ CONTENU ═══════════════ -->
+    <ui:define name="content">
+        <div class="section-card">
+            <div class="section-header">
+                <div class="section-title">
+                    <div class="section-title-dot" style="background:#2563eb;"></div>
+                    Plan de formation
+                </div>
+
+                <h:form id="formHeaderFormations">
+                    <p:commandButton value="+ Planifier une formation"
+                        action="#{rhBean.preparerNouvelleFormation}"
+                        oncomplete="PF('dlgFormation').show()"
+                        update=":formFormation"
+                        styleClass="btn btn-primary"/>
+                </h:form>
+            </div>
+
+            <!-- Filtre rapide par statut (pilote le filtre de la colonne Statut) -->
+            <div class="fm-pills">
+                <button type="button" class="fm-pill p-all active"  onclick="fmFiltrerStatut(this,'')">Toutes</button>
+                <button type="button" class="fm-pill p-plan"        onclick="fmFiltrerStatut(this,'PLANIFIEE')">Planifiée</button>
+                <button type="button" class="fm-pill p-cours"       onclick="fmFiltrerStatut(this,'EN_COURS')">En cours</button>
+                <button type="button" class="fm-pill p-fin"         onclick="fmFiltrerStatut(this,'TERMINEE')">Terminée</button>
+                <button type="button" class="fm-pill p-ann"         onclick="fmFiltrerStatut(this,'ANNULEE')">Annulée</button>
+            </div>
+
+            <h:form id="formTableFormations">
+                <div class="fm-table-wrap" style="margin-top:12px;">
+                    <p:dataTable id="dtFormations" widgetVar="dtFormations"
+                                 value="#{rhBean.formations}" var="fo"
+                                 rows="12" paginator="true" paginatorPosition="bottom"
+                                 paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink}"
+                                 emptyMessage="Aucune formation planifiee."
+                                 styleClass="cand-tbl">
+
+                        <p:column headerText="Formation" style="width:28%;"
+                                  filterBy="#{fo.titre}" filterMatchMode="contains" sortBy="#{fo.titre}">
+                            <div style="font-weight:700;font-size:13px;">#{fo.titre}</div>
+                            <div style="font-size:11px;color:#64748b;">#{fo.categorie} — #{fo.organisme}</div>
+                            <div style="font-size:11px;color:#94a3b8;">#{fo.lieu}</div>
+                        </p:column>
+
+                        <p:column headerText="Dates" sortBy="#{fo.dateDebut}" styleClass="fm-nowrap">
+                            <h:outputText value="#{fo.dateDebut}">
+                                <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                            </h:outputText>
+                            <span style="color:#94a3b8;"> → </span>
+                            <h:outputText value="#{fo.dateFin}">
+                                <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                            </h:outputText>
+                        </p:column>
+
+                        <p:column headerText="Modalite" filterBy="#{fo.modalite}" filterMatchMode="contains">
+                            <span style="font-size:12px;font-weight:500;">#{fo.modalite}</span>
+                        </p:column>
+
+                        <p:column headerText="Participants" style="text-align:center;">
+                            <div class="fm-part">
+                                <span class="fm-part-count">#{fo.nombreParticipants}</span>
+                                <span class="fm-part-max">/ #{fo.capaciteMax}</span>
+                                <div class="fm-bar">
+                                    <span style="width:#{fo.capaciteMax gt 0 ? (fo.nombreParticipants * 100 / fo.capaciteMax) : 0}%;"></span>
+                                </div>
+                            </div>
+                        </p:column>
+
+                        <p:column headerText="Cout" sortBy="#{fo.cout}" styleClass="fm-nowrap">
+                            <h:outputText value="#{fo.cout}">
+                                <f:convertNumber type="currency" currencySymbol="FCFA " groupingUsed="true" maxFractionDigits="0"/>
+                            </h:outputText>
+                        </p:column>
+
+                        <!-- Filtre de statut : liste déroulante pilotée aussi par les pastilles -->
+                        <p:column headerText="Statut" filterBy="#{fo.statut}" filterMatchMode="exact">
+                            <f:facet name="filter">
+                                <p:selectOneMenu widgetVar="wvStatutFormation" styleClass="ui-column-filter"
+                                                 onchange="PF('dtFormations').filter()">
+                                    <f:selectItem itemLabel="Tous" itemValue="" noSelectionOption="true"/>
+                                    <f:selectItem itemLabel="Planifiée" itemValue="PLANIFIEE"/>
+                                    <f:selectItem itemLabel="En cours"  itemValue="EN_COURS"/>
+                                    <f:selectItem itemLabel="Terminée"  itemValue="TERMINEE"/>
+                                    <f:selectItem itemLabel="Annulée"   itemValue="ANNULEE"/>
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <span class="badge badge-#{fo.statut}">#{fo.statut}</span>
+                        </p:column>
+
+                        <p:column headerText="Actions" style="text-align:right;">
+                            <div class="fm-actions">
+                                <p:commandButton value="Inscrire" icon="pi pi-user-plus"
+                                    action="#{rhBean.preparerInscriptionFormation(fo)}"
+                                    oncomplete="PF('dlgInscriptionForm').show()"
+                                    update=":formInscription"
+                                    style="background:#16a34a;color:#fff;border:none;margin:2px;padding:0 10px;height:28px;font-size:11px;line-height:1;border-radius:5px;"
+                                    styleClass="abtn"/>
+                                <p:commandButton value="Modifier" icon="pi pi-pencil"
+                                    action="#{rhBean.preparerEditionFormation(fo)}"
+                                    oncomplete="PF('dlgFormation').show()"
+                                    update=":formFormation"
+                                    style="background:#6366f1;color:#fff;border:none;margin:2px;padding:0 10px;height:28px;font-size:11px;line-height:1;border-radius:5px;"
+                                    styleClass="abtn"/>
+                            </div>
+                        </p:column>
+                    </p:dataTable>
+                </div>
+            </h:form>
+        </div>
+
+        <script>
+            /* Pastille cliquée -> met à jour le filtre de la colonne Statut */
+            function fmFiltrerStatut(btn, valeur) {
+                document.querySelectorAll('.fm-pill').forEach(function (b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                PF('wvStatutFormation').selectValue(valeur);
+            }
+        </script>
+    </ui:define>
+
+    <!-- ═══════════════ DIALOGS ═══════════════ -->
+    <ui:define name="dialogs">
+
+        <!-- DIALOG FORMATION -->
+        <h:form id="formFormation">
+            <p:dialog header="#{rhBean.modeEdition ? 'Modifier la formation' : 'Planifier une formation'}"
+                      widgetVar="dlgFormation" modal="true" width="720"
+                      responsive="true" resizable="false" closeOnEscape="true" dynamic="true"
+                      styleClass="fm-dialog" style="max-width:96vw;">
+                <div class="fm-dialog-body">
+
+                    <div class="fm-field">
+                        <label class="fm-label">Titre de la formation *</label>
+                        <p:inputText value="#{rhBean.formation.titre}"/>
+                    </div>
+
+                    <div class="fm-grid c3">
+                        <div class="fm-field">
+                            <label class="fm-label">Categorie</label>
+                            <p:selectOneMenu value="#{rhBean.formation.categorie}">
+                                <f:selectItem itemLabel="Technique"   itemValue="Technique"/>
+                                <f:selectItem itemLabel="Management"  itemValue="Management"/>
+                                <f:selectItem itemLabel="Bureautique" itemValue="Bureautique"/>
+                                <f:selectItem itemLabel="Langues"     itemValue="Langues"/>
+                                <f:selectItem itemLabel="Securite"    itemValue="Securite"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="fm-field">
+                            <label class="fm-label">Modalite</label>
+                            <p:selectOneMenu value="#{rhBean.formation.modalite}">
+                                <f:selectItem itemLabel="Presentiel" itemValue="PRESENTIEL"/>
+                                <f:selectItem itemLabel="Distanciel" itemValue="DISTANCIEL"/>
+                                <f:selectItem itemLabel="Mixte"      itemValue="MIXTE"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="fm-field">
+                            <label class="fm-label">Capacite max</label>
+                            <p:inputNumber value="#{rhBean.formation.capaciteMax}" decimalPlaces="0"/>
+                        </div>
+                    </div>
+
+                    <div class="fm-grid c2">
+                        <div class="fm-field">
+                            <label class="fm-label">Formateur / Organisme</label>
+                            <p:inputText value="#{rhBean.formation.organisme}"/>
+                        </div>
+                        <div class="fm-field">
+                            <label class="fm-label">Lieu</label>
+                            <p:inputText value="#{rhBean.formation.lieu}"/>
+                        </div>
+                    </div>
+
+                    <div class="fm-grid c3">
+                        <div class="fm-field">
+                            <label class="fm-label">Date de debut *</label>
+                            <p:datePicker value="#{rhBean.formation.dateDebut}" pattern="dd/MM/yyyy"/>
+                        </div>
+                        <div class="fm-field">
+                            <label class="fm-label">Date de fin *</label>
+                            <p:datePicker value="#{rhBean.formation.dateFin}" pattern="dd/MM/yyyy"/>
+                        </div>
+                        <div class="fm-field">
+                            <label class="fm-label">Duree (heures)</label>
+                            <p:inputNumber value="#{rhBean.formation.dureeHeures}" decimalPlaces="0"/>
+                        </div>
+                    </div>
+
+                    <div class="fm-grid c2">
+                        <div class="fm-field">
+                            <label class="fm-label">Cout total (FCFA)</label>
+                            <p:inputNumber value="#{rhBean.formation.cout}" decimalPlaces="0"/>
+                        </div>
+                        <div class="fm-field">
+                            <label class="fm-label">Statut</label>
+                            <p:selectOneMenu value="#{rhBean.formation.statut}">
+                                <f:selectItem itemLabel="Planifiee" itemValue="PLANIFIEE"/>
+                                <f:selectItem itemLabel="En cours"  itemValue="EN_COURS"/>
+                                <f:selectItem itemLabel="Terminee"  itemValue="TERMINEE"/>
+                                <f:selectItem itemLabel="Annulee"   itemValue="ANNULEE"/>
+                            </p:selectOneMenu>
+                        </div>
+                    </div>
+
+                    <div class="fm-field">
+                        <label class="fm-label">Description</label>
+                        <p:inputTextarea value="#{rhBean.formation.description}" rows="3" autoResize="false"/>
+                    </div>
+
+                    <div class="fm-dialog-actions">
+                        <p:commandButton value="Annuler" type="button"
+                            onclick="PF('dlgFormation').hide()"
+                            styleClass="ui-button-secondary"
+                            style="padding:8px 16px;"/>
+                        <p:commandButton value="Enregistrer"
+                            action="#{rhBean.sauvegarderFormation}"
+                            update=":formTableFormations growl"
+                            oncomplete="if(!args.validationFailed) PF('dlgFormation').hide();"
+                            style="padding:8px 18px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;"/>
+                    </div>
+                </div>
+            </p:dialog>
+        </h:form>
+
+        <!-- DIALOG INSCRIPTION FORMATION -->
+        <h:form id="formInscription">
+            <p:dialog header="Inscrire un employé"
+                      widgetVar="dlgInscriptionForm" modal="true" width="580"
+                      responsive="true" resizable="false" closeOnEscape="true" dynamic="true"
+                      styleClass="fm-dialog" style="max-width:96vw;">
+                <div class="fm-dialog-body">
+                    <h:panelGroup rendered="#{rhBean.formationSelectionnee != null}">
+
+                        <div class="fm-info">
+                            <div class="fm-info-lbl">Formation</div>
+                            <div class="fm-info-title">#{rhBean.formationSelectionnee.titre}</div>
+                            <div class="fm-info-sub">
+                                Du <h:outputText value="#{rhBean.formationSelectionnee.dateDebut}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                                </h:outputText>
+                                au <h:outputText value="#{rhBean.formationSelectionnee.dateFin}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy" type="localDate"/>
+                                </h:outputText>
+                                &#8226; #{rhBean.formationSelectionnee.nombreParticipants}
+                                / #{rhBean.formationSelectionnee.capaciteMax} participants
+                            </div>
+                        </div>
+
+                        <div class="fm-field">
+                            <label class="fm-label">Employé à inscrire</label>
+                            <p:selectOneMenu value="#{rhBean.employeAInscrireId}"
+                                             filter="true" filterMatchMode="contains">
+                                <f:selectItem itemLabel="— Choisir un employé —" itemValue="#{null}"/>
+                                <f:selectItems value="#{rhBean.employes}" var="emp"
+                                               itemValue="#{emp.id}"
+                                               itemLabel="#{emp.matricule} — #{emp.nomComplet}"/>
+                            </p:selectOneMenu>
+                        </div>
+
+                        <div class="fm-field">
+                            <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;
+                                        letter-spacing:.5px;margin-bottom:8px;">
+                                Participants déjà inscrits (#{rhBean.formationSelectionnee.nombreParticipants})
+                            </div>
+                            <div class="fm-list">
+                                <ui:repeat value="#{rhBean.formationSelectionnee.participants}" var="part">
+                                    <div class="fm-list-item">
+                                        <span><strong>#{part.matricule}</strong> — #{part.nomComplet}</span>
+                                        <span style="color:#94a3b8;">#{part.intiutePoste}</span>
+                                    </div>
+                                </ui:repeat>
+                                <h:panelGroup rendered="#{rhBean.formationSelectionnee.participants.isEmpty()}">
+                                    <div class="fm-list-empty">Aucun participant inscrit pour le moment.</div>
+                                </h:panelGroup>
+                            </div>
+                        </div>
+                    </h:panelGroup>
+
+                    <div class="fm-dialog-actions">
+                        <p:commandButton value="Fermer" type="button"
+                            onclick="PF('dlgInscriptionForm').hide()"
+                            styleClass="ui-button-secondary"
+                            style="padding:8px 16px;"/>
+                        <p:commandButton value="Inscrire" icon="pi pi-check"
+                            action="#{rhBean.inscrireEmployeFormation}"
+                            update="formInscription :formTableFormations growl"
+                            style="padding:8px 18px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;"/>
+                    </div>
+                </div>
+            </p:dialog>
+        </h:form>
+    </ui:define>
+
+</ui:composition>

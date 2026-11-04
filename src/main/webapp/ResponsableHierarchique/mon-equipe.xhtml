@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+<h:head>
+    <title>Mon Equipe — Chef de Structure</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #f8fafc; color: #0f172a; font-family: 'Segoe UI', sans-serif; font-size: 14px; }
+        a { text-decoration: none; color: inherit; }
+
+        /* Layout */
+        .mg-sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+        .mg-sidebar { width: 220px; min-height: 100vh; background: #0f172a; display: flex; flex-direction: column;
+                      border-right: 1px solid #1e293b; flex-shrink: 0; }
+        .mg-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .mg-sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 20px 16px;
+                           border-bottom: 1px solid #1e293b; }
+        .logo-icon { width: 36px; height: 36px; border-radius: 8px; background: #16a34a;
+                     display: flex; align-items: center; justify-content: center;
+                     font-weight: 800; font-size: 13px; color: #fff; }
+        .logo-title { font-size: 13px; font-weight: 700; color: #f1f5f9; }
+        .logo-sub { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: .5px; }
+        .mg-nav { flex: 1; padding: 12px 0; }
+        .nav-section { padding: 8px 16px 4px; font-size: 10px; color: #475569;
+                       text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px;
+                    color: #94a3b8; font-size: 13px; cursor: pointer; transition: all .15s; }
+        .nav-item:hover { background: rgba(255,255,255,.05); color: #f1f5f9; }
+        .nav-item.active { background: rgba(22,163,74,.12); color: #4ade80;
+                           border-left: 3px solid #16a34a; }
+        .nav-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+        .mg-sidebar-footer { padding: 16px; border-top: 1px solid #1e293b; }
+        .sidebar-user { display: flex; align-items: center; gap: 10px; }
+        .sidebar-user-avatar { width: 32px; height: 32px; border-radius: 50%; background: #16a34a;
+                               display: flex; align-items: center; justify-content: center;
+                               font-weight: 700; font-size: 12px; color: #fff; flex-shrink: 0; }
+        .sidebar-user-name { font-size: 12px; font-weight: 600; color: #f1f5f9; }
+        .sidebar-user-role { font-size: 10px; color: #64748b; }
+
+        /* Topbar */
+        .mg-topbar { display: flex; align-items: center; justify-content: space-between;
+                     padding: 16px 28px; background: #fff; border-bottom: 1px solid #e2e8f0; }
+        .mg-topbar h1 { font-size: 20px; font-weight: 700; }
+        .breadcrumb { font-size: 12px; color: #64748b; margin-top: 2px; }
+        .mg-topbar-right { display: flex; align-items: center; gap: 12px; }
+        .topbar-badge { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+        .role-pill { background: #dcfce7; color: #15803d; padding: 2px 8px;
+                     border-radius: 999px; font-size: 10px; font-weight: 700; }
+        .btn-logout { background: #ef4444 !important; color: #fff !important; border: none !important;
+                      padding: 7px 14px !important; border-radius: 7px !important; font-size: 12px !important;
+                      cursor: pointer !important; }
+
+        /* Content */
+        .mg-content { padding: 24px 28px; overflow-y: auto; flex: 1; }
+
+        /* KPI Cards */
+        .kpi-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 16px; }
+        .kpi-card { border-radius: 10px; padding: 16px 20px; border: 1px solid transparent; }
+        .kpi-card.green  { background: #f0fdf4; border-color: #bbf7d0; }
+        .kpi-card.red    { background: #fef2f2; border-color: #fecaca; }
+        .kpi-card.amber  { background: #fffbeb; border-color: #fde68a; }
+        .kpi-card.slate  { background: #f8fafc; border-color: #e2e8f0; }
+        .kpi-label { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
+        .kpi-value { font-size: 28px; font-weight: 800; color: #0f172a; }
+        .kpi-sub   { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+        /* Section cards */
+        .section-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center;
+                          padding: 16px 20px; border-bottom: 1px solid #f1f5f9; }
+        .section-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; }
+        .section-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+        /* Employe card */
+        .employe-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; }
+        .employe-avatar { width: 40px; height: 40px; border-radius: 50%; background: #dcfce7;
+                          color: #16a34a; display: flex; align-items: center; justify-content: center;
+                          font-weight: 700; font-size: 13px; flex-shrink: 0; }
+
+        /* Buttons */
+        .btn { display: inline-flex; align-items: center; gap: 5px; padding: 8px 14px;
+               border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer;
+               border: none; transition: all .15s; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-primary { background: #2563eb; color: #fff; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-amber   { background: #f59e0b; color: #fff; }
+        .btn-amber:hover { background: #d97706; }
+        .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+        .btn-danger  { background: #ef4444; color: #fff; }
+
+        /* Badges */
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+        .badge-ACTIF    { background: #dcfce7; color: #15803d; }
+        .badge-INACTIF  { background: #fee2e2; color: #b91c1c; }
+        .badge-EN_ATTENTE { background: #fef3c7; color: #92400e; }
+        .badge-APPROUVE { background: #dcfce7; color: #15803d; }
+        .badge-REFUSE   { background: #fee2e2; color: #b91c1c; }
+        .badge-SOUMISE  { background: #dbeafe; color: #1d4ed8; }
+
+        /* Alert */
+        .alert { display: flex; gap: 12px; padding: 14px 16px; border-radius: 8px; font-size: 13px; }
+        .alert-info { background: #f0f9ff; border: 1px solid #bae6fd; color: #0369a1; }
+    </style>
+</h:head>
+<h:body>
+<div style="display:flex;">
+    <ui:include src="sidebar-manager.xhtml"><ui:param name="page" value="equipe"/></ui:include>
+
+    <div class="mg-main">
+        <div class="mg-topbar">
+            <div class="mg-topbar-left">
+                <h1>Mes Collaborateurs</h1>
+                <div class="breadcrumb">Mon equipe &gt; Fiches</div>
+            </div>
+            <div class="mg-topbar-right">
+                <div class="topbar-badge">
+                    <span>#{sessionBean.nomComplet}</span>
+                    <span class="role-pill">MANAGER</span>
+                </div>
+                <h:form>
+                    <p:commandButton value="Deconnexion" action="#{loginBean.logout}"
+                        styleClass="btn-logout" ajax="false"/>
+                </h:form>
+            </div>
+        </div>
+
+        <div class="mg-content">
+            <p:growl id="growl" showDetail="true" life="4000"/>
+
+            <!-- Stats mini -->
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
+                <div class="kpi-card green">
+                    <div class="kpi-label">Total equipe</div>
+                    <div class="kpi-value">#{managerBean.totalEquipe}</div>
+                </div>
+                <div class="kpi-card green">
+                    <div class="kpi-label">Presents</div>
+                    <div class="kpi-value">#{managerBean.presentsAujourdhui}</div>
+                </div>
+                <div class="kpi-card red">
+                    <div class="kpi-label">Absents</div>
+                    <div class="kpi-value">#{managerBean.absentsAujourdhui}</div>
+                </div>
+            </div>
+
+            <!-- ONGLETS HIERARCHIQUES -->
+            <p:tabView style="margin-bottom:24px;">
+
+                <!-- Onglet 1 : Vue globale -->
+                <p:tab title="Toute l'equipe (#{managerBean.totalEquipe})">
+                    <h:form id="formTableEquipe" style="padding:16px 0;">
+                        <p:dataTable value="#{managerBean.monEquipe}" var="e"
+                                     rows="15" paginator="true"
+                                     paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink}"
+                                     emptyMessage="Aucun collaborateur." style="border:none;">
+                            <p:column headerText="Matricule" style="padding:10px 12px;width:100px;">
+                                <span style="font-family:monospace;font-size:11px;background:#f0fdf4;padding:2px 7px;border-radius:4px;">
+                                    #{e.matricule}
+                                </span>
+                            </p:column>
+                            <p:column headerText="Collaborateur" style="padding:10px 12px;">
+                                <div style="font-weight:600;font-size:13px;">#{e.nomComplet}</div>
+                                <div style="font-size:11px;color:#64748b;">#{e.email}</div>
+                            </p:column>
+                            <p:column headerText="Niveau" style="padding:10px 12px;width:120px;">
+                                <span style="font-size:12px;">#{e.getLabelNiveau()}</span>
+                            </p:column>
+                            <p:column headerText="Poste" style="padding:10px 12px;">
+                                #{e.intiutePoste}
+                            </p:column>
+                            <p:column headerText="Statut" style="padding:10px 12px;width:90px;">
+                                <span class="badge badge-#{e.statut}">#{e.statut}</span>
+                            </p:column>
+                            <p:column style="padding:10px 12px;width:160px;text-align:right;">
+                                <p:commandButton value="Evaluer"
+                                    action="#{managerBean.preparerNouvelleEvaluation(e)}"
+                                    oncomplete="PF('dlgEval').show()"
+                                    update="formEvalDialog"
+                                    styleClass="btn btn-sm btn-primary"
+                                    style="margin-right:4px;"/>
+                                <p:commandButton value="Mutation"
+                                    action="#{managerBean.preparerNouveauMouvement(e)}"
+                                    oncomplete="PF('dlgMutation').show()"
+                                    update="formMutationDialog"
+                                    styleClass="btn btn-sm btn-amber"/>
+                            </p:column>
+                        </p:dataTable>
+                    </h:form>
+                </p:tab>
+
+                <!-- Onglet 2 : Chefs de Division -->
+                <p:tab title="Chefs de Division (#{managerBean.chefsDivision.size()})">
+                    <div style="overflow-x:auto;padding:16px 0;">
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                            <thead>
+                                <tr style="background:#f8fafc;">
+                                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;">Nom</th>
+                                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;">Poste</th>
+                                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;">Division</th>
+                                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;">Email</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <ui:repeat value="#{managerBean.chefsDivision}" var="e">
+                                    <tr style="border-bottom:1px solid #f1f5f9;">
+                                        <td style="padding:10px 12px;font-weight:700;">#{e.nomComplet}</td>
+                                        <td style="padding:10px 12px;">#{e.intiutePoste}</td>
+                                        <td style="padding:10px 12px;">#{e.nomDivision}</td>
+                                        <td style="padding:10px 12px;color:#64748b;">#{e.email}</td>
+                                    </tr>
+                                </ui:repeat>
+                            </tbody>
+                        </table>
+                        <h:panelGroup rendered="#{empty managerBean.chefsDivision}">
+                            <div style="padding:20px;text-align:center;color:#94a3b8;">Aucun chef de division.</div>
+                        </h:panelGroup>
+                    </div>
+                </p:tab>
+
+                <!-- Onglet 3 : Chefs de Service -->
+                <p:tab title="Chefs de Service (#{managerBean.chefsService.size()})">
+                    <div style="overflow-x:auto;padding:16px 0;">
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                            <thead>
+                                <tr style="background:#f8fafc;">
+                                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;">Nom</th>
+                                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;">Poste</th>
+                                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;">Service</th>
+                                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;">Division</th>
+                                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;">Email</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <ui:repeat value="#{managerBean.chefsService}" var="e">
+                                    <tr style="border-bottom:1px solid #f1f5f9;">
+                                        <td style="padding:10px 12px;font-weight:700;">#{e.nomComplet}</td>
+                                        <td style="padding:10px 12px;">#{e.intiutePoste}</td>
+                                        <td style="padding:10px 12px;">#{e.nomService}</td>
+                                        <td style="padding:10px 12px;">#{e.nomDivision}</td>
+                                        <td style="padding:10px 12px;color:#64748b;">#{e.email}</td>
+                                    </tr>
+                                </ui:repeat>
+                            </tbody>
+                        </table>
+                        <h:panelGroup rendered="#{empty managerBean.chefsService}">
+                            <div style="padding:20px;text-align:center;color:#94a3b8;">Aucun chef de service.</div>
+                        </h:panelGroup>
+                    </div>
+                </p:tab>
+
+                <!-- Onglet 4 : Chefs de Bureau -->
+                <p:tab title="Chefs de Bureau (#{managerBean.chefsBureau.size()})">
+                    <div style="overflow-x:auto;padding:16px 0;">
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                            <thead>
+                                <tr style="background:#f8fafc;">
+                                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;">Nom</th>
+                                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;">Poste</th>
+                                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;">Bureau</th>
+                                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;">Service</th>
+                                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;">Email</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <ui:repeat value="#{managerBean.chefsBureau}" var="e">
+                                    <tr style="border-bottom:1px solid #f1f5f9;">
+                                        <td style="padding:10px 12px;font-weight:700;">#{e.nomComplet}</td>
+                                        <td style="padding:10px 12px;">#{e.intiutePoste}</td>
+                                        <td style="padding:10px 12px;">#{e.nomBureau}</td>
+                                        <td style="padding:10px 12px;">#{e.nomService}</td>
+                                        <td style="padding:10px 12px;color:#64748b;">#{e.email}</td>
+                                    </tr>
+                                </ui:repeat>
+                            </tbody>
+                        </table>
+                        <h:panelGroup rendered="#{empty managerBean.chefsBureau}">
+                            <div style="padding:20px;text-align:center;color:#94a3b8;">Aucun chef de bureau.</div>
+                        </h:panelGroup>
+                    </div>
+                </p:tab>
+
+                <!-- Onglet 5 : Employes standards -->
+                <p:tab title="Employes (#{managerBean.employesStandards.size()})">
+                    <div style="overflow-x:auto;padding:16px 0;">
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                            <thead>
+                                <tr style="background:#f8fafc;">
+                                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;">Nom</th>
+                                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;">Poste</th>
+                                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;">Bureau</th>
+                                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;">Service</th>
+                                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;">Contrat</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <ui:repeat value="#{managerBean.employesStandards}" var="e">
+                                    <tr style="border-bottom:1px solid #f1f5f9;">
+                                        <td style="padding:10px 12px;font-weight:700;">#{e.nomComplet}</td>
+                                        <td style="padding:10px 12px;">#{e.intiutePoste}</td>
+                                        <td style="padding:10px 12px;">#{e.nomBureau}</td>
+                                        <td style="padding:10px 12px;">#{e.nomService}</td>
+                                        <td style="padding:10px 12px;">#{e.typeContrat}</td>
+                                    </tr>
+                                </ui:repeat>
+                            </tbody>
+                        </table>
+                        <h:panelGroup rendered="#{empty managerBean.employesStandards}">
+                            <div style="padding:20px;text-align:center;color:#94a3b8;">Aucun employe standard.</div>
+                        </h:panelGroup>
+                    </div>
+                </p:tab>
+
+            </p:tabView>
+
+            <!-- DIALOG : Evaluation rapide -->
+            <h:form id="formEvalDialog">
+                <p:dialog header="Nouvelle evaluation" widgetVar="dlgEval"
+                          modal="true" width="600" resizable="false" closeOnEscape="true">
+                    <div style="padding:20px;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+                            <div>
+                                <label style="display:block;font-size:11px;color:#64748b;margin-bottom:4px;">Type</label>
+                                <p:selectOneMenu value="#{managerBean.evaluation.typeEvaluation}" style="width:100%;">
+                                    <f:selectItem itemLabel="Evaluation annuelle"    itemValue="ANNUELLE"/>
+                                    <f:selectItem itemLabel="Evaluation semestrielle" itemValue="SEMESTRIELLE"/>
+                                    <f:selectItem itemLabel="Periode d'essai"        itemValue="PERIODE_ESSAI"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div>
+                                <label style="display:block;font-size:11px;color:#64748b;margin-bottom:4px;">Periode</label>
+                                <p:inputText value="#{managerBean.evaluation.periode}" style="width:100%;"/>
+                            </div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+                            <div>
+                                <label style="display:block;font-size:11px;color:#64748b;margin-bottom:4px;">Note Objectifs /5</label>
+                                <p:inputNumber value="#{managerBean.evaluation.noteObjectifs}" min="0" max="5" decimalPlaces="1" style="width:100%;"/>
+                            </div>
+                            <div>
+                                <label style="display:block;font-size:11px;color:#64748b;margin-bottom:4px;">Note Competences /5</label>
+                                <p:inputNumber value="#{managerBean.evaluation.noteCompetences}" min="0" max="5" decimalPlaces="1" style="width:100%;"/>
+                            </div>
+                        </div>
+                        <div style="text-align:right;padding-top:14px;border-top:1px solid #e2e8f0;">
+                            <p:commandButton value="Annuler"
+                                oncomplete="PF('dlgEval').hide()"
+                                styleClass="btn btn-secondary" style="margin-right:8px;" ajax="false"/>
+                            <p:commandButton value="Soumettre"
+                                action="#{managerBean.sauvegarderEvaluation}"
+                                update="growl"
+                                oncomplete="if(!args.validationFailed) PF('dlgEval').hide();"
+                                styleClass="btn btn-primary"/>
+                        </div>
+                    </div>
+                </p:dialog>
+            </h:form>
+
+            <!-- DIALOG : Mutation -->
+            <h:form id="formMutationDialog">
+                <p:dialog header="Demande de mutation / promotion" widgetVar="dlgMutation"
+                          modal="true" width="560" resizable="false" closeOnEscape="true">
+                    <div style="padding:20px;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+                            <div>
+                                <label style="display:block;font-size:11px;color:#64748b;margin-bottom:4px;">Type de demande</label>
+                                <p:selectOneMenu value="#{managerBean.mouvement.typeMouvement}" style="width:100%;">
+                                    <f:selectItem itemLabel="Promotion"        itemValue="PROMOTION"/>
+                                    <f:selectItem itemLabel="Mutation"         itemValue="MUTATION"/>
+                                    <f:selectItem itemLabel="Mobilite interne" itemValue="MOBILITE"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div>
+                                <label style="display:block;font-size:11px;color:#64748b;margin-bottom:4px;">Nouveau poste</label>
+                                <p:inputText value="#{managerBean.mouvement.nouveauPoste}" style="width:100%;"/>
+                            </div>
+                        </div>
+                        <div style="margin-bottom:16px;">
+                            <label style="display:block;font-size:11px;color:#64748b;margin-bottom:4px;">Justification</label>
+                            <p:inputTextarea value="#{managerBean.mouvement.motif}" rows="3" style="width:100%;"/>
+                        </div>
+                        <div style="text-align:right;padding-top:14px;border-top:1px solid #e2e8f0;">
+                            <p:commandButton value="Annuler"
+                                oncomplete="PF('dlgMutation').hide()"
+                                styleClass="btn btn-secondary" style="margin-right:8px;" ajax="false"/>
+                            <p:commandButton value="Soumettre au RH"
+                                action="#{managerBean.soumettreMouvement}"
+                                update="growl"
+                                oncomplete="if(!args.validationFailed) PF('dlgMutation').hide();"
+                                styleClass="btn btn-amber"/>
+                        </div>
+                    </div>
+                </p:dialog>
+            </h:form>
+
+        </div>
+    </div>
+</div>
+</h:body>
+</html>

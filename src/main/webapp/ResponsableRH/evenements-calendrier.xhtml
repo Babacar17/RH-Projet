@@ -1,0 +1,133 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <ui:param name="page" value="evenements"/>
+    <ui:define name="title">Calendrier des événements — Espace RH</ui:define>
+    <ui:define name="pageTitle">Calendrier des événements</ui:define>
+    <ui:define name="breadcrumb">
+        <a href="evenements.xhtml" style="color:#64748b;text-decoration:none;">Espace RH › Événements</a>
+        › Vue calendrier
+    </ui:define>
+
+    <ui:define name="styles">
+        <style>
+            .calendar-wrap { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+                             padding: 20px; min-height: 600px; }
+            .legende { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 18px;
+                       font-size: 12px; color: #64748b; }
+            .legende-item { display: inline-flex; align-items: center; gap: 6px; }
+            .legende-dot  { width: 10px; height: 10px; border-radius: 3px; }
+        </style>
+        <!-- FullCalendar 6 from CDN -->
+        <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css" rel="stylesheet"/>
+    </ui:define>
+
+    <ui:define name="content">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+            <a href="evenements.xhtml" style="display:inline-flex;align-items:center;gap:6px;
+                padding:8px 14px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;
+                border-radius:7px;font-size:12px;text-decoration:none;">
+                <i class="pi pi-list"/> Vue liste
+            </a>
+        </div>
+
+        <div class="calendar-wrap">
+            <div class="legende">
+                <span class="legende-item"><span class="legende-dot" style="background:#1d4ed8;"/> Séminaire</span>
+                <span class="legende-item"><span class="legende-dot" style="background:#7c3aed;"/> Réunion</span>
+                <span class="legende-item"><span class="legende-dot" style="background:#f59e0b;"/> Voyage d'affaires</span>
+                <span class="legende-item"><span class="legende-dot" style="background:#15803d;"/> Formation externe</span>
+                <span class="legende-item"><span class="legende-dot" style="background:#0891b2;"/> Workshop</span>
+                <span class="legende-item"><span class="legende-dot" style="background:#dc2626;"/> Conférence</span>
+                <span class="legende-item"><span class="legende-dot" style="background:#16a34a;"/> Journée intégration</span>
+            </div>
+
+            <!-- Calendrier construit avec FullCalendar via JS (compat PrimeFaces sans dep) -->
+            <div id="cal"></div>
+        </div>
+    </ui:define>
+
+    <ui:define name="scripts">
+        <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+        <!-- Données events injectées en JSON -->
+        <script id="evtData" type="application/json">
+[
+<ui:repeat value="#{evenementBean.evenements}" var="e" varStatus="vs">
+{
+    "id": "#{e.id}",
+    "title": "#{e.titre}",
+    "start": "#{e.dateDebut}",
+    "end":   "#{e.dateFin}",
+    "type":  "#{e.type}",
+    "statut":"#{e.statut}",
+    "lieu":  "#{e.lieu}",
+    "modalite":"#{e.modalite}",
+    "participants":#{e.nombreParticipants}
+}#{vs.last ? '' : ','}
+</ui:repeat>
+]
+        </script>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var raw = document.getElementById('evtData').textContent;
+                var data = [];
+                try { data = JSON.parse(raw); } catch (e) { console.error('parse evt', e); }
+
+                var couleurs = {
+                    'REUNION':    '#7c3aed',
+                    'FORMATION':  '#15803d',
+                    'SEMINAIRE':  '#1d4ed8',
+                    'ATELIER':    '#0891b2',
+                    'CONFERENCE': '#dc2626',
+                    'AUTRE':      '#64748b'
+                };
+
+                var events = data.map(function(e) {
+                    var color = couleurs[e.type] || '#64748b';
+                    if (e.statut === 'ANNULE') color = '#94a3b8';
+                    return {
+                        id: e.id,
+                        title: e.title + ' (' + e.participants + ')',
+                        start: e.start,
+                        end: e.end,
+                        backgroundColor: color,
+                        borderColor: color,
+                        extendedProps: e
+                    };
+                });
+
+                var el = document.getElementById('cal');
+                if (!el || !window.FullCalendar) return;
+                var calendar = new FullCalendar.Calendar(el, {
+                    initialView: 'dayGridMonth',
+                    locale: 'fr',
+                    buttonText: { today:"Aujourd'hui", month:'Mois', week:'Semaine', day:'Jour', list:'Liste' },
+                    headerToolbar: {
+                        left:'prev,next today',
+                        center:'title',
+                        right:'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
+                    },
+                    height: 700,
+                    events: events,
+                    eventClick: function(info) {
+                        var p = info.event.extendedProps;
+                        alert(info.event.title + '\n\n' +
+                              'Type : ' + p.type + '\n' +
+                              'Statut : ' + p.statut + '\n' +
+                              'Modalité : ' + p.modalite + '\n' +
+                              (p.lieu ? 'Lieu : ' + p.lieu + '\n' : '') +
+                              'Participants : ' + p.participants);
+                    }
+                });
+                calendar.render();
+            });
+        </script>
+    </ui:define>
+
+</ui:composition>

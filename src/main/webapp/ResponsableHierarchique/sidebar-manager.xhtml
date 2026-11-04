@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+<ui:composition>
+
+<style>
+    .mg-notif-wrap { position:relative;margin-left:auto; }
+    .mg-notif-bell {
+        position:relative;width:34px;height:34px;border-radius:50%;
+        background:rgba(255,255,255,.10);color:#f1f5f9;border:none;cursor:pointer;
+        display:flex;align-items:center;justify-content:center;transition:background .15s;
+    }
+    .mg-notif-bell:hover { background:rgba(255,255,255,.22); }
+    .mg-notif-badge {
+        position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;
+        min-width:18px;height:18px;border-radius:9px;font-size:10px;font-weight:700;
+        display:flex;align-items:center;justify-content:center;padding:0 5px;
+        border:2px solid #0f172a;
+    }
+    .mg-notif-panel {
+        position:fixed;top:70px;left:228px;width:340px;max-height:480px;overflow-y:auto;
+        background:#fff;border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.28);
+        display:none;z-index:9999;color:#0f172a;
+    }
+    .mg-notif-panel.open { display:block; }
+    .mg-notif-header {
+        padding:12px 14px;border-bottom:1px solid #e2e8f0;
+        display:flex;justify-content:space-between;align-items:center;
+    }
+    .mg-notif-title { font-size:13px;font-weight:800; }
+    .mg-notif-empty { padding:40px 14px;text-align:center;color:#94a3b8;font-size:12px; }
+    .mg-notif-item {
+        display:flex;gap:10px;padding:12px 14px;border-bottom:1px solid #f1f5f9;
+        cursor:pointer;transition:background .15s;text-decoration:none;color:#0f172a;
+    }
+    .mg-notif-item:hover { background:#f8fafc; }
+    .mg-notif-item.unread { background:#eff6ff; }
+    .mg-notif-icon {
+        width:32px;height:32px;border-radius:8px;display:flex;align-items:center;
+        justify-content:center;font-size:13px;flex-shrink:0;
+    }
+    .mg-notif-content { flex:1;min-width:0; }
+    .mg-notif-text-title { font-size:12px;font-weight:700;margin-bottom:2px; }
+    .mg-notif-msg { font-size:11px;color:#64748b; }
+    .mg-notif-time { font-size:10px;color:#94a3b8;margin-top:3px; }
+    .mg-notif-mark-all {
+        background:none;border:none;color:#2563eb;font-size:11px;font-weight:600;cursor:pointer;
+    }
+    .mg-jury-item { cursor:pointer; align-items:flex-start; }
+    .mg-jury-item .jury-titre { font-weight:600; font-size:13px; display:block; }
+    .mg-jury-item .jury-role  { font-size:11px; opacity:.7; display:block; }
+</style>
+
+<div class="mg-sidebar" style="z-index:60;">
+    <div class="mg-sidebar-logo" style="position:relative;">
+        <div class="logo-icon">CS</div>
+        <div style="flex:1;">
+            <div class="logo-title">Mon Espace</div>
+            <div class="logo-sub">Chef de Structure</div>
+        </div>
+
+        <!-- ═══ Cloche notifications ═══ -->
+        <div class="mg-notif-wrap">
+            <button type="button" class="mg-notif-bell"
+                    onclick="document.getElementById('mgNotifPanel').classList.toggle('open');
+                             event.stopPropagation();">
+                <i class="pi pi-bell" style="font-size:14px;"></i>
+                <h:panelGroup rendered="#{notificationBean.compteurNonLues gt 0}">
+                    <span class="mg-notif-badge">#{notificationBean.compteurNonLues}</span>
+                </h:panelGroup>
+            </button>
+
+            <div id="mgNotifPanel" class="mg-notif-panel"
+                 onclick="event.stopPropagation();">
+                <div class="mg-notif-header">
+                    <span class="mg-notif-title">
+                        Notifications
+                        <span style="color:#94a3b8;font-weight:500;">(#{notificationBean.compteurNonLues} non lues)</span>
+                    </span>
+                    <h:form style="display:inline;">
+                        <p:commandButton value="Tout marquer lu"
+                            action="#{notificationBean.marquerToutesLues}"
+                            update="@form :mgNotifList"
+                            styleClass="mg-notif-mark-all"
+                            rendered="#{notificationBean.compteurNonLues gt 0}"/>
+                    </h:form>
+                </div>
+                <h:form id="mgNotifList">
+                    <h:panelGroup rendered="#{notificationBean.recentes.isEmpty()}">
+                        <div class="mg-notif-empty">
+                            <i class="pi pi-inbox" style="font-size:28px;color:#cbd5e1;display:block;margin-bottom:8px;"/>
+                            Aucune notification.
+                        </div>
+                    </h:panelGroup>
+                    <ui:repeat value="#{notificationBean.recentes}" var="n">
+                        <p:commandLink action="#{notificationBean.marquerLue(n.id)}"
+                                       update="@form"
+                                       oncomplete="if (#{not empty n.lienAction}) { window.location='#{request.contextPath}#{n.lienAction}#{not empty n.entiteLieeId ? '?entiteId=' : ''}#{n.entiteLieeId}'; }"
+                                       styleClass="mg-notif-item #{n.estLue ? '' : 'unread'}">
+                            <div class="mg-notif-icon"
+                                 style="background:#{notificationBean.getCouleur(n.priorite)}22;
+                                        color:#{notificationBean.getCouleur(n.priorite)};">
+                                <i class="pi #{notificationBean.getIcone(n.type)}"/>
+                            </div>
+                            <div class="mg-notif-content">
+                                <div class="mg-notif-text-title">#{n.titre}</div>
+                                <div class="mg-notif-msg">#{n.message}</div>
+                                <div class="mg-notif-time">#{notificationBean.getDateRelative(n.dateCreation)}</div>
+                            </div>
+                        </p:commandLink>
+                    </ui:repeat>
+                </h:form>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('click', function() {
+            var p = document.getElementById('mgNotifPanel');
+            if (p) p.classList.remove('open');
+        });
+    </script>
+
+    <style>
+        .mg-nav .nav-group { margin-bottom: 4px; }
+        .mg-nav .nav-section { cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; }
+        .mg-nav .nav-section::after { content: '>'; font-size: 12px; transition: transform .2s; }
+        .mg-nav .nav-group.open .nav-section::after { transform: rotate(90deg); }
+        .mg-nav .nav-group-body { display: none; }
+        .mg-nav .nav-group.open .nav-group-body { display: block; }
+    </style>
+
+    <nav class="mg-nav">
+        <div class="nav-group #{page == 'dashboard' ? 'open' : ''}">
+            <div class="nav-section" onclick="this.parentElement.classList.toggle('open')">VUE D'ENSEMBLE</div>
+            <div class="nav-group-body">
+                <h:outputLink value="#{request.contextPath}/ResponsableHierarchique/dashboard.xhtml" styleClass="nav-item #{page == 'dashboard' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Tableau de bord
+                </h:outputLink>
+            </div>
+        </div>
+
+        <div class="nav-group #{page == 'equipe' or page == 'planning' or page == 'organigramme' ? 'open' : ''}">
+            <div class="nav-section" onclick="this.parentElement.classList.toggle('open')">MON EQUIPE</div>
+            <div class="nav-group-body">
+                <h:outputLink value="#{request.contextPath}/ResponsableHierarchique/mon-equipe.xhtml" styleClass="nav-item #{page == 'equipe' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Mon Equipe
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/ResponsableHierarchique/planning.xhtml" styleClass="nav-item #{page == 'planning' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Planning et presences
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/ResponsableHierarchique/organigramme.xhtml" styleClass="nav-item #{page == 'organigramme' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Organigramme
+                </h:outputLink>
+            </div>
+        </div>
+
+        <div class="nav-group #{page == 'conges' or page == 'evaluations' or page == 'mutations' ? 'open' : ''}">
+            <div class="nav-section" onclick="this.parentElement.classList.toggle('open')">GESTION</div>
+            <div class="nav-group-body">
+                <h:outputLink value="#{request.contextPath}/ResponsableHierarchique/conges-equipe.xhtml" styleClass="nav-item #{page == 'conges' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Conges de l'equipe
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/ResponsableHierarchique/evaluations.xhtml" styleClass="nav-item #{page == 'evaluations' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Evaluations
+                </h:outputLink>
+                <h:outputLink value="#{request.contextPath}/ResponsableHierarchique/mutations.xhtml" styleClass="nav-item #{page == 'mutations' ? 'active' : ''}">
+                    <div class="nav-dot"></div> Mutations et Promotions
+                </h:outputLink>
+            </div>
+        </div>
+
+        <h:panelGroup rendered="#{not empty managerBean.mesJurys}">
+            <div class="nav-group #{page == 'notation-jury' ? 'open' : ''}">
+                <div class="nav-section" onclick="this.parentElement.classList.toggle('open')">CONCOURS &amp; JURY</div>
+                <div class="nav-group-body">
+                    <ui:repeat value="#{managerBean.mesJurys}" var="j">
+                        <a href="#{request.contextPath}/ResponsableHierarchique/notation-jury.xhtml?id=#{j.comite.offre.id}"
+                           class="nav-item mg-jury-item">
+                            <div class="nav-dot"></div>
+                            <span>
+                                <span class="jury-titre">#{j.comite.offre.titre}</span>
+                                <span class="jury-role">#{j.role}</span>
+                            </span>
+                        </a>
+                    </ui:repeat>
+                </div>
+            </div>
+        </h:panelGroup>
+
+        <div class="nav-group">
+            <div class="nav-section" onclick="this.parentElement.classList.toggle('open')">NAVIGATION</div>
+            <div class="nav-group-body">
+                <h:outputLink value="#{request.contextPath}/Principal/index.xhtml" styleClass="nav-item">
+                    <div class="nav-dot"></div> Portail public
+                </h:outputLink>
+            </div>
+        </div>
+    </nav>
+
+    <div class="mg-sidebar-footer">
+        <div class="sidebar-user">
+            <div class="sidebar-user-avatar">
+                #{not empty sessionBean.nomComplet ? sessionBean.nomComplet.substring(0,1) : 'M'}
+            </div>
+            <div>
+                <div class="sidebar-user-name">#{sessionBean.nomComplet}</div>
+                <div class="sidebar-user-role">Chef de Structure</div>
+            </div>
+        </div>
+        <h:form style="margin-top:12px;">
+            <p:commandButton value="Déconnexion" icon="pi pi-sign-out" action="#{loginBean.logout}" ajax="false"
+                             style="width:100%;background:#ef4444;color:#fff;border:none;border-radius:8px;font-weight:600;"/>
+        </h:form>
+    </div>
+</div>
+
+</ui:composition>
+</html>

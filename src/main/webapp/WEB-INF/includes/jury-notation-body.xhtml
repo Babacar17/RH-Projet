@@ -1,0 +1,553 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+    <!-- NOTE : f:metadata (viewParam id / viewAction charger) vit dans les deux pages
+         hote (Employes/notation-jury.xhtml, ResponsableHierarchique/notation-jury.xhtml),
+         pas ici — f:metadata n'est traite par JSF que comme enfant direct de la vue. -->
+
+    <style>
+        .jn-wrap{max-width:1240px;}
+        .jn-header{margin-bottom:20px;}
+        .jn-header h1{font-size:20px;font-weight:700;margin:0 0 4px;}
+        .jn-header .jn-sub{font-size:13px;color:#64748b;}
+        .jn-role-badge{display:inline-block;background:#eef2ff;color:#3730a3;font-size:11px;font-weight:700;
+                       padding:3px 10px;border-radius:12px;margin-left:8px;vertical-align:middle;}
+        .jn-denied{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:16px 20px;border-radius:8px;font-size:14px;}
+        .jn-empty{background:#f8fafc;border:1px solid #e2e8f0;color:#64748b;padding:16px 20px;border-radius:8px;font-size:13px;}
+
+        .jn-cand-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:20px;overflow:hidden;}
+        .jn-cand-head{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;background:#f8fafc;border-bottom:1px solid #e2e8f0;}
+        .jn-cand-name{font-weight:700;font-size:15px;color:#0f172a;}
+        .jn-cand-statut{font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;background:#e0f2fe;color:#075985;}
+        .jn-complet{background:#f0fdf4;color:#166534;border-bottom:1px solid #bbf7d0;padding:8px 20px;font-size:12.5px;font-weight:600;}
+        .jn-incomplet{background:#fef2f2;color:#991b1b;border-bottom:1px solid #fecaca;padding:8px 20px;font-size:12.5px;}
+
+        .jn-acc{border:none;border-radius:0;}
+        .jn-acc .ui-accordion-header{font-size:13px;font-weight:700;color:#334155;background:#fafbfc;border:none;border-top:1px solid #e2e8f0;border-radius:0;margin:0;padding:12px 20px;}
+        .jn-acc .ui-accordion-header.ui-state-active{color:#1d4ed8;background:#eff6ff;}
+        .jn-acc .ui-accordion-content{padding:16px 20px;border:none;border-radius:0;background:#fff;}
+        .jn-notes{display:flex;flex-direction:column;}
+        .jn-acc.jn-acc-cand{border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#fff;}
+        .jn-acc.jn-acc-cand > .ui-accordion-header{font-size:15px;font-weight:700;color:#0f172a;padding:14px 20px;border-top:none;background:#f8fafc;}
+        .jn-acc.jn-acc-cand > .ui-accordion-header.ui-state-active{background:#f8fafc;color:#0f172a;}
+        .jn-acc.jn-acc-cand > .ui-accordion-content{padding:0;}
+        .jn-section-title{font-size:11.5px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin:0 0 10px;}
+        .jn-sub-title{font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.4px;margin:12px 0 4px;}
+        .jn-lettre{font-size:12.5px;color:#334155;background:#fff;border:1px solid #e2e8f0;border-radius:6px;
+                   padding:10px 12px;white-space:pre-wrap;max-height:140px;overflow-y:auto;}
+        .doc-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px;}
+        .doc-row:last-child{border-bottom:none;}
+        .doc-name{font-weight:600;color:#0f172a;}
+        .doc-sub{font-size:11.5px;color:#94a3b8;}
+        .dl-link{color:#2563eb;font-weight:600;font-size:12.5px;text-decoration:none;white-space:nowrap;}
+        .dl-link:hover{text-decoration:underline;}
+        .dl-none{color:#94a3b8;font-size:12px;font-style:italic;white-space:nowrap;}
+        .jn-contact{font-size:12.5px;color:#475569;margin-bottom:6px;}
+
+        .jn-element-max{font-size:11px;color:#94a3b8;margin-left:4px;}
+
+        /* ── Bulletin de notes : table classique, pas de grille à largeurs fixes qui déborde ── */
+        .jn-bulletin{width:100%;border-collapse:collapse;table-layout:fixed;}
+        .jn-bulletin thead th{font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.4px;
+                               text-align:left;padding:6px 8px;border-bottom:1px solid #e2e8f0;}
+        .jn-bulletin .jn-col-max,.jn-bulletin .jn-col-note{text-align:center;}
+        .jn-bulletin .jn-col-max{width:70px;}
+        .jn-bulletin .jn-col-note{width:90px;}
+        .jn-bulletin .jn-col-comment{width:34%;}
+        .jn-bulletin tbody td{padding:8px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#334155;vertical-align:middle;}
+        .jn-bulletin .jn-rubrique-row td{background:#f8fafc;font-weight:700;font-size:12px;color:#1e293b;}
+        .jn-bulletin td.jn-col-max{color:#94a3b8;}
+        .jn-bulletin td.jn-col-note .ui-inputnumber{width:100%;}
+        .jn-bulletin td.jn-col-note input{width:100%;box-sizing:border-box;}
+        .jn-bulletin td.jn-col-comment input{width:100%;box-sizing:border-box;}
+        .jn-cand-actions{margin-top:auto;padding-top:16px;text-align:right;}
+
+        /* ══════ Carte d'offre : fil d'ariane, échéance, parcours (stepper), avancement global ══════ */
+        .jn-offer-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;margin-bottom:20px;}
+        .jn-offer-title{font-size:18px;font-weight:700;color:#0f172a;margin:0;display:inline;}
+        .jn-breadcrumb{font-size:12px;color:#64748b;margin-top:4px;}
+        .jn-deadline-pill{display:inline-block;margin-top:12px;font-weight:700;font-size:11.5px;padding:6px 12px;border-radius:8px;}
+
+        .jn-stepper{display:flex;align-items:flex-start;margin-top:18px;padding-top:4px;}
+        .jn-step{display:flex;flex-direction:column;align-items:center;text-align:center;min-width:110px;}
+        .jn-step-circle{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+                         font-size:12px;font-weight:700;margin-bottom:6px;border:2px solid #cbd5e1;background:#fff;color:#94a3b8;}
+        .jn-step.jn-step-done .jn-step-circle{background:#16a34a;border-color:#16a34a;color:#fff;}
+        .jn-step.jn-step-courant .jn-step-circle{background:#2563eb;border-color:#2563eb;color:#fff;}
+        .jn-step.jn-step-planifiee .jn-step-circle{border-color:#2563eb;color:#2563eb;}
+        .jn-step-label{font-size:11px;color:#334155;font-weight:600;}
+        .jn-step-line{flex:1;height:2px;background:#e2e8f0;margin-top:14px;min-width:20px;}
+
+        .jn-progress-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:18px;font-size:12.5px;color:#475569;font-weight:600;}
+        .jn-progress-bar{background:#f1f5f9;border-radius:20px;height:8px;overflow:hidden;margin-top:8px;}
+        .jn-progress-fill{background:#2563eb;height:100%;border-radius:20px;}
+
+        /* ══════ Carte candidat : en-tête riche cliquable (avatar, badges, action) ══════ */
+        .jn-cand-card.jn-cand-riche{border:1px solid #e2e8f0;border-radius:10px;margin-bottom:14px;overflow:hidden;background:#fff;}
+        .jn-cand-head-riche{display:flex;align-items:center;gap:14px;padding:14px 18px;cursor:pointer;background:#fff;}
+        .jn-cand-head-riche:hover{background:#f8fafc;}
+        .jn-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+                    color:#fff;font-weight:700;font-size:14px;flex-shrink:0;}
+        .jn-cand-info{flex:1;min-width:0;}
+        .jn-cand-nom{font-weight:700;font-size:14.5px;color:#0f172a;}
+        .jn-cand-contact{font-size:11.5px;color:#94a3b8;}
+        .jn-mini-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;}
+        .jn-mini-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+        .jn-mini-badge-ok{background:#dcfce7;color:#15803d;}
+        .jn-mini-badge-warn{background:#fef3c7;color:#92400e;}
+        .jn-cand-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+        .jn-score-pill{font-weight:700;font-size:13px;color:#0f172a;white-space:nowrap;}
+        .jn-chevron{transition:transform .15s ease;color:#94a3b8;}
+        .jn-chevron.jn-rot{transform:rotate(180deg);}
+        .jn-cand-body{border-top:1px solid #e2e8f0;}
+
+        .jn-section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 18px;
+                          cursor:pointer;background:#fafbfc;border-bottom:1px solid #f1f5f9;}
+        .jn-section-head:hover{background:#f1f5f9;}
+        .jn-section-head-title{font-size:12px;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:.4px;}
+        .jn-section-body{padding:16px 18px;}
+
+        .jn-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:7px;font-size:12.5px;
+                font-weight:700;cursor:pointer;border:none;white-space:nowrap;}
+        .jn-btn-primary{background:#2563eb;color:#fff;}
+        .jn-btn-primary:hover{background:#1d4ed8;}
+        .jn-btn-primary:disabled{background:#cbd5e1;color:#64748b;cursor:not-allowed;}
+        .jn-btn-warning{background:#d97706;color:#fff;}
+        .jn-btn-warning:hover{background:#b45309;}
+        .jn-btn-outline{background:#fff;color:#334155;border:1px solid #cbd5e1;}
+        .jn-btn-outline:hover{background:#f8fafc;}
+
+        /* Statut de candidature — indépendant du style de la page hôte (Employés / Responsable Hiérarchique). */
+        .jn-statut-badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;white-space:nowrap;}
+        .jn-statut-RECUE{background:#dbeafe;color:#1d4ed8;}
+        .jn-statut-EN_COURS{background:#fef3c7;color:#b45309;}
+        .jn-statut-ENTRETIEN{background:#ede9fe;color:#7c3aed;}
+        .jn-statut-RETENUE{background:#dcfce7;color:#15803d;}
+        .jn-statut-RECRUTEE{background:#dcfce7;color:#15803d;}
+        .jn-statut-REFUSEE{background:#fee2e2;color:#b91c1c;}
+        .dv-overlay{position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:9000;align-items:center;justify-content:center;padding:24px;}
+        .dv-box{background:#fff;border-radius:12px;width:min(1000px,100%);height:86vh;display:flex;flex-direction:column;overflow:hidden;}
+        .dv-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #e2e8f0;font-weight:700;font-size:14px;color:#0f172a;}
+        .dv-close{border:none;background:#f1f5f9;padding:6px 12px;border-radius:6px;cursor:pointer;font-weight:700;font-size:12px;}
+        .dv-frame{flex:1;width:100%;border:0;}
+    </style>
+
+    <div id="docViewer" class="dv-overlay" style="display:none;" onclick="fermerDocEl()">
+        <div class="dv-box" onclick="event.stopPropagation();">
+            <div class="dv-head">
+                <span id="docViewerTitre"></span>
+                <button type="button" class="dv-close" onclick="fermerDocEl()">Fermer</button>
+            </div>
+            <iframe id="docViewerFrame" class="dv-frame" src="about:blank"></iframe>
+        </div>
+    </div>
+
+    <script>
+        function ouvrirDocEl(el) {
+            document.getElementById('docViewerTitre').textContent = el.getAttribute('data-titre');
+            document.getElementById('docViewerFrame').src = el.getAttribute('data-url');
+            document.getElementById('docViewer').style.display = 'flex';
+        }
+        function fermerDocEl() {
+            document.getElementById('docViewer').style.display = 'none';
+            document.getElementById('docViewerFrame').src = 'about:blank';
+        }
+
+        /* Pliage/dépliage purement client (CSS display), sans aller-retour serveur : les champs
+           de notation restent dans le DOM et donc dans la soumission du formulaire même repliés. */
+        function jnToggle(id) {
+            var body = document.getElementById(id);
+            var chev = document.getElementById('chev-' + id);
+            var ouvert = body.style.display !== 'none';
+            body.style.display = ouvert ? 'none' : 'block';
+            if (chev) chev.classList.toggle('jn-rot', !ouvert);
+        }
+        function jnOuvrir(id) {
+            var body = document.getElementById(id);
+            var chev = document.getElementById('chev-' + id);
+            body.style.display = 'block';
+            if (chev) chev.classList.add('jn-rot');
+        }
+    </script>
+
+    <div class="jn-wrap">
+        <h:panelGroup rendered="#{not juryBean.autorise}">
+            <div class="jn-denied">
+                Vous n'êtes pas membre du jury de cette offre, ou l'offre est introuvable.
+            </div>
+        </h:panelGroup>
+
+        <h:panelGroup rendered="#{juryBean.autorise}">
+            <div class="jn-offer-card">
+                <h2 class="jn-offer-title">#{juryBean.offre.titre}</h2>
+                <span class="jn-role-badge" style="text-transform:uppercase;">#{juryBean.monRole}</span>
+                <div class="jn-breadcrumb">#{juryBean.offre.organisationTexte}</div>
+
+                <h:panelGroup rendered="#{juryBean.phaseActuelle != null and juryBean.phaseActuelle.dateLimite != null}">
+                    <div class="jn-deadline-pill"
+                         style="background:#{juryBean.phaseActuelle.delaiDepasse ? '#fee2e2' : '#fef3c7'};
+                                color:#{juryBean.phaseActuelle.delaiDepasse ? '#991b1b' : '#92400e'};">
+                        #{juryBean.phaseActuelle.phase.libelle} :
+                        <h:outputText value="#{juryBean.phaseActuelle.delaiDepasse ? 'délai dépassé le ' : 'à noter avant le '}"/>
+                        <h:outputText value="#{juryBean.phaseActuelle.dateLimite}">
+                            <f:convertDateTime pattern="dd/MM/yyyy HH:mm" type="localDateTime"/>
+                        </h:outputText>
+                    </div>
+                </h:panelGroup>
+
+                <div class="jn-stepper">
+                    <div class="jn-step jn-step-done">
+                        <div class="jn-step-circle"><i class="pi pi-check"/></div>
+                        <div class="jn-step-label">Candidatures reçues</div>
+                    </div>
+                    <ui:repeat value="#{juryBean.etapes}" var="etape" varStatus="st">
+                        <div class="jn-step-line"/>
+                        <div class="jn-step #{etape.statut eq 'CLOTUREE' ? 'jn-step-done' : (etape.statut eq 'EN_COURS' ? 'jn-step-courant' : (etape.statut eq 'PLANIFIEE' ? 'jn-step-planifiee' : ''))}">
+                            <div class="jn-step-circle">
+                                <h:outputText styleClass="pi pi-check" rendered="#{etape.statut eq 'CLOTUREE'}"/>
+                                <h:outputText value="#{st.index + 2}" rendered="#{etape.statut ne 'CLOTUREE'}"/>
+                            </div>
+                            <div class="jn-step-label">#{etape.libelle}</div>
+                        </div>
+                    </ui:repeat>
+                    <div class="jn-step-line"/>
+                    <div class="jn-step">
+                        <div class="jn-step-circle">#{juryBean.etapes.size() + 2}</div>
+                        <div class="jn-step-label">Délibération</div>
+                    </div>
+                </div>
+
+                <h:panelGroup rendered="#{juryBean.phaseActuelle != null and not empty juryBean.candidatures}">
+                    <div class="jn-progress-row">
+                        <span>
+                            #{juryBean.nbCandidaturesCompletes} / #{juryBean.candidatures.size()} candidatures complètes ·
+                            #{juryBean.nbCriteresNotesTotal} / #{juryBean.nbCriteresATotal} critères notés
+                        </span>
+                        <h:panelGroup rendered="#{juryBean.nbCandidaturesACompleter gt 0}">
+                            <span class="jn-mini-badge jn-mini-badge-warn">#{juryBean.nbCandidaturesACompleter} à compléter</span>
+                        </h:panelGroup>
+                    </div>
+                    <div class="jn-progress-bar">
+                        <div class="jn-progress-fill" style="width:#{juryBean.nbCriteresATotal gt 0 ? (juryBean.nbCriteresNotesTotal * 100 / juryBean.nbCriteresATotal) : 0}%;"/>
+                    </div>
+                </h:panelGroup>
+            </div>
+
+            <h:panelGroup rendered="#{not empty juryBean.rapports or not empty juryBean.pvs}">
+                <div class="jn-offer-card">
+                    <div class="jn-section-head-title" style="margin-bottom:10px;">Rapports &amp; PV de cette offre</div>
+                    <h:form id="formDocsJury">
+                        <ui:repeat value="#{juryBean.rapports}" var="r">
+                            <div class="doc-row">
+                                <div>
+                                    <div class="doc-name">Rapport — #{r.libelle}</div>
+                                    <div class="doc-sub">Candidats retenus : #{r.candidatsRetenus}</div>
+                                </div>
+                                <p:commandButton value="Ouvrir →" action="#{juryBean.ouvrirRapport(r.id)}"
+                                                  ajax="false" target="_blank" styleClass="ui-button-flat"
+                                                  style="font-size:12.5px;color:#2563eb;font-weight:600;border:none;background:none;padding:0;"/>
+                            </div>
+                        </ui:repeat>
+                        <ui:repeat value="#{juryBean.pvs}" var="pv">
+                            <div class="doc-row">
+                                <div>
+                                    <div class="doc-name">PV — #{pv.libelle}</div>
+                                    <div class="doc-sub">Membres présents : #{pv.nombreMembres}</div>
+                                </div>
+                                <p:commandButton value="Ouvrir →" action="#{juryBean.ouvrirPv(pv.id)}"
+                                                  ajax="false" target="_blank" styleClass="ui-button-flat"
+                                                  style="font-size:12.5px;color:#2563eb;font-weight:600;border:none;background:none;padding:0;"/>
+                            </div>
+                        </ui:repeat>
+                    </h:form>
+                </div>
+            </h:panelGroup>
+
+            <h:panelGroup rendered="#{juryBean.phaseActuelle == null}">
+                <div class="jn-empty">Aucune phase n'a encore été lancée : vous pouvez consulter les dossiers, la notation sera ouverte au lancement d'une phase.</div>
+            </h:panelGroup>
+
+            <h:panelGroup rendered="#{empty juryBean.candidatures}">
+                <div class="jn-empty">Aucune candidature pour cette offre pour l'instant.</div>
+            </h:panelGroup>
+
+            <h:form id="formNotation">
+                <ui:repeat value="#{juryBean.candidatures}" var="cand">
+                    <div class="jn-cand-card jn-cand-riche">
+                        <div class="jn-cand-head-riche" onclick="jnToggle('cand-#{cand.id}')">
+                            <div class="jn-avatar" style="background:#{juryBean.getAvatarColor(cand)};">#{juryBean.getInitiales(cand)}</div>
+                            <div class="jn-cand-info">
+                                <div class="jn-cand-nom">#{cand.prenomCandidat} #{cand.nomCandidat}</div>
+                                <div class="jn-cand-contact">#{cand.emailCandidat} · #{cand.telephoneCandidat}</div>
+                                <h:panelGroup rendered="#{juryBean.phaseActuelle != null}">
+                                    <div class="jn-mini-badges">
+                                        <ui:repeat value="#{juryBean.rubriques}" var="rub">
+                                            <span class="jn-mini-badge #{juryBean.getNbNotesSaisiesRubrique(cand, rub) eq juryBean.getNbElementsRubrique(rub) ? 'jn-mini-badge-ok' : 'jn-mini-badge-warn'}">
+                                                #{rub.libelle} #{juryBean.getNbNotesSaisiesRubrique(cand, rub)}/#{juryBean.getNbElementsRubrique(rub)}
+                                            </span>
+                                        </ui:repeat>
+                                    </div>
+                                </h:panelGroup>
+                            </div>
+                            <div class="jn-cand-right">
+                                <span class="jn-statut-badge jn-statut-#{cand.statut}">#{cand.statut}</span>
+                                <h:panelGroup rendered="#{juryBean.phaseActuelle != null and juryBean.phaseActuelle.statut eq 'EN_COURS'}">
+                                    <h:panelGroup rendered="#{juryBean.isCandidatComplet(cand)}">
+                                        <span class="jn-score-pill" title="Moyenne de tout le jury pour ce candidat — pas seulement vos propres notes.">
+                                            <h:outputText value="#{juryBean.getPointsProvisoires(cand)}"><f:convertNumber maxFractionDigits="1"/></h:outputText>
+                                            / #{juryBean.pointsMaxPhaseActuelle}
+                                        </span>
+                                        <button type="button" class="jn-btn jn-btn-outline" onclick="event.stopPropagation(); jnOuvrir('cand-#{cand.id}');">Modifier</button>
+                                    </h:panelGroup>
+                                    <h:panelGroup rendered="#{not juryBean.isCandidatComplet(cand) and juryBean.getNbNotesSaisiesCandidat(cand) gt 0}">
+                                        <span class="jn-mini-badge jn-mini-badge-warn">#{juryBean.nbCriteresTotalPhase - juryBean.getNbNotesSaisiesCandidat(cand)} restant(s)</span>
+                                        <button type="button" class="jn-btn jn-btn-warning" onclick="event.stopPropagation(); jnOuvrir('cand-#{cand.id}');">Compléter</button>
+                                    </h:panelGroup>
+                                    <h:panelGroup rendered="#{juryBean.getNbNotesSaisiesCandidat(cand) eq 0}">
+                                        <span class="jn-mini-badge jn-mini-badge-warn">#{juryBean.nbCriteresTotalPhase} restant(s)</span>
+                                        <button type="button" class="jn-btn jn-btn-primary" onclick="event.stopPropagation(); jnOuvrir('cand-#{cand.id}');">Noter</button>
+                                    </h:panelGroup>
+                                </h:panelGroup>
+                                <h:panelGroup rendered="#{juryBean.phaseActuelle != null and juryBean.phaseActuelle.statut ne 'EN_COURS'}">
+                                    <span class="jn-mini-badge" style="background:#f1f5f9;color:#64748b;">Phase clôturée</span>
+                                    <button type="button" class="jn-btn jn-btn-outline" onclick="event.stopPropagation(); jnOuvrir('cand-#{cand.id}');">Voir</button>
+                                </h:panelGroup>
+                                <i id="chev-cand-#{cand.id}" class="pi pi-chevron-down jn-chevron"/>
+                            </div>
+                        </div>
+
+                        <div id="cand-#{cand.id}" class="jn-cand-body" style="display:none;">
+                        <h:panelGroup rendered="#{empty juryBean.getManquants(cand)}">
+                            <div class="jn-complet">Dossier complet — toutes les pièces obligatoires sont fournies.</div>
+                        </h:panelGroup>
+                        <h:panelGroup rendered="#{not empty juryBean.getManquants(cand)}">
+                            <div class="jn-incomplet">
+                                Dossier incomplet — pièce(s) obligatoire(s) manquante(s) :
+                                <ui:repeat value="#{juryBean.getManquants(cand)}" var="m" varStatus="st">
+                                    <strong>#{m}</strong><h:outputText value=", " rendered="#{not st.last}"/>
+                                </ui:repeat>
+                            </div>
+                        </h:panelGroup>
+
+                        <div class="jn-section-head" onclick="jnToggle('doc-#{cand.id}')">
+                            <span class="jn-section-head-title">Dossier du candidat</span>
+                            <span style="display:flex;align-items:center;gap:8px;">
+                                <span class="jn-mini-badge #{empty juryBean.getManquants(cand) ? 'jn-mini-badge-ok' : 'jn-mini-badge-warn'}">
+                                    #{empty juryBean.getManquants(cand) ? 'Dossier complet' : 'Dossier incomplet'} · #{juryBean.getNbPiecesFournies(cand)} pièce(s)
+                                </span>
+                                <i id="chev-doc-#{cand.id}" class="pi pi-chevron-down jn-chevron"/>
+                            </span>
+                        </div>
+                        <div id="doc-#{cand.id}" class="jn-section-body" style="display:none;">
+                                <div class="jn-docs">
+                                <div class="jn-contact">#{cand.emailCandidat} — #{cand.telephoneCandidat}</div>
+
+                                <h:panelGroup rendered="#{not empty cand.diplomes}">
+                                    <div class="jn-sub-title">Diplômes</div>
+                                    <ui:repeat value="#{cand.diplomes}" var="dip">
+                                        <div class="doc-row">
+                                            <div>
+                                                <div class="doc-name">#{dip.libelle}</div>
+                                                <div class="doc-sub">#{dip.etablissement} — #{dip.annee}
+                                                    <h:outputText value=" — mention #{dip.mention}" rendered="#{not empty dip.mention}"/></div>
+                                            </div>
+                                        </div>
+                                    </ui:repeat>
+                                </h:panelGroup>
+
+                                <h:panelGroup rendered="#{not empty cand.experiences}">
+                                    <div class="jn-sub-title">Expériences professionnelles</div>
+                                    <ui:repeat value="#{cand.experiences}" var="exp">
+                                        <div class="doc-row">
+                                            <div>
+                                                <div class="doc-name">#{exp.libelle}</div>
+                                                <div class="doc-sub">#{exp.employeur} — #{exp.annee} (#{exp.duree})</div>
+                                                <div class="doc-sub">#{exp.description}</div>
+                                            </div>
+                                        </div>
+                                    </ui:repeat>
+                                </h:panelGroup>
+
+                                <h:panelGroup rendered="#{not empty cand.lettreMotivation}">
+                                    <div class="jn-sub-title">Lettre de motivation</div>
+                                    <div class="jn-lettre">#{cand.lettreMotivation}</div>
+                                </h:panelGroup>
+
+                                <div class="jn-sub-title">Pièces</div>
+                                <div class="doc-row">
+                                    <div>
+                                        <div class="doc-name">CV</div>
+                                        <div class="doc-sub">Document principal</div>
+                                    </div>
+                                    <h:panelGroup rendered="#{cand.cvUrl != null}">
+                                        <a href="javascript:void(0)" class="dl-link" data-url="#{request.contextPath}/uploads/candidatures/#{cand.cvUrl}" data-titre="CV" onclick="ouvrirDocEl(this); return false;">Ouvrir</a>
+                                    </h:panelGroup>
+                                    <h:panelGroup rendered="#{cand.cvUrl == null}">
+                                        <span class="dl-none">Non fourni</span>
+                                    </h:panelGroup>
+                                </div>
+
+                                <ui:repeat value="#{cand.documentsSoumis}" var="doc">
+                                    <div class="doc-row">
+                                        <div>
+                                            <div class="doc-name">#{doc.libelle}</div>
+                                            <div class="doc-sub">Exigé pour cette offre</div>
+                                        </div>
+                                        <a href="javascript:void(0)" class="dl-link" data-url="#{request.contextPath}/uploads/candidatures/#{doc.url}" data-titre="#{doc.libelle}" onclick="ouvrirDocEl(this); return false;">Ouvrir</a>
+                                    </div>
+                                </ui:repeat>
+
+                                <ui:repeat value="#{cand.documentsSupplementaires}" var="ds">
+                                <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px;">
+                                    <div>
+                                        <div style="font-weight:600;color:#0f172a;">#{ds.libelle}</div>
+                                        <div style="font-size:11.5px;color:#94a3b8;">Document supplémentaire</div>
+                                    </div>
+                                    <a href="javascript:void(0)" class="dl-link" data-url="#{request.contextPath}/uploads/candidatures/#{ds.url}" data-titre="#{ds.libelle}" onclick="ouvrirDocEl(this); return false;">Ouvrir</a>
+                                </div>
+                            </ui:repeat>
+                                                            <h:panelGroup rendered="#{not empty cand.autresDocumentsUrl}">
+                                    <div class="doc-row">
+                                        <div class="doc-name">Autres documents</div>
+                                        <a href="javascript:void(0)" class="dl-link" data-url="#{request.contextPath}/uploads/candidatures/#{cand.autresDocumentsUrl}" data-titre="Autres documents" onclick="ouvrirDocEl(this); return false;">Ouvrir</a>
+                                    </div>
+                                </h:panelGroup>
+
+                                <h:panelGroup rendered="#{empty cand.lettreMotivation and cand.cvUrl == null and empty cand.documentsSoumis}">
+                                    <span class="dl-none">Aucun document fourni par ce candidat.</span>
+                                </h:panelGroup>
+                                </div>
+                        </div>
+
+                        <h:panelGroup rendered="#{juryBean.phaseActuelle != null}">
+                            <div class="jn-section-head" onclick="jnToggle('notation-#{cand.id}')">
+                                <span class="jn-section-head-title">Ma notation</span>
+                                <span style="display:flex;align-items:center;gap:10px;">
+                                    <span class="jn-mini-badge #{juryBean.isCandidatComplet(cand) ? 'jn-mini-badge-ok' : 'jn-mini-badge-warn'}">
+                                        #{juryBean.getNbNotesSaisiesCandidat(cand)} / #{juryBean.nbCriteresTotalPhase} notés
+                                    </span>
+                                    <span style="font-size:12px;color:#475569;font-weight:700;"
+                                          title="Moyenne de tout le jury pour ce candidat sur les critères déjà notés — pas seulement vos propres notes.">
+                                        Note provisoire (tout le jury) :
+                                        <h:outputText value="#{juryBean.getPointsProvisoires(cand)}"><f:convertNumber maxFractionDigits="1"/></h:outputText>
+                                        / #{juryBean.pointsMaxPhaseActuelle}
+                                    </span>
+                                    <i id="chev-notation-#{cand.id}" class="pi pi-chevron-down jn-chevron"/>
+                                </span>
+                            </div>
+                            <div id="notation-#{cand.id}" class="jn-section-body" style="display:none;">
+                                <div class="jn-notes">
+                                <h:panelGroup rendered="#{juryBean.seuilEliminatoire != null and juryBean.getPointsProvisoires(cand) lt juryBean.seuilEliminatoire}">
+                                    <div style="margin-bottom:12px;padding:10px 14px;border-radius:8px;font-size:12.5px;font-weight:600;background:#fef2f2;color:#991b1b;">
+                                        En dessous du seuil éliminatoire (#{juryBean.seuilEliminatoire} points).
+                                    </div>
+                                </h:panelGroup>
+                                <table class="jn-bulletin">
+                                    <thead>
+                                        <tr>
+                                            <th>Critère</th>
+                                            <th class="jn-col-max">Max</th>
+                                            <th class="jn-col-note">Note</th>
+                                            <th class="jn-col-comment">Commentaire</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    <ui:repeat value="#{juryBean.rubriques}" var="rub">
+                                        <tr class="jn-rubrique-row">
+                                            <td colspan="4">
+                                                #{rub.libelle} <span class="jn-element-max">coef. #{rub.coefficient}</span>
+                                                <span class="jn-mini-badge #{juryBean.getNbNotesSaisiesRubrique(cand, rub) eq juryBean.getNbElementsRubrique(rub) ? 'jn-mini-badge-ok' : 'jn-mini-badge-warn'}" style="margin-left:8px;">
+                                                    #{juryBean.getNbNotesSaisiesRubrique(cand, rub)}/#{juryBean.getNbElementsRubrique(rub)} notés
+                                                </span>
+                                                <span style="float:right;color:#64748b;font-weight:600;">#{juryBean.getSommePointsRubrique(cand, rub)} / #{juryBean.getSommeMaxRubrique(rub)}</span>
+                                            </td>
+                                        </tr>
+                                        <ui:repeat value="#{juryBean.elementsParRubrique[rub.id]}" var="el">
+                                            <tr>
+                                                <td>#{el.libelle}</td>
+                                                <td class="jn-col-max">#{el.pointsMax}</td>
+                                                <td class="jn-col-note">
+                                                    <p:inputNumber value="#{juryBean.mesNotes[juryBean.cle(cand.id, el.id)]}"
+                                                                    decimalPlaces="0" minValue="0" maxValue="#{el.pointsMax}"
+                                                                    disabled="#{juryBean.phaseActuelle.statut != 'EN_COURS'}"/>
+                                                </td>
+                                                <td class="jn-col-comment">
+                                                    <p:inputText value="#{juryBean.mesCommentaires[juryBean.cle(cand.id, el.id)]}"
+                                                                 placeholder="Commentaire (optionnel)"
+                                                                 disabled="#{juryBean.phaseActuelle.statut != 'EN_COURS'}"/>
+                                                </td>
+                                            </tr>
+                                        </ui:repeat>
+                                    </ui:repeat>
+                                    </tbody>
+                                </table>
+
+                                <h:panelGroup rendered="#{juryBean.phaseActuelle.statut eq 'EN_COURS'}">
+                                    <h:panelGroup rendered="#{not juryBean.isCandidatComplet(cand)}">
+                                        <p style="color:#991b1b;font-size:12.5px;margin-top:10px;">
+                                            Il reste #{juryBean.nbCriteresTotalPhase - juryBean.getNbNotesSaisiesCandidat(cand)} critère(s) à noter avant de valider cette phase.
+                                        </p>
+                                    </h:panelGroup>
+                                    <div class="jn-cand-actions">
+                                        <p:commandButton value="Valider la phase" action="#{juryBean.validerPhase(cand)}"
+                                                          process="@this formNotation" update="@form growl"
+                                                          styleClass="jn-btn jn-btn-primary"/>
+                                    </div>
+                                </h:panelGroup>
+                                <h:panelGroup rendered="#{juryBean.phaseActuelle.statut ne 'EN_COURS'}">
+                                    <p style="color:#64748b;font-size:12.5px;margin-top:10px;">
+                                        Cette phase est clôturée — demandez au RH de la réouvrir pour pouvoir noter ou modifier des notes.
+                                    </p>
+                                </h:panelGroup>
+                                </div>
+                            </div>
+                        </h:panelGroup>
+                        </div>
+                    </div>
+                </ui:repeat>
+            </h:form>
+
+            <h:panelGroup rendered="#{juryBean.monRole == 'PRESIDENT' and not empty juryBean.candidatsFinaux}">
+                <div class="jn-cand-card" style="margin-top:28px;">
+                    <div class="jn-cand-head">
+                        <span class="jn-cand-name">Avis sur les candidats finalistes</span>
+                        <span class="jn-cand-statut">Président du jury</span>
+                    </div>
+                    <div style="padding:16px 20px;">
+                        <div class="jn-sub" style="margin-bottom:14px;">
+                            En tant que président de ce jury, votre avis est enregistré ici sous votre propre nom — le RH le consultera pour sa décision finale, mais ne peut pas le saisir à votre place.
+                        </div>
+                        <h:form id="formAvis">
+                            <ui:repeat value="#{juryBean.candidatsFinaux}" var="cf">
+                                <div style="border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+                                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                                        <div>
+                                            <span style="font-weight:700;font-size:13.5px;color:#0f172a;">#{cf.rang}. #{cf.candidature.prenomCandidat} #{cf.candidature.nomCandidat}</span>
+                                            <span class="jn-element-max" style="margin-left:8px;">#{cf.nombrePoints} points</span>
+                                        </div>
+                                        <span class="jn-cand-statut">#{cf.statut}</span>
+                                    </div>
+                                    <div style="display:grid;grid-template-columns:200px 1fr auto;gap:10px;align-items:start;">
+                                        <p:selectOneMenu value="#{juryBean.monAvisSaisi[cf.candidature.id]}" style="width:100%;">
+                                            <f:selectItem itemLabel="— Mon avis —" itemValue="#{null}" noSelectionOption="true"/>
+                                            <f:selectItem itemLabel="Favorable" itemValue="FAVORABLE"/>
+                                            <f:selectItem itemLabel="Défavorable" itemValue="DEFAVORABLE"/>
+                                            <f:selectItem itemLabel="Réservé" itemValue="RESERVE"/>
+                                        </p:selectOneMenu>
+                                        <p:inputText value="#{juryBean.monAvisCommentaireSaisi[cf.candidature.id]}" placeholder="Commentaire (optionnel)" style="width:100%;"/>
+                                        <p:commandButton value="Enregistrer" action="#{juryBean.donnerMonAvis(cf)}"
+                                                          process="@this formAvis" update="@form growl" styleClass="btn btn-secondary btn-sm"/>
+                                    </div>
+                                </div>
+                            </ui:repeat>
+                        </h:form>
+                    </div>
+                </div>
+            </h:panelGroup>
+        </h:panelGroup>
+    </div>
+
+</ui:composition>

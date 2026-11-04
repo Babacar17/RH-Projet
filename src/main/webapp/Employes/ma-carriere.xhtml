@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Ma carrière — Espace Employé</title>
+    <h:outputStylesheet library="css" name="employe-style.css"/>
+</h:head>
+<h:body>
+<div class="emp-layout">
+
+    <ui:include src="sidebar-employe.xhtml"/>
+
+    <main class="emp-main">
+
+        <div class="emp-page-header">
+            <div class="emp-page-title">
+                <h1><i class="pi pi-chart-line" style="color:var(--emp-primary);"/> Mon historique de carrière</h1>
+                <p>Vos promotions, mutations et mouvements de carrière</p>
+            </div>
+        </div>
+
+        <!-- Poste actuel -->
+        <div class="emp-profil-hero" style="margin-bottom:24px;">
+            <div class="emp-profil-avatar" style="background:linear-gradient(135deg,var(--emp-primary),var(--emp-copper));">
+                <i class="pi pi-briefcase" style="font-size:1.8rem;"/>
+            </div>
+            <div class="emp-profil-info">
+                <h2>#{employeBean.employe.intiutePoste}</h2>
+                <div class="profil-poste">Position actuelle</div>
+                <div class="profil-meta">
+                    <span class="profil-meta-item"><i class="pi pi-building"/> #{employeBean.employe.departement}</span>
+                    <span class="profil-meta-item"><i class="pi pi-briefcase"/> #{employeBean.employe.service}</span>
+                    <span class="profil-meta-item"><i class="pi pi-star"/> #{employeBean.employe.gradeEchelon}</span>
+                    <span class="profil-meta-item"><i class="pi pi-file"/> #{employeBean.employe.typeContrat}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline des mouvements -->
+        <div class="emp-card">
+            <div class="emp-card-header">
+                <div class="emp-card-title">
+                    <span class="card-icon"><i class="pi pi-list"/></span>
+                    Mouvements de carrière
+                </div>
+                <span style="font-size:0.82rem;color:var(--emp-muted);">
+                    #{employeBean.monHistoriqueCarriere.size()} mouvement(s) enregistré(s)
+                </span>
+            </div>
+
+            <!-- Timeline -->
+            <h:panelGroup rendered="#{not empty employeBean.monHistoriqueCarriere}">
+                <div class="formation-timeline" style="padding-left:40px;">
+                    <ui:repeat value="#{employeBean.monHistoriqueCarriere}" var="mv">
+                        <div class="formation-item" style="margin-bottom:28px;">
+                            <div style="background:var(--emp-card-hover);border:1px solid var(--emp-border);border-radius:12px;padding:16px 20px;">
+                                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                                    <div style="display:flex;align-items:center;gap:10px;">
+                                        <span class="emp-badge #{employeBean.getBadgeMouvement(mv.typeMouvement)}">
+                                            #{employeBean.getLabelMouvement(mv.typeMouvement)}
+                                        </span>
+                                        <span style="font-weight:600;font-size:0.95rem;">#{mv.typeMouvement}</span>
+                                    </div>
+                                    <span style="font-size:0.8rem;color:var(--emp-muted);">
+                                        <i class="pi pi-calendar"/> Effet : <h:outputText value="#{mv.dateEffet}"/>
+                                    </span>
+                                </div>
+
+                                <!-- Avant / Après -->
+                                <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;">
+                                    <!-- Avant -->
+                                    <div style="background:var(--emp-bg);border-radius:8px;padding:12px;">
+                                        <div style="font-size:0.7rem;color:var(--emp-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Avant</div>
+                                        <div style="font-size:0.85rem;margin-bottom:3px;"><i class="pi pi-briefcase" style="color:var(--emp-muted);margin-right:4px;"/>#{mv.ancienPoste}</div>
+                                        <div style="font-size:0.82rem;color:var(--emp-muted);"><i class="pi pi-building" style="margin-right:4px;"/>#{mv.ancienDepartement}</div>
+                                        <h:panelGroup rendered="#{mv.ancienGrade != null}">
+                                            <div style="font-size:0.82rem;color:var(--emp-muted);"><i class="pi pi-star" style="margin-right:4px;"/>#{mv.ancienGrade}</div>
+                                        </h:panelGroup>
+                                    </div>
+
+                                    <!-- Flèche -->
+                                    <div style="text-align:center;color:var(--emp-primary);font-size:1.4rem;">
+                                        <i class="pi pi-arrow-right"/>
+                                    </div>
+
+                                    <!-- Après -->
+                                    <div style="background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);border-radius:8px;padding:12px;">
+                                        <div style="font-size:0.7rem;color:var(--emp-primary);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Après</div>
+                                        <div style="font-size:0.85rem;margin-bottom:3px;font-weight:600;"><i class="pi pi-briefcase" style="color:var(--emp-primary);margin-right:4px;"/>#{mv.nouveauPoste}</div>
+                                        <div style="font-size:0.82rem;color:var(--emp-muted);"><i class="pi pi-building" style="margin-right:4px;"/>#{mv.nouveauDepartement}</div>
+                                        <h:panelGroup rendered="#{mv.nouveauGrade != null}">
+                                            <div style="font-size:0.82rem;color:var(--emp-copper-l);"><i class="pi pi-star" style="margin-right:4px;"/>#{mv.nouveauGrade}</div>
+                                        </h:panelGroup>
+                                    </div>
+                                </div>
+
+                                <!-- Motif -->
+                                <h:panelGroup rendered="#{mv.motif != null}">
+                                    <div style="margin-top:10px;font-size:0.82rem;color:var(--emp-muted);">
+                                        <i class="pi pi-comment" style="margin-right:4px;"/> #{mv.motif}
+                                    </div>
+                                </h:panelGroup>
+
+                                <div style="margin-top:8px;font-size:0.78rem;color:var(--emp-muted);display:flex;gap:16px;">
+                                    <span><i class="pi pi-user" style="margin-right:3px;"/>Approuvé par : #{mv.approuvePar != null ? mv.approuvePar : '—'}</span>
+                                    <span><i class="pi pi-calendar" style="margin-right:3px;"/>Créé le : <h:outputText value="#{mv.dateCreation}"/></span>
+                                    <span class="emp-badge badge-success">#{mv.statut}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </ui:repeat>
+                </div>
+            </h:panelGroup>
+
+            <h:panelGroup rendered="#{empty employeBean.monHistoriqueCarriere}">
+                <div style="text-align:center;padding:48px;color:var(--emp-muted);">
+                    <i class="pi pi-chart-line" style="font-size:2.5rem;display:block;margin-bottom:12px;opacity:0.4;"/>
+                    <p style="font-size:0.95rem;">Aucun mouvement de carrière enregistré</p>
+                    <p style="font-size:0.82rem;margin-top:4px;">Votre historique apparaîtra ici lors de promotions ou mutations.</p>
+                </div>
+            </h:panelGroup>
+        </div>
+
+    </main>
+</div>
+</h:body>
+</html>

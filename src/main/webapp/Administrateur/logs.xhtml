@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+    <title>Journaux &#8212; Administration SIRH</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <h:outputStylesheet library="css" name="admin-style.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; display: flex; min-height: 100vh; }
+        .main { flex: 1; padding: 28px; }
+        .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+        .page-title { font-size:22px; font-weight:800; color:#0f172a; }
+        .page-subtitle { font-size:12px; color:#94a3b8; margin-top:2px; }
+        .section-card { background:#fff; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; margin-bottom:20px; }
+        /* Badge action */
+        .log-badge { display:inline-flex; padding:2px 10px; border-radius:12px; font-size:10px; font-weight:700; white-space:nowrap; }
+        .log-CONNEXION        { background:#ede9fe; color:#7c3aed; }
+        .log-DECONNEXION      { background:#f1f5f9; color:#64748b; }
+        .log-CREATION_USER    { background:#dcfce7; color:#15803d; }
+        .log-MODIFICATION_USER{ background:#dbeafe; color:#1d4ed8; }
+        .log-SUPPRESSION_USER { background:#fee2e2; color:#b91c1c; }
+        .log-RESET_MDP        { background:#fef3c7; color:#b45309; }
+        .log-ACTIVATION_USER  { background:#dcfce7; color:#15803d; }
+        .log-DESACTIVATION_USER { background:#fee2e2; color:#b91c1c; }
+        .log-CREATION_INSTITUTION   { background:rgba(181,138,58,.15); color:#b58a3a; }
+        .log-MODIFICATION_INSTITUTION { background:rgba(181,138,58,.1); color:#b58a3a; }
+        .log-ACTIVATION_INSTITUTION { background:#dcfce7; color:#15803d; }
+        .log-DESACTIVATION_INSTITUTION { background:#fee2e2; color:#b91c1c; }
+        .log-SUPPRESSION_INSTITUTION { background:#fee2e2; color:#b91c1c; }
+        /* Légende */
+        .legend-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:14px 20px; border-bottom:1px solid #f1f5f9; background:#fafbfc; }
+        /* Filtres */
+        .filter-row { display:flex; gap:10px; align-items:center; padding:12px 20px; border-bottom:1px solid #f1f5f9; background:#fafbfc; flex-wrap:wrap; }
+        .btn-secondary { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border:1px solid #e2e8f0; border-radius:8px; background:#fff; font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; color:#374151; }
+        .btn-secondary:hover { background:#f1f5f9; }
+    </style>
+</h:head>
+
+<h:body>
+
+<ui:include src="sidebar-admin.xhtml"/>
+
+<div class="main">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Journaux d&#8217;activit&#233;</h1>
+            <p class="page-subtitle">Administration &#8250; Logs syst&#232;me</p>
+        </div>
+        <h:form id="formRefresh">
+            <!-- CORRECTION : actualiser charge getTousLesLogs() et non les 20 récents -->
+            <p:commandButton value="Actualiser"
+                             update="formTableLogs"
+                             styleClass="btn-secondary"
+                             icon="fas fa-sync-alt"/>
+        </h:form>
+    </div>
+
+    <p:growl id="growl" showDetail="true" life="4000"/>
+
+    <!-- Légende -->
+    <div class="section-card" style="margin-bottom:20px;">
+        <div class="legend-row">
+            <span style="font-size:12px;font-weight:700;color:#64748b;">L&#233;gende :</span>
+            <span class="log-badge log-CONNEXION">CONNEXION</span>
+            <span class="log-badge log-DECONNEXION">D&#201;CONNEXION</span>
+            <span class="log-badge log-CREATION_USER">CRÉATION</span>
+            <span class="log-badge log-MODIFICATION_USER">MODIFICATION</span>
+            <span class="log-badge log-SUPPRESSION_USER">SUPPRESSION</span>
+            <span class="log-badge log-RESET_MDP">RESET MDP</span>
+            <span class="log-badge log-CREATION_INSTITUTION">INSTITUTION</span>
+        </div>
+    </div>
+
+    <!-- Table des logs -->
+    <div class="section-card">
+        <h:form id="formTableLogs">
+            <!-- CORRECTION : value="#{adminBean.logs}" au lieu de #{adminBean.logs}
+                 qui ne retournait que les 20 derniers. getTousLesLogs() retourne tous les logs. -->
+            <p:dataTable value="#{adminBean.logs}" var="log"
+                         rows="25" paginator="true"
+                         paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                         rowsPerPageTemplate="25,50,100,200"
+                         emptyMessage="Aucun journal disponible."
+                         style="border:none;"
+                         sortBy="#{log.dateAction}" sortOrder="descending"
+                         >
+
+                <p:column headerText="Date / Heure" style="width:160px;"
+                          sortBy="#{log.dateAction}">
+                    <div style="font-size:12px;font-weight:600;color:#0f172a;">
+                        <h:outputText value="#{log.dateAction}">
+                            <f:convertDateTime pattern="dd/MM/yyyy" type="localDateTime"/>
+                        </h:outputText>
+                    </div>
+                    <div style="font-size:11px;color:#94a3b8;">
+                        <h:outputText value="#{log.dateAction}">
+                            <f:convertDateTime pattern="HH:mm:ss" type="localDateTime"/>
+                        </h:outputText>
+                    </div>
+                </p:column>
+
+                <p:column headerText="Utilisateur" style="width:160px;"
+                          filterBy="#{log.username}" filterMatchMode="contains">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6d28d9,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">
+                            #{log.username != null and log.username.length() > 0
+                              ? log.username.substring(0,1).toUpperCase() : '?'}
+                        </div>
+                        <span style="font-size:13px;font-weight:600;">#{log.username}</span>
+                    </div>
+                </p:column>
+
+                <p:column headerText="Action" style="width:220px;"
+                          filterBy="#{log.action}" filterMatchMode="contains">
+                    <span class="log-badge log-#{log.action}">#{log.action}</span>
+                </p:column>
+
+                <p:column headerText="D&#233;tail">
+                    <span style="font-size:13px;color:#374151;">
+                        #{log.detail != null ? log.detail : '—'}
+                    </span>
+                </p:column>
+
+                <p:column headerText="IP / Source" style="width:130px;">
+                    <span style="font-family:monospace;font-size:11px;color:#94a3b8;">
+                        #{log.adresseIp != null ? log.adresseIp : '—'}
+                    </span>
+                </p:column>
+
+            </p:dataTable>
+        </h:form>
+    </div>
+
+</div>
+
+</h:body>
+</html>

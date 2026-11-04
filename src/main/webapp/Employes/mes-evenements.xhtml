@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+    <title>Mes événements — Espace employé</title>
+    <style>
+        body { background:#f1f5f9; font-family:'Segoe UI',sans-serif; margin:0; }
+        .emp-main { flex:1; padding:24px 32px; }
+        .page-title { font-size:22px; font-weight:800; color:#0f172a; }
+        .page-sub   { font-size:12px; color:#94a3b8; margin-top:2px; }
+        .section { background:#fff; border:1px solid #e2e8f0; border-radius:12px;
+                   padding:20px; margin:18px 0; }
+        .section-title { font-size:14px; font-weight:800; color:#0f172a;
+                         margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+        .evt-card {
+            display:flex; gap:16px; padding:14px 16px; border-bottom:1px solid #f1f5f9;
+        }
+        .evt-card:last-child { border-bottom:none; }
+        .evt-icon {
+            width:48px; height:48px; border-radius:12px; display:flex;
+            align-items:center; justify-content:center; font-size:20px; flex-shrink:0;
+        }
+        .evt-info { flex:1; min-width:0; }
+        .evt-titre { font-size:14px; font-weight:700; color:#0f172a; }
+        .evt-meta  { font-size:11px; color:#64748b; margin-top:4px; }
+        .evt-meta i { font-size:10px; margin-right:3px; }
+        .badge { display:inline-block; padding:3px 10px; border-radius:12px;
+                 font-size:10px; font-weight:700; }
+        .badge-info { background:#dbeafe; color:#1d4ed8; }
+        .badge-success { background:#dcfce7; color:#15803d; }
+        .badge-danger { background:#fee2e2; color:#b91c1c; }
+        .badge-primary { background:#ede9fe; color:#6d28d9; }
+        .badge-warning { background:#fef3c7; color:#92400e; }
+        .empty { padding:30px; text-align:center; color:#94a3b8; }
+    </style>
+</h:head>
+
+<h:body>
+<div style="display:flex;">
+    <ui:include src="sidebar-employe.xhtml"><ui:param name="page" value="mes-evenements"/></ui:include>
+
+    <div class="emp-main">
+        <p:growl id="growl" showDetail="true"/>
+
+        <div>
+            <h1 class="page-title">Mes événements</h1>
+            <div class="page-sub">Vos invitations et participations professionnelles</div>
+        </div>
+
+        <!-- À VENIR -->
+        <div class="section">
+            <div class="section-title">
+                <i class="pi pi-clock" style="color:#f59e0b;"/>
+                À venir (#{mesEvenementsBean.mesEvenementsAVenir.size()})
+            </div>
+
+            <h:panelGroup rendered="#{mesEvenementsBean.mesEvenementsAVenir.isEmpty()}">
+                <div class="empty">
+                    <i class="pi pi-calendar" style="font-size:40px;color:#cbd5e1;display:block;margin-bottom:10px;"/>
+                    Aucun événement prévu pour vous prochainement.
+                </div>
+            </h:panelGroup>
+
+            <h:form id="formEvtsAVenir">
+                <ui:repeat value="#{mesEvenementsBean.mesEvenementsAVenir}" var="e">
+                    <div class="evt-card">
+                        <div class="evt-icon"
+                             style="background:#ede9fe;color:#6d28d9;">
+                            <i class="pi #{mesEvenementsBean.getIconeType(e.type)}"/>
+                        </div>
+                        <div class="evt-info">
+                            <div class="evt-titre">#{e.titre}</div>
+                            <div class="evt-meta">
+                                <i class="pi pi-calendar"/>
+                                <h:outputText value="#{e.dateDebut}">
+                                    <f:convertDateTime pattern="EEE d MMM yyyy 'à' HH:mm"
+                                                       type="localDateTime" locale="fr"/>
+                                </h:outputText>
+                                <span style="margin:0 8px;">·</span>
+                                <i class="pi pi-map-marker"/>
+                                #{e.modalite}#{not empty e.lieu ? ' — ' : ''}#{e.lieu}
+                            </div>
+                            <div style="margin-top:6px;">
+                                <span class="badge #{mesEvenementsBean.getBadgeStatut(mesEvenementsBean.maParticipation(e).statut)}">
+                                    #{mesEvenementsBean.getLabelStatut(mesEvenementsBean.maParticipation(e).statut)}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+                            <h:panelGroup rendered="#{e.urlVisio != null and not empty e.urlVisio}">
+                                <a href="#{e.urlVisio}" target="_blank"
+                                   style="background:#2563eb;color:#fff;text-decoration:none;padding:6px 12px;border-radius:6px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px;">
+                                    <i class="pi pi-video"/> Rejoindre
+                                </a>
+                            </h:panelGroup>
+                            <p:commandButton value="Se désister" styleClass="p-button-text p-button-sm p-button-danger"
+                                              rendered="#{mesEvenementsBean.peutSeDesister(e)}"
+                                              actionListener="#{mesEvenementsBean.preparerDesistement(mesEvenementsBean.maParticipation(e).id)}"
+                                              oncomplete="PF('dlgDesistement').show();" update=":formDesistement" process="@this"/>
+                        </div>
+                    </div>
+                </ui:repeat>
+            </h:form>
+        </div>
+
+        <p:dialog header="Se désister de l'événement" widgetVar="dlgDesistement" modal="true" width="420" closable="true">
+            <h:form id="formDesistement">
+                <p style="font-size:12px;color:#64748b;margin-top:0;">
+                    Vous pouvez indiquer un motif (facultatif). Tant que vous ne confirmez pas, vous restez convoqué(e).
+                </p>
+                <p:inputTextarea value="#{mesEvenementsBean.motifDesistement}" rows="3"
+                                  style="width:100%;" placeholder="Motif (facultatif)"/>
+                <div style="margin-top:14px;display:flex;justify-content:flex-end;gap:8px;">
+                    <p:commandButton value="Annuler" type="button" styleClass="p-button-outlined p-button-sm"
+                                      onclick="PF('dlgDesistement').hide();"/>
+                    <p:commandButton value="Confirmer le désistement" styleClass="p-button-danger p-button-sm"
+                                      actionListener="#{mesEvenementsBean.confirmerDesistement}"
+                                      oncomplete="PF('dlgDesistement').hide();"
+                                      update=":growl :formEvtsAVenir"/>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <!-- HISTORIQUE -->
+        <div class="section">
+            <div class="section-title">
+                <i class="pi pi-history" style="color:#94a3b8;"/>
+                Historique (#{mesEvenementsBean.mesEvenementsPasses.size()})
+            </div>
+
+            <h:panelGroup rendered="#{mesEvenementsBean.mesEvenementsPasses.isEmpty()}">
+                <div class="empty">
+                    Vous n'avez encore participé à aucun événement.
+                </div>
+            </h:panelGroup>
+
+            <ui:repeat value="#{mesEvenementsBean.mesEvenementsPasses}" var="e">
+                <div class="evt-card" style="opacity:0.85;">
+                    <div class="evt-icon" style="background:#f1f5f9;color:#64748b;">
+                        <i class="pi #{mesEvenementsBean.getIconeType(e.type)}"/>
+                    </div>
+                    <div class="evt-info">
+                        <div class="evt-titre">#{e.titre}</div>
+                        <div class="evt-meta">
+                            <h:outputText value="#{e.dateDebut}">
+                                <f:convertDateTime pattern="d MMM yyyy" type="localDateTime" locale="fr"/>
+                            </h:outputText>
+                            <span style="margin:0 8px;">·</span>
+                            #{e.modalite}#{not empty e.lieu ? ' — ' : ''}#{e.lieu}
+                        </div>
+                        <div style="margin-top:6px;">
+                            <span class="badge #{mesEvenementsBean.getBadgeStatut(mesEvenementsBean.maParticipation(e).statut)}">
+                                #{mesEvenementsBean.maParticipation(e).statut}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </ui:repeat>
+        </div>
+    </div>
+</div>
+</h:body>
+</html>

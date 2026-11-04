@@ -1,0 +1,293 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/templates/rhTemplate.xhtml">
+
+    <ui:param name="page" value="postes"/>
+    <ui:define name="title">Postes &amp; Fiches de poste — SIRH</ui:define>
+    <ui:define name="pageTitle">Postes &amp; Fiches de poste</ui:define>
+    <ui:define name="breadcrumb">Organisation &gt; Postes — #{sessionBean.institutionCourante.nom}</ui:define>
+
+    <ui:define name="content">
+        <div class="kpi-grid">
+            <div class="kpi-card blue">
+                <div class="kpi-label">Postes</div>
+                <div class="kpi-value">#{posteBean.totalPostes}</div>
+            </div>
+            <div class="kpi-card orange">
+                <div class="kpi-label">Vacants</div>
+                <div class="kpi-value">#{posteBean.postesVacants}</div>
+                <div class="kpi-sub">postes marqués "vacant"</div>
+            </div>
+            <div class="kpi-card green">
+                <div class="kpi-label">Occupés</div>
+                <div class="kpi-value">#{posteBean.postesOccupes}</div>
+                <div class="kpi-sub">#{posteBean.tauxOccupation}% du référentiel</div>
+            </div>
+            <div class="kpi-card red">
+                <div class="kpi-label">Sans fiche de poste</div>
+                <div class="kpi-value">#{posteBean.fichesSansPoste}</div>
+            </div>
+        </div>
+
+        <p:tabView>
+
+            <!-- ═══ RÉFÉRENTIEL DES POSTES ═══ -->
+            <p:tab title="Référentiel">
+                <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+                    <p:commandButton value="+ Nouveau poste"
+                        action="#{posteBean.preparerNouveauPoste}"
+                        oncomplete="PF('dlgPoste').show()" update="formPoste"
+                        styleClass="btn btn-primary"/>
+                </div>
+                <h:form id="formTablePostes">
+                    <p:dataTable value="#{posteBean.postes}" var="p" rows="12" paginator="true"
+                                 emptyMessage="Aucun poste enregistré." style="border:none;">
+                        <p:column headerText="Poste" style="padding:12px 16px;">
+                            <div style="font-weight:700;font-size:13px;">#{p.intitule}</div>
+                            <div style="font-size:11px;color:#64748b;">#{p.code} — #{p.famille}</div>
+                        </p:column>
+                        <p:column headerText="Unité de rattachement" style="padding:12px 16px;">
+                            <h:outputText value="#{p.unite}" rendered="#{not empty p.unite}"/>
+                            <h:panelGroup rendered="#{empty p.unite}">
+                                <span style="color:#94a3b8;">Non précisée</span>
+                            </h:panelGroup>
+                        </p:column>
+                        <p:column headerText="Effectif" style="padding:12px 16px;width:130px;text-align:center;">
+                            <div style="font-weight:700;font-size:13px;">#{p.effectifActuel} / #{p.effectifCible}</div>
+                            <div style="font-size:10px;color:#94a3b8;">occupés / cible</div>
+                        </p:column>
+                        <p:column headerText="Statut du poste" style="padding:12px 16px;width:130px;">
+                            <span class="badge #{posteBean.getBadgeStatut(p.statutPoste)}">#{posteBean.getLabelStatut(p.statutPoste)}</span>
+                        </p:column>
+                        <p:column style="padding:12px 16px;width:110px;text-align:right;">
+                            <p:commandButton icon="pi pi-id-card" title="Fiche de poste"
+                                action="#{posteBean.selectionnerPoste(p)}"
+                                oncomplete="PF('dlgFiche').show()" update="formFiche"
+                                style="width:30px;height:30px;padding:0;background:#2563eb;border:none;border-radius:6px;color:#fff;cursor:pointer;margin-right:6px;"/>
+                            <p:commandButton icon="pi pi-pencil" title="Modifier"
+                                action="#{posteBean.preparerEditionPoste(p)}"
+                                oncomplete="PF('dlgPoste').show()" update="formPoste"
+                                style="width:30px;height:30px;padding:0;background:#6366f1;border:none;border-radius:6px;color:#fff;cursor:pointer;margin-right:6px;"/>
+                            <p:commandButton icon="pi pi-trash" title="Supprimer"
+                                action="#{posteBean.supprimerPoste(p.id)}"
+                                update="growl formTablePostes"
+                                onclick="if(!confirm('Supprimer ce poste ?')) return false;"
+                                style="width:30px;height:30px;padding:0;background:#ef4444;border:none;border-radius:6px;color:#fff;cursor:pointer;"/>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </p:tab>
+
+            <!-- ═══ FICHES DE POSTE ═══ -->
+            <p:tab title="Fiches de poste (#{posteBean.fichesPoste.size()})">
+                <h:form id="formTableFiches">
+                    <p:dataTable value="#{posteBean.fichesPoste}" var="f" rows="12" paginator="true"
+                                 emptyMessage="Aucune fiche de poste." style="border:none;">
+                        <p:column headerText="Poste" style="padding:12px 16px;">
+                            <div style="font-weight:700;font-size:13px;">#{f.poste.intitule}</div>
+                            <div style="font-size:11px;color:#64748b;">#{f.poste.code}</div>
+                        </p:column>
+                        <p:column headerText="Niveau d'études" style="padding:12px 16px;">#{f.niveauEtudesRequis}</p:column>
+                        <p:column headerText="Expérience min." style="padding:12px 16px;width:130px;text-align:center;">
+                            #{f.experienceMinAnnees} an(s)
+                        </p:column>
+                        <p:column headerText="Statut" style="padding:12px 16px;width:120px;">
+                            <span class="badge #{f.valide ? 'badge-success' : 'badge-warning'}">#{f.statut}</span>
+                        </p:column>
+                        <p:column style="padding:12px 16px;width:80px;text-align:right;">
+                            <p:commandButton icon="pi pi-pencil" title="Modifier"
+                                action="#{posteBean.preparerEditionFiche(f)}"
+                                oncomplete="PF('dlgFiche').show()" update="formFiche"
+                                style="width:30px;height:30px;padding:0;background:#6366f1;border:none;border-radius:6px;color:#fff;cursor:pointer;margin-right:6px;"/>
+                            <p:commandButton icon="pi pi-check" title="Valider"
+                                rendered="#{!f.valide}"
+                                action="#{posteBean.validerFichePoste(f.id)}"
+                                update="growl formTableFiches"
+                                style="width:30px;height:30px;padding:0;background:#16a34a;border:none;border-radius:6px;color:#fff;cursor:pointer;"/>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </p:tab>
+
+            <!-- ═══ FAMILLES DE POSTES ═══ -->
+            <p:tab title="Familles de postes">
+                <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;
+                            padding:12px 16px;margin-bottom:16px;font-size:12px;color:#1d4ed8;">
+                    <i class="pi pi-info-circle"/>
+                    Référentiel commun à toutes les institutions — consultation seule depuis l'espace RH.
+                </div>
+                <h:form id="formTableFamilles">
+                    <p:dataTable value="#{posteBean.familles}" var="fm" rows="12" paginator="true"
+                                 emptyMessage="Aucune famille de postes." style="border:none;">
+                        <p:column headerText="Famille" style="padding:12px 16px;">
+                            <div style="font-weight:700;font-size:13px;">#{fm.nom}</div>
+                            <div style="font-size:11px;color:#64748b;">#{fm.code}</div>
+                        </p:column>
+                        <p:column headerText="Description" style="padding:12px 16px;">#{fm.description}</p:column>
+                        <p:column headerText="Postes" style="padding:12px 16px;width:100px;text-align:center;">
+                            #{posteBean.countPostesByFamille(fm.nom)}
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </p:tab>
+
+        </p:tabView>
+    </ui:define>
+
+    <ui:define name="dialogs">
+        <!-- DIALOG POSTE -->
+        <h:form id="formPoste">
+            <p:dialog header="#{posteBean.modeEditionPoste ? 'Modifier le poste' : 'Nouveau poste'}"
+                      widgetVar="dlgPoste" modal="true" width="600" resizable="false">
+                <div style="padding:22px;">
+                    <div class="form-row col-2">
+                        <div class="form-group">
+                            <label class="form-label">Intitulé *</label>
+                            <p:inputText value="#{posteBean.poste.intitule}" required="true" style="width:100%;"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Code *</label>
+                            <p:inputText value="#{posteBean.poste.code}" required="true" style="width:100%;"
+                                         disabled="#{posteBean.modeEditionPoste}"/>
+                        </div>
+                    </div>
+                    <div class="form-row col-2">
+                        <div class="form-group">
+                            <label class="form-label">Famille métier</label>
+                            <p:selectOneMenu value="#{posteBean.poste.famille}" style="width:100%;">
+                                <f:selectItem itemLabel="— Aucune —" itemValue="#{null}"/>
+                                <f:selectItems value="#{posteBean.familles}" var="fm" itemValue="#{fm.nom}" itemLabel="#{fm.nom}"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Unité de rattachement</label>
+                            <p:selectOneMenu value="#{posteBean.poste.unite}" style="width:100%;" filter="true">
+                                <f:selectItem itemLabel="— Aucune —" itemValue="#{null}"/>
+                                <f:selectItemGroup label="Directions">
+                                    <f:selectItems value="#{posteBean.directionsStructure}" var="u" itemValue="#{u.nom}" itemLabel="#{u.nom}"/>
+                                </f:selectItemGroup>
+                                <f:selectItemGroup label="Divisions">
+                                    <f:selectItems value="#{posteBean.divisionsStructure}" var="u" itemValue="#{u.nom}" itemLabel="#{u.nom}"/>
+                                </f:selectItemGroup>
+                                <f:selectItemGroup label="Services">
+                                    <f:selectItems value="#{posteBean.servicesStructure}" var="u" itemValue="#{u.nom}" itemLabel="#{u.nom}"/>
+                                </f:selectItemGroup>
+                                <f:selectItemGroup label="Bureaux">
+                                    <f:selectItems value="#{posteBean.bureauxStructure}" var="u" itemValue="#{u.nom}" itemLabel="#{u.nom}"/>
+                                </f:selectItemGroup>
+                            </p:selectOneMenu>
+                        </div>
+                    </div>
+                    <div class="form-row col-3">
+                        <div class="form-group">
+                            <label class="form-label">Corps / Catégorie</label>
+                            <p:inputText value="#{posteBean.poste.corps}" style="width:100%;"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Effectif cible</label>
+                            <p:inputNumber value="#{posteBean.poste.effectifCible}" decimalPlaces="0" style="width:100%;"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Statut</label>
+                            <p:selectOneMenu value="#{posteBean.poste.statutPoste}" style="width:100%;">
+                                <f:selectItem itemLabel="Vacant" itemValue="VACANT"/>
+                                <f:selectItem itemLabel="Occupé" itemValue="OCCUPE"/>
+                            </p:selectOneMenu>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <p:inputTextarea value="#{posteBean.poste.description}" rows="3" style="width:100%;"/>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;border-top:1px solid #e2e8f0;">
+                        <p:commandButton value="Annuler" type="button" onclick="PF('dlgPoste').hide()" styleClass="btn btn-secondary"/>
+                        <p:commandButton value="Enregistrer"
+                            action="#{posteBean.sauvegarderPoste}"
+                            update="growl formPoste :formTablePostes"
+                            oncomplete="if(!args.validationFailed) PF('dlgPoste').hide()"
+                            styleClass="btn btn-primary"/>
+                    </div>
+                </div>
+            </p:dialog>
+        </h:form>
+
+        <!-- DIALOG FICHE DE POSTE -->
+        <h:form id="formFiche">
+            <p:dialog header="Fiche de poste — #{posteBean.posteSelectionne.intitule}"
+                      widgetVar="dlgFiche" modal="true" width="700" height="600" resizable="false">
+                <h:panelGroup rendered="#{posteBean.posteSelectionne != null}">
+                    <div style="padding:22px;max-height:70vh;overflow-y:auto;">
+                        <div style="background:#f8fafc;border-radius:8px;padding:12px 14px;margin-bottom:18px;display:flex;gap:24px;">
+                            <div>
+                                <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;">Poste</div>
+                                <div style="font-size:14px;font-weight:700;color:#0f172a;">#{posteBean.posteSelectionne.intitule}</div>
+                            </div>
+                            <div>
+                                <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;">Unité / Bureau</div>
+                                <div style="font-size:14px;font-weight:700;color:#0f172a;">
+                                    <h:outputText value="#{posteBean.posteSelectionne.unite}" rendered="#{not empty posteBean.posteSelectionne.unite}"/>
+                                    <h:panelGroup rendered="#{empty posteBean.posteSelectionne.unite}">
+                                        <span style="color:#94a3b8;font-weight:400;">Non précisée</span>
+                                    </h:panelGroup>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Mission principale *</label>
+                            <p:inputTextarea value="#{posteBean.fichePoste.missions}" rows="3" style="width:100%;"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Activités principales</label>
+                            <p:inputTextarea value="#{posteBean.fichePoste.activitesPrincipales}" rows="3" style="width:100%;"/>
+                        </div>
+                        <div class="form-row col-2">
+                            <div class="form-group">
+                                <label class="form-label">Compétences techniques</label>
+                                <p:inputTextarea value="#{posteBean.fichePoste.competencesTechniques}" rows="3" style="width:100%;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Compétences transversales</label>
+                                <p:inputTextarea value="#{posteBean.fichePoste.competencesTransversales}" rows="3" style="width:100%;"/>
+                            </div>
+                        </div>
+                        <div class="form-row col-2">
+                            <div class="form-group">
+                                <label class="form-label">Niveau d'études requis</label>
+                                <p:inputText value="#{posteBean.fichePoste.niveauEtudesRequis}" style="width:100%;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Expérience minimale (années)</label>
+                                <p:inputNumber value="#{posteBean.fichePoste.experienceMinAnnees}" decimalPlaces="0" style="width:100%;"/>
+                            </div>
+                        </div>
+                        <div class="form-row col-2">
+                            <div class="form-group">
+                                <label class="form-label">Responsable hiérarchique</label>
+                                <p:inputText value="#{posteBean.fichePoste.responsableHierarchique}" style="width:100%;"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Postes supervisés</label>
+                                <p:inputText value="#{posteBean.fichePoste.postesSupervises}" style="width:100%;"/>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Conditions d'exercice</label>
+                            <p:inputTextarea value="#{posteBean.fichePoste.conditionsExercice}" rows="2" style="width:100%;"/>
+                        </div>
+                        <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;border-top:1px solid #e2e8f0;">
+                            <p:commandButton value="Fermer" type="button" onclick="PF('dlgFiche').hide()" styleClass="btn btn-secondary"/>
+                            <p:commandButton value="Enregistrer"
+                                action="#{posteBean.sauvegarderFichePoste}"
+                                update="growl formFiche :formTableFiches :formTablePostes"
+                                styleClass="btn btn-primary"/>
+                        </div>
+                    </div>
+                </h:panelGroup>
+            </p:dialog>
+        </h:form>
+    </ui:define>
+
+</ui:composition>

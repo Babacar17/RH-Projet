@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+    <!-- Utilisateur connecté (évalué à la demande) -->
+    <ui:param name="candUser" value="#{sessionBean.utilisateurConnecte}"/>
+
+    <!-- Styles complémentaires de la sidebar -->
+    <h:outputStylesheet library="css" name="candidat-sidebar.css"/>
+
+    <!-- ── Bouton hamburger (mobile uniquement) ─────────────── -->
+    <button type="button" class="sidebar-toggle" id="sidebarToggle"
+            aria-label="Ouvrir le menu" aria-controls="mainSidebar" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <!-- ── Overlay sombre (mobile) ──────────────────────────── -->
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+    <!-- ── Sidebar ──────────────────────────────────────────── -->
+    <aside class="sidebar" id="mainSidebar" aria-label="Menu du candidat">
+
+        <div class="sidebar-logo">
+            <div class="sidebar-logo-text">
+                <div class="app-name">📋 SIRH</div>
+                <div class="app-sub">Espace Candidat</div>
+            </div>
+
+            <!-- ═══ Cloche notifications ═══ -->
+            <div class="notif-wrapper">
+                <button type="button" class="notif-bell" id="notifBell"
+                        aria-label="Notifications" aria-haspopup="true"
+                        aria-controls="notifPanelCandidat" aria-expanded="false">
+                    <i class="pi pi-bell"></i>
+                    <p:outputPanel id="notifBadge" layout="inline">
+                        <h:panelGroup rendered="#{notificationBean.compteurNonLues gt 0}">
+                            <span class="notif-badge">#{notificationBean.compteurNonLues gt 9 ? '9+' : notificationBean.compteurNonLues}</span>
+                        </h:panelGroup>
+                    </p:outputPanel>
+                </button>
+
+                <div id="notifPanelCandidat" class="notif-panel" role="dialog"
+                     aria-label="Notifications">
+                    <div class="notif-panel-header">
+                        <span class="notif-panel-title">
+                            Notifications
+                            <p:outputPanel id="notifCount" layout="inline" styleClass="notif-panel-count">
+                                (#{notificationBean.compteurNonLues} non lue(s))
+                            </p:outputPanel>
+                        </span>
+                        <h:form id="notifActionsForm" styleClass="notif-actions">
+                            <p:commandButton value="Tout marquer lu"
+                                action="#{notificationBean.marquerToutesLues}"
+                                update="@form :notifPanelCandidatList :notifBadge :notifCount"
+                                styleClass="notif-mark-all"
+                                rendered="#{notificationBean.compteurNonLues gt 0}"/>
+                        </h:form>
+                    </div>
+
+                    <h:form id="notifPanelCandidatList">
+                        <h:panelGroup rendered="#{empty notificationBean.recentes}">
+                            <div class="notif-panel-empty">
+                                <i class="pi pi-inbox"></i>
+                                Aucune notification.
+                            </div>
+                        </h:panelGroup>
+
+                        <ui:repeat value="#{notificationBean.recentes}" var="n">
+                            <p:commandLink action="#{notificationBean.marquerLue(n.id)}"
+                                           update="@form :notifBadge :notifCount :notifActionsForm"
+                                           oncomplete="allerVersNotif('#{request.contextPath}#{n.lienAction}#{not empty n.entiteLieeId ? '?entiteId=' : ''}#{n.entiteLieeId}', #{not empty n.lienAction})"
+                                           styleClass="notif-item #{n.estLue ? '' : 'unread'}">
+                                <div class="notif-icon"
+                                     style="background:#{notificationBean.getCouleur(n.priorite)}22;color:#{notificationBean.getCouleur(n.priorite)};">
+                                    <i class="pi #{notificationBean.getIcone(n.type)}"></i>
+                                </div>
+                                <div class="notif-content">
+                                    <div class="notif-title">#{n.titre}</div>
+                                    <div class="notif-msg">#{n.message}</div>
+                                    <div class="notif-time">#{notificationBean.getDateRelative(n.dateCreation)}</div>
+                                </div>
+                            </p:commandLink>
+                        </ui:repeat>
+                    </h:form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rafraîchit les notifications toutes les 60 s (fonctionne si le bean relit les données) -->
+        <h:form id="notifPollForm" styleClass="notif-poll">
+            <p:poll interval="60" process="@none"
+                    update=":notifBadge :notifCount :notifPanelCandidatList :notifActionsForm"/>
+        </h:form>
+
+        <div class="sidebar-user">
+            <div class="sidebar-avatar avatar-candidat">
+                #{not empty candUser.prenom ? candUser.prenom.substring(0,1).toUpperCase() : 'C'}
+            </div>
+            <div class="sidebar-user-info">
+                <div class="user-name" title="#{candUser.prenom} #{candUser.nom}">
+                    #{candUser.prenom} #{candUser.nom}
+                </div>
+                <div class="user-role">Candidat</div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav" aria-label="Navigation principale">
+
+            <div class="nav-section-label">Mon espace</div>
+            <a class="nav-item #{view.viewId eq '/Candidat/dashboard.xhtml' ? 'active' : ''}"
+               aria-current="#{view.viewId eq '/Candidat/dashboard.xhtml' ? 'page' : 'false'}"
+               href="#{request.contextPath}/Candidat/dashboard.xhtml">
+                <i class="pi pi-home"></i>
+                <span>Tableau de bord</span>
+            </a>
+
+            <div class="nav-section-label">Emploi</div>
+            <a class="nav-item #{view.viewId eq '/Candidat/offres.xhtml' ? 'active' : ''}"
+               aria-current="#{view.viewId eq '/Candidat/offres.xhtml' ? 'page' : 'false'}"
+               href="#{request.contextPath}/Candidat/offres.xhtml">
+                <i class="pi pi-briefcase"></i>
+                <span>Offres d'emploi</span>
+            </a>
+            <a class="nav-item #{view.viewId eq '/Candidat/mes-candidatures.xhtml' ? 'active' : ''}"
+               aria-current="#{view.viewId eq '/Candidat/mes-candidatures.xhtml' ? 'page' : 'false'}"
+               href="#{request.contextPath}/Candidat/mes-candidatures.xhtml">
+                <i class="pi pi-file"></i>
+                <span>Mes candidatures</span>
+            </a>
+            <a class="nav-item #{view.viewId eq '/Candidat/demande-spontanee.xhtml' ? 'active' : ''}"
+               aria-current="#{view.viewId eq '/Candidat/demande-spontanee.xhtml' ? 'page' : 'false'}"
+               href="#{request.contextPath}/Candidat/demande-spontanee.xhtml">
+                <i class="pi pi-send"></i>
+                <span>Demande spontanée</span>
+            </a>
+
+            <div class="nav-section-label">Compte</div>
+            <a class="nav-item #{view.viewId eq '/Candidat/mon-compte.xhtml' ? 'active' : ''}"
+               aria-current="#{view.viewId eq '/Candidat/mon-compte.xhtml' ? 'page' : 'false'}"
+               href="#{request.contextPath}/Candidat/mon-compte.xhtml">
+                <i class="pi pi-user-edit"></i>
+                <span>Mon compte</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-footer">
+            <h:form id="logoutForm">
+                <p:commandButton value="Déconnexion"
+                    action="#{loginBean.deconnecter}"
+                    ajax="false"
+                    icon="pi pi-sign-out"
+                    styleClass="sidebar-logout"/>
+            </h:form>
+        </div>
+    </aside>
+
+    <!-- ── Scripts de la sidebar (menu mobile + notifications) ── -->
+    <script type="text/javascript">
+    //<![CDATA[
+    (function () {
+    'use strict';
+
+    function byId(id) { return document.getElementById(id); }
+
+    var sidebar, overlay, toggle, bell, panel;
+
+    function setSidebar(open) {
+        if (!sidebar) { return; }
+        sidebar.classList.toggle('open', open);
+        if (overlay) { overlay.classList.toggle('active', open); }
+        if (toggle) {
+            toggle.classList.toggle('open', open);
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            toggle.setAttribute('aria-label', open ? 'Fermer le menu' : 'Ouvrir le menu');
+        }
+        document.body.style.overflow = open ? 'hidden' : '';
+    }
+
+    function setPanel(open) {
+        if (!panel) { return; }
+        panel.classList.toggle('open', open);
+        if (bell) { bell.setAttribute('aria-expanded', open ? 'true' : 'false'); }
+    }
+
+    function init() {
+        sidebar = byId('mainSidebar');
+        overlay = byId('sidebarOverlay');
+        toggle  = byId('sidebarToggle');
+        bell    = byId('notifBell');
+        panel   = byId('notifPanelCandidat');
+        if (!sidebar) { return; }
+
+        if (toggle)  { toggle.addEventListener('click', function () { setSidebar(!sidebar.classList.contains('open')); }); }
+        if (overlay) { overlay.addEventListener('click', function () { setSidebar(false); }); }
+
+        /* Un clic sur un lien du menu referme la sidebar (mobile) */
+        sidebar.querySelectorAll('.nav-item').forEach(function (a) {
+            a.addEventListener('click', function () { setSidebar(false); });
+        });
+
+        /* Cloche : ouvre/ferme le panneau */
+        if (bell && panel) {
+            bell.addEventListener('click', function (e) {
+                e.stopPropagation();
+                setPanel(!panel.classList.contains('open'));
+            });
+            /* Clic en dehors du panneau = fermeture */
+            document.addEventListener('click', function (e) {
+                if (panel.classList.contains('open') && !panel.contains(e.target)) { setPanel(false); }
+            });
+        }
+
+        /* Échap : ferme panneau et menu */
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') { return; }
+            if (panel && panel.classList.contains('open')) { setPanel(false); if (bell) { bell.focus(); } }
+            else if (sidebar.classList.contains('open')) { setSidebar(false); if (toggle) { toggle.focus(); } }
+        });
+
+        /* Retour en mode bureau : on referme le menu mobile */
+        window.addEventListener('resize', function () {
+            if (window.innerWidth > 768) { setSidebar(false); }
+        });
+    }
+
+    /* Appelée par oncomplete d'une notification : redirige vers le lien associé */
+    window.allerVersNotif = function (url, hasLink) {
+        if (hasLink) { window.location.href = url; }
+    };
+
+    /* Compatibilité avec l'ancien code */
+    window.toggleSidebar = function () { setSidebar(!(sidebar && sidebar.classList.contains('open'))); };
+    window.closeSidebar  = function () { setSidebar(false); };
+
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); }
+    else { init(); }
+})();
+    //]]>
+    </script>
+
+</ui:composition>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+<ui:composition template="/Principal/template.xhtml">
+<ui:param name="active" value="investisseurs"/>
+<ui:define name="title">Investisseurs</ui:define>
+<ui:define name="content">
+
+<div class="page-banner">
+    <div class="breadcrumb"><a href="@P@/index.xhtml">Accueil</a><span>/</span>Investisseurs</div>
+    <h1>Investir au Sénégal</h1>
+    <p>Fiche pays, cadre des affaires, procédures et relations avec les investisseurs.</p>
+    <div class="anchor-nav">
+        <a href="#fiche-pays">Fiche Pays</a>
+        <a href="#doing-business">Doing Business</a>
+        <a href="#codes">Codes et Procédures</a>
+        <a href="#relations">Relations investisseurs</a>
+    </div>
+</div>
+
+<div class="section alt" id="fiche-pays">
+  <div class="container">
+    <div class="section-header"><div class="section-title">Fiche <span>Pays</span></div></div>
+    <div class="stats-grid">
+        <div class="stat-card"><div class="val">17 M</div><div class="lbl">Population totale</div></div>
+        <div class="stat-card"><div class="val">+4.3%</div><div class="lbl">Croissance du PIB 2025</div></div>
+        <div class="stat-card"><div class="val">1.4%</div><div class="lbl">Taux d'inflation</div></div>
+        <div class="stat-card"><div class="val">3%</div><div class="lbl">Déficit budgétaire cible (du PIB)</div></div>
+    </div>
+    <p class="source-note">Plus de données : <a href="@P@/statistiques.xhtml" style="color:#b58a3a;font-weight:700">statistiques économiques</a>.</p>
+  </div>
+</div>
+
+<div class="section" id="doing-business">
+  <div class="container two-col">
+    <div>
+        <div class="section-header"><div class="section-title">Doing <span>Business</span></div></div>
+        <ul class="check-list">
+            <li><i class="fas fa-check-circle"></i><span>Création d'entreprise et démarches fiscales en ligne.</span></li>
+            <li><i class="fas fa-check-circle"></i><span>Accompagnement de l'investissement par l'APIX SA.</span></li>
+            <li><i class="fas fa-check-circle"></i><span>Soutien aux PME, notamment avec la BERD.</span></li>
+            <li><i class="fas fa-check-circle"></i><span>Journées de l'investissement au Sénégal (JIS 2026), le 18 avril à Diamniadio.</span></li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h3>Créer votre entreprise</h3>
+        <p>Les démarches fiscales liées à la création d'une société sont accessibles en ligne avec un compte.</p>
+        <a href="@P@/services.xhtml#entreprises" class="btn">Démarches entreprises</a>
+    </div>
+  </div>
+</div>
+
+<div class="section alt" id="codes">
+  <div class="container">
+    <div class="section-header"><div class="section-title">Codes et <span>Procédures</span></div></div>
+    <ul class="doc-list">
+        <li><div><h4>Loi de Finances initiale 2026</h4><small>Dispositions budgétaires et fiscales de l'exercice 2026</small></div><a href="@P@/loi-finances.xhtml">Consulter</a></li>
+        <li><div><h4>Stratégie nationale de financement 2026–2030</h4><small>Cadre de mobilisation des ressources</small></div><a href="#{request.contextPath}/resources/docs/strategie-financement-2026-2030.pdf">Télécharger le PDF</a></li>
+        <li><div><h4>Revue du secteur financier 2025</h4><small>Stabilité financière, crédit bancaire et marchés de capitaux</small></div><a href="#{request.contextPath}/resources/docs/revue-secteur-financier-2025.pdf">Télécharger le PDF</a></li>
+    </ul>
+    <!-- TODO : ajouter les codes (général des impôts, des douanes, des marchés publics...) -->
+  </div>
+</div>
+
+<div class="section" id="relations">
+  <div class="container two-col">
+    <div class="info-card">
+        <h3>Marché financier</h3>
+        <p>Le Trésor public a mobilisé plus de 450 milliards FCFA sur le marché de l'UEMOA, dont une émission de 250 milliards FCFA à un taux compétitif.</p>
+        <a href="@P@/actualites.xhtml#marche" class="btn outline">Lire les actualités</a>
+    </div>
+    <div class="info-card">
+        <h3>Contacter l'équipe</h3>
+        <p>Une question sur les émissions, la dette ou l'investissement ? Écrivez-nous.</p>
+        <a href="@P@/contact.xhtml" class="btn">Nous contacter</a>
+    </div>
+  </div>
+</div>
+
+</ui:define>
+</ui:composition>
+</html>
